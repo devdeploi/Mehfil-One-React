@@ -1,0 +1,158 @@
+.sa-page-title {
+    margin-bottom: 24px;
+    font-weight: 800;
+    font-size: 2rem;
+    color: #0f172a;
+    border-left: 8px solid #d97706;
+    /* Gold Accent */
+    padding-left: 20px;
+    letter-spacing: -0.02em;
+}
+
+.sa-table-container {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Red Line Top */
+.sa-table-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #dc2626, #d97706);
+    z-index: 10;
+}
+
+.sa-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 0;
+}
+
+.sa-table thead th {
+    background-color: #0f172a;
+    /* Black Header */
+    color: #fbbf24;
+    /* Gold Text */
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    padding: 20px 24px;
+    border: none;
+}
+
+.sa-table tbody td {
+    padding: 20px 24px;
+    vertical-align: middle;
+    color: #334155;
+    font-weight: 600;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+}
+
+.sa-table tbody tr:hover td {
+    background-color: #fff7ed;
+    /* Light Gold/Orange Tint */
+    color: #000;
+}
+
+.sa-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Badges */
+.sa-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    border-radius: 50px;
+    /* Pill Shape */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    min-width: 80px;
+}
+
+.sa-badge-active {
+    background-color: #fef2f2;
+    color: #dc2626;
+    /* Red Text */
+    border: 1px solid #fee2e2;
+}
+
+.sa-badge-inactive {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.sa-badge-pending {
+    background-color: #fffbeb;
+    color: #d97706;
+    /* Gold Text */
+    border: 1px solid #fef3c7;
+}
+
+/* Active row highlight for badge */
+.sa-table tbody tr:hover .sa-badge-active {
+    background-color: #dc2626;
+    color: #fff;
+    border-color: #dc2626;
+}
+
+/* Action Buttons */
+.sa-action-btn {
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 1.1rem;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+    margin-right: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sa-action-btn:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    transform: translateY(-2px);
+}
+
+.sa-btn-toggle {
+    color: #d97706;
+    /* Gold Icon */
+    background: #fffbeb;
+}
+
+.sa-btn-toggle:hover {
+    background: #d97706;
+    color: #fff;
+}
+
+.sa-btn-delete {
+    color: #dc2626;
+    /* Red Icon */
+    background: #fef2f2;
+}
+
+.sa-btn-delete:hover {
+    background: #dc2626;
+    color: #fff;
+}

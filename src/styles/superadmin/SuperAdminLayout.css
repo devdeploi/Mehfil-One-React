@@ -1,0 +1,464 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --font-main: 'Plus Jakarta Sans', sans-serif;
+    --bg-body: #ffffff;
+    --primary: #dc2626;
+    /* Bright Red */
+    --primary-dark: #7f1d1d;
+    /* Deep Red */
+    --accent: #fbbf24;
+    /* Bright Gold */
+    --accent-dark: #d97706;
+    /* Deep Gold */
+    --text-dark: #0f172a;
+    /* Dark Text */
+    --dock-bg: #0f172a;
+
+
+    --header-height: 70px;
+    --dock-height: 100px;
+}
+
+body {
+    background-color: var(--bg-body);
+    font-family: var(--font-main);
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.sa-layout-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* --- TOP HEADER (WHITE) --- */
+.sa-header {
+    height: var(--header-height);
+    background-color: #ffffff;
+    border-bottom: 2px solid #e2e8f0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.sa-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Jersey Gradient Text for Brand */
+.sa-header-brand span {
+    background: linear-gradient(135deg, #0f172a 0%, #dc2626 50%, #d97706 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sa-header-brand i {
+    color: var(--primary);
+    font-size: 1.6rem;
+}
+
+.sa-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.sa-user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.sa-user-profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+}
+
+.sa-logout-btn-header {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1.2rem;
+}
+
+.sa-logout-btn-header:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+/* --- MAIN CONTENT --- */
+.sa-main-content {
+    margin-top: var(--header-height);
+    margin-bottom: var(--dock-height);
+    padding: 40px;
+    min-height: calc(100vh - var(--header-height) - 100px);
+}
+
+/* --- BLACK FLOATING DOCK (Responsive Positions) --- */
+.sa-dock-container {
+    position: fixed;
+    z-index: 1100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Position Variants */
+.sa-dock-container.bottom {
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+}
+
+.sa-dock-container.left {
+    left: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    height: auto;
+}
+
+.sa-dock-container.right {
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    height: auto;
+}
+
+/* Dock Body */
+.sa-dock {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
+    border-radius: 50px;
+    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--accent);
+    transition: all 0.3s ease;
+}
+
+/* Vertical Orientation for Left/Right */
+.sa-dock-container.left .sa-dock,
+.sa-dock-container.right .sa-dock {
+    flex-direction: column;
+    padding: 16px 10px;
+}
+
+/* Drag Handle */
+.sa-dock-handle {
+    color: #94a3b8;
+    cursor: grab;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.sa-dock-handle:active {
+    cursor: grabbing;
+    color: var(--accent);
+}
+
+.sa-dock-container.left .sa-dock-handle i,
+.sa-dock-container.right .sa-dock-handle i {
+    transform: rotate(90deg);
+    /* Rotate grip for vertical dock */
+}
+
+/* Items */
+.sa-dock-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    color: #94a3b8;
+    background: transparent;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.sa-dock-item i {
+    font-size: 1.4rem;
+}
+
+.sa-dock-item:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sa-dock-item.active {
+    background: var(--accent);
+    color: #0f172a;
+    box-shadow: 0 0 15px rgba(217, 119, 6, 0.4);
+}
+
+/* Tooltips */
+.sa-dock-label {
+    position: absolute;
+    background: #0f172a;
+    color: var(--accent);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    white-space: nowrap;
+    border: 1px solid var(--accent-dark);
+    pointer-events: none;
+    z-index: 1200;
+}
+
+/* Tooltip Positions */
+.sa-dock-container.bottom .sa-dock-label {
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+}
+
+.sa-dock-container.bottom .sa-dock-item:hover .sa-dock-label {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.sa-dock-container.left .sa-dock-label {
+    left: 60px;
+    top: 50%;
+    transform: translateY(-50%) translateX(-10px);
+}
+
+.sa-dock-container.left .sa-dock-item:hover .sa-dock-label {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.sa-dock-container.right .sa-dock-label {
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%) translateX(10px);
+}
+
+.sa-dock-container.right .sa-dock-item:hover .sa-dock-label {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+/* DROP ZONES UI */
+.sa-drop-zone {
+    position: fixed;
+    background: rgba(59, 130, 246, 0.1);
+    border: 2px dashed rgba(59, 130, 246, 0.5);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(59, 130, 246, 0.6);
+    font-size: 3rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.sa-dock-container.dragging+.sa-drop-zone,
+.sa-drop-zone.active {
+    /* Show zones when active or valid target? Logic handled in React for now we just show all zones subtly? */
+    /* Handled via inline conditional rendering in React, but we want styles here */
+    opacity: 0.5;
+}
+
+.zone-left {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 15%;
+}
+
+.zone-right {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 15%;
+}
+
+.zone-bottom {
+    bottom: 0;
+    left: 15%;
+    right: 15%;
+    height: 15%;
+}
+
+.sa-drop-zone.active {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Main Content Adjustment based on Dock */
+.sa-main-content.position-left {
+    padding-left: 120px;
+    padding-bottom: 40px;
+}
+
+.sa-main-content.position-right {
+    padding-right: 120px;
+    padding-bottom: 40px;
+}
+
+.sa-main-content.position-bottom {
+    padding-bottom: 140px;
+}
+
+@media (max-width: 768px) {
+    .sa-dock-handle {
+        display: none;
+    }
+
+    .sa-dock-label {
+        display: none;
+    }
+}
+
+/* --- MODAL STYLES --- */
+.sa-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.sa-modal-content {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sa-modal-header {
+    margin-bottom: 20px;
+}
+
+.sa-modal-header i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.sa-modal-header h3 {
+    margin: 0;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.sa-modal-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+.sa-btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.sa-btn-secondary:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.sa-btn-danger {
+    background: #dc2626;
+    color: #ffffff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);
+}
+
+.sa-btn-danger:hover {
+    background: #b91c1c;
+    transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
