@@ -38,7 +38,7 @@ const PaymentTracking = () => {
                     <tbody>
                         {payments.map(payment => (
                             <tr key={payment.id}>
-                                <td className="fw-bold text-muted">#{payment.id}</td>
+                                <td className="fw-bold text-muted">{payment.id}</td>
                                 <td className="fw-bold">{payment.user}</td>
                                 <td className="fw-black fs-6">{payment.amount}</td>
                                 <td>{payment.date}</td>

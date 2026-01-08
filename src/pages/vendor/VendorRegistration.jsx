@@ -1,12 +1,24 @@
+import axios from 'axios';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../../utils/function';
 import { SUBSCRIPTION_PLANS } from '../../utils/constants';
-import { FaCheck, FaLock, FaUser, FaCreditCard, FaArrowLeft } from 'react-icons/fa';
+import { FaCheck, FaLock, FaCreditCard, FaArrowLeft } from 'react-icons/fa';
 import '../../styles/superadmin/SuperAdminLogin.css';
 import '../../styles/vendor/VendorRegistration.css';
 
 const VendorRegistration = () => {
     const navigate = useNavigate();
+
+    const loadScript = (src) => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
     const [step, setStep] = useState(1);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [formData, setFormData] = useState({
@@ -33,18 +45,17 @@ const VendorRegistration = () => {
         if (password.length >= 6) strength += 1;
         if (password.length >= 8 && /\d/.test(password)) strength += 1;
         if (password.length >= 10 && /[A-Z]/.test(password) && /[!@#$%^&*]/.test(password)) strength += 1;
-        return strength + 1; // Base level is 1 (Weak) if typed, max 4
+        return strength + 1;
     };
 
     const handlePlanSelect = (plan) => {
         setSelectedPlan(plan);
-        setStep(3); // Move to Payment after plan selection
+        setStep(2);
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        // Clear error when user types, but keep the shake trigger available for next submit
         if (name === 'password' || name === 'confirmPassword') setPasswordError('');
         if (name === 'password') {
             setPasswordStrength(value ? calculateStrength(value) : 0);
@@ -53,13 +64,15 @@ const VendorRegistration = () => {
 
     const handleNext = (e) => {
         e.preventDefault();
-        // Validation for Step 1 (Account Details)
-        if (step === 1) {
+        if (step === 2) {
             if (formData.password !== formData.confirmPassword) {
                 setPasswordError('Passwords do not match.');
                 setShakeTrigger(prev => prev + 1);
                 return;
             }
+            // Direct Payment Trigger
+            handlePayment();
+            return;
         }
         setStep(prev => prev + 1);
     };
@@ -68,30 +81,103 @@ const VendorRegistration = () => {
         setStep(prev => prev - 1);
     };
 
+    const handlePayment = async () => {
+        setIsProcessing(true);
+        const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+
+        if (!res) {
+            alert('Razorpay SDK failed to load. Are you online?');
+            setIsProcessing(false);
+            return;
+        }
+
+        try {
+            // 1. Create Order
+            const orderResult = await axios.post(`${API_URL}/payment/create-order`, {
+                amount: selectedPlan.price,
+                currency: 'INR',
+                receipt: `receipt_${Date.now()}`
+            });
+
+            const { id: order_id, currency, amount } = orderResult.data;
+
+            // 2. Initialize Options
+            const options = {
+                key: "rzp_test_S0aFMLxRqwkL8z", // Enter the Key ID generated from the Dashboard
+                amount: amount.toString(),
+                currency: currency,
+                name: "Mehfil One",
+                description: `Subscription for ${selectedPlan.name}`,
+                order_id: order_id,
+                handler: async function (response) {
+                    try {
+                        // 3. Verify Payment
+                        const verifyResult = await axios.post(`${API_URL}/payment/verify`, {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+
+                        if (verifyResult.data.status === 'success') {
+                            // 4. Register Vendor on Success
+                            await registerVendor();
+                        } else {
+                            alert('Payment Verification Failed');
+                        }
+                    } catch (error) {
+                        console.error('Payment Verification Error:', error);
+                        alert('Payment Verification Failed');
+                    }
+                },
+                prefill: {
+                    name: formData.fullName,
+                    email: formData.email,
+                    contact: formData.phone
+                },
+                theme: {
+                    color: "#dc2626"
+                }
+            };
+
+            const paymentObject = new window.Razorpay(options);
+            paymentObject.open();
+            setIsProcessing(false);
+        } catch (error) {
+            console.error('Payment Error:', error);
+            alert('Could not initiate payment.');
+            setIsProcessing(false);
+        }
+    };
+
+    const registerVendor = async () => {
+        try {
+            const payload = {
+                fullName: formData.fullName,
+                email: formData.email,
+                phone: formData.phone,
+                password: formData.password,
+                plan: selectedPlan?.name || 'Standard'
+            };
+
+            const response = await axios.post(`${API_URL}/auth/register`, payload);
+
+            if (response.status === 201) {
+                alert('Registration Successful! Redirecting to login...');
+                navigate('/superadmin/login');
+            }
+        } catch (error) {
+            console.error('Registration Error:', error);
+            alert('An error occurred during registration.');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // Final validation check (redundant but safe)
-        if (formData.password !== formData.confirmPassword) return;
-
-        setIsProcessing(true);
-
-        // Mock API Call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Save mock user for login
-        localStorage.setItem('mock_vendor_user', JSON.stringify({
-            email: formData.email,
-            role: 'vendor',
-            name: formData.businessName
-        }));
-
-        alert('Registration Successful! Redirecting to login...');
-        navigate('/superadmin/login');
+        handlePayment();
     };
 
     return (
         <div className="sa-login-container">
-            {/* Added vr-card-wide to allow wider content for plans */}
             <div className="sa-login-card vr-card-wide">
                 <div className="sa-login-brand">
                     <i className="bi bi-calendar-check-fill"></i>
@@ -101,18 +187,15 @@ const VendorRegistration = () => {
                 <h2 className="sa-login-title">Vendor Registration</h2>
 
                 <div className="vr-steps">
-                    <div className={`vr-step ${step >= 1 ? 'active' : ''}`}>1. Account Details</div>
+                    <div className={`vr-step ${step >= 1 ? 'active' : ''}`}>1. Select Plan</div>
                     <div className="vr-line"></div>
-                    <div className={`vr-step ${step >= 2 ? 'active' : ''}`}>2. Select Plan</div>
-                    <div className="vr-line"></div>
-                    <div className={`vr-step ${step >= 3 ? 'active' : ''}`}>3. Payment</div>
+                    <div className={`vr-step ${step >= 2 ? 'active' : ''}`}>2. Account Details & Payment</div>
                 </div>
 
                 <div className="vr-content pt-2">
-                    {step === 2 && (
+                    {step === 1 && (
                         <>
                             <div className="vr-form-header">
-                                <button type="button" onClick={handleBack} className="vr-back-btn" title="Back"><FaArrowLeft /></button>
                                 <h3>Select a Plan</h3>
                             </div>
                             <div className="vr-plans-grid">
@@ -141,10 +224,10 @@ const VendorRegistration = () => {
                         </>
                     )}
 
-                    {step === 1 && (
+                    {step === 2 && (
                         <form onSubmit={handleNext} className="sa-login-form">
                             <div className="vr-form-header">
-                                {/* No back button on first step */}
+                                <button type="button" onClick={handleBack} className="vr-back-btn" title="Back"><FaArrowLeft /></button>
                                 <h3>Personal Account</h3>
                             </div>
 
@@ -247,64 +330,13 @@ const VendorRegistration = () => {
                                 </div>
                             </div>
 
-                            <button type="submit" className="sa-login-btn mt-4">
-                                Continue
-                            </button>
-                        </form>
-                    )}
-
-                    {step === 3 && (
-                        <form onSubmit={handleSubmit} className="sa-login-form">
-                            <div className="vr-form-header">
-                                <button type="button" onClick={handleBack} className="vr-back-btn" title="Back"><FaArrowLeft /></button>
-                                <h3>Secure Payment</h3>
-                            </div>
-
-                            <div className="vr-summary-card">
-                                <div className="d-flex justify-content-between">
-                                    <span>Selected Plan:</span>
-                                    <strong>{selectedPlan?.name}</strong>
-                                </div>
-                                <div className="d-flex justify-content-between mt-2">
-                                    <span>Total to pay:</span>
-                                    <strong className="text-primary" style={{ fontSize: '1.2rem' }}>
-                                        {selectedPlan?.currency}{selectedPlan?.price}
-                                    </strong>
-                                </div>
-                            </div>
-
-                            <div className="vr-payment-mock">
-                                <div className="mb-3">
-                                    <label className="form-label">Cardholder Name</label>
-                                    <input type="text" name="cardName" required value={formData.cardName} onChange={handleInputChange} className="form-control" placeholder="Name on card" />
-                                </div>
-                                <div className="mb-3">
-                                    <label className="form-label">Card Number</label>
-                                    <div className="position-relative">
-                                        <input type="text" name="cardNumber" required value={formData.cardNumber} onChange={handleInputChange} className="form-control" placeholder="0000 0000 0000 0000" />
-                                        <FaCreditCard className="vr-input-icon" />
-                                    </div>
-                                </div>
-                                <div className="row g-3">
-                                    <div className="col-6">
-                                        <label className="form-label">Expiry Date</label>
-                                        <input type="text" name="expiry" required value={formData.expiry} onChange={handleInputChange} className="form-control" placeholder="MM/YY" />
-                                    </div>
-                                    <div className="col-6">
-                                        <label className="form-label">CVC</label>
-                                        <div className="position-relative">
-                                            <input type="text" name="cvc" required value={formData.cvc} onChange={handleInputChange} className="form-control" placeholder="123" />
-                                            <FaLock className="vr-input-icon" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                             <button type="submit" className="sa-login-btn mt-4" disabled={isProcessing}>
-                                {isProcessing ? 'Processing...' : `Pay ${selectedPlan?.currency}${selectedPlan?.price} & Register`}
+                                {isProcessing ? 'Processing...' : 'Pay & Register'}
                             </button>
                         </form>
                     )}
+
+
                 </div>
                 <div className="text-center pb-3">
                     <button type="button" onClick={() => navigate('/superadmin/login')} className="btn btn-link text-white-50 text-decoration-none" style={{ fontSize: '0.9rem' }}>

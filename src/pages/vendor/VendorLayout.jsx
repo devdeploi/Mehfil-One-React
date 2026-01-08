@@ -9,6 +9,17 @@ const VendorLayout = () => {
         return localStorage.getItem('vendor-dock-position') || 'bottom';
     });
 
+    // Access Control
+    const [userPlan, setUserPlan] = useState(null);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('vendor_user');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            setUserPlan(user.plan || {});
+        }
+    }, []);
+
     // Dragging State
     const [isDragging, setIsDragging] = useState(false);
     const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
@@ -91,9 +102,15 @@ const VendorLayout = () => {
                         <span className="sa-dock-label">Dashboard</span>
                     </NavLink>
                     <NavLink to="/vendor/profile" className="sa-dock-item">
-                        <i className="bi bi-building"></i>
+                        <i className="bi bi-person-badge"></i>
                         <span className="sa-dock-label">Profile</span>
                     </NavLink>
+
+                    <NavLink to="/vendor/mahal-profile" className="sa-dock-item">
+                        <i className="bi bi-building"></i>
+                        <span className="sa-dock-label">Mahal</span>
+                    </NavLink>
+
                     <NavLink to="/vendor/availability" className="sa-dock-item">
                         <i className="bi bi-calendar-check"></i>
                         <span className="sa-dock-label">Dates</span>

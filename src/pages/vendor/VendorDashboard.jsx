@@ -75,11 +75,21 @@ const VendorDashboard = () => {
 
     }, []);
 
-    const currentPlan = SUBSCRIPTION_PLANS.find(p => p.name === 'Standard');
+    const user = JSON.parse(localStorage.getItem('vendor_user') || '{}');
+    const currentPlanName = user.plan || 'Standard';
+    const currentPlan = SUBSCRIPTION_PLANS.find(p => p.name === currentPlanName) || SUBSCRIPTION_PLANS[0];
 
     return (
         <div className="container-fluid">
-            <h1 className="sa-dashboard-title">Vendor Dashboard</h1>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h1 className="sa-dashboard-title mb-0">Vendor Dashboard</h1>
+                <div className="d-flex align-items-center gap-3">
+                    <span className={`badge rounded-pill px-3 py-2 ${currentPlan.name === 'Premium' ? 'bg-gradient-gold text-dark' : 'bg-primary'}`}>
+                        <i className={`bi ${currentPlan.name === 'Premium' ? 'bi-star-fill' : 'bi-shield-check'} me-2`}></i>
+                        {currentPlan.name} Plan
+                    </span>
+                </div>
+            </div>
 
             <div className="row g-4">
                 {/* Total Bookings */}

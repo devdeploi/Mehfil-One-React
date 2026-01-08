@@ -32,7 +32,7 @@ const UserList = () => {
                     <tbody>
                         {users.map(user => (
                             <tr key={user.id}>
-                                <td>#{user.id}</td>
+                                <td>{user.id}</td>
                                 <td>
                                     <div className="d-flex flex-column">
                                         <span className="fw-bold">{user.name}</span>

@@ -1,34 +1,72 @@
-import React, { useState } from 'react';
-import { FaChevronLeft, FaChevronRight, FaTimes } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaChevronLeft, FaChevronRight, FaTimes, FaBuilding } from 'react-icons/fa';
 import '../../styles/superadmin/Dashboard.css';
 
 const VendorAvailability = () => {
-    // Current date being viewed in calendar
+
+    const [mahals, setMahals] = useState([]);
+    const [selectedMahalId, setSelectedMahalId] = useState(null);
+
+    useEffect(() => {
+        const savedHalls = localStorage.getItem('mock_vendor_halls');
+        let initialHalls = [];
+        if (savedHalls) {
+            initialHalls = JSON.parse(savedHalls);
+        } else {
+            // Default Fallback
+            initialHalls = [
+                { id: 1, hallName: 'Grand Royal Palace' },
+                { id: 2, hallName: 'Sunset Garden Hall' }
+            ];
+            // Save this so MahalProfile could technically see it if we updated it (but we aren't updating MahalProfile right now)
+            localStorage.setItem('mock_vendor_halls', JSON.stringify(initialHalls));
+        }
+        setMahals(initialHalls);
+        if (initialHalls.length > 0) {
+            setSelectedMahalId(initialHalls[0].id);
+        }
+    }, []);
+
+
+    // --- 2. Calendar State ---
     const [currentDate, setCurrentDate] = useState(new Date());
 
-    // Initial Mock Bookings
+    // Bookings State
     const [bookings, setBookings] = useState(() => {
         const saved = localStorage.getItem('vendor_bookings_v2');
         if (saved) return JSON.parse(saved);
 
+        // Comprehensive Mock Data for Demo
         return {
-            "2025-12-10": [{ shift: 'Morning', customer: 'Past User 1', phone: '000', paymentMode: 'Offline - Cash', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
-            "2025-12-15": [{ shift: 'Evening', customer: 'Past User 2', phone: '000', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
-            "2025-12-25": [{ shift: 'Full Day', customer: 'Past User 3', phone: '000', paymentMode: 'Offline - UPI', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
-
-            "2026-01-05": [{ shift: 'Morning', customer: 'Alice', phone: '123', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
-            "2026-01-08": [{ shift: 'Evening', customer: 'Bob', phone: '456', paymentMode: 'Offline - Cash', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }],
-            "2026-01-12": [
-                { shift: 'Morning', customer: 'Charlie', phone: '789', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' },
-                { shift: 'Evening', customer: 'Dave', phone: '101', paymentMode: 'Offline - UPI', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }
+            // --- MAHAL ID 1: Grand Royal Palace ---
+            // Past
+            "2025-12-01": [{ mahalId: 1, shift: 'Morning', customer: 'John Doe', phone: '9876543210', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Completed' }],
+            "2025-12-05": [{ mahalId: 1, shift: 'Full Day', customer: 'Sarah Smith', phone: '9876543211', paymentMode: 'Offline - Cash', paymentStatus: 'Paid', bookingStatus: 'Completed' }],
+            // Present / Near Future (Jan 2026)
+            "2026-01-10": [{ mahalId: 1, shift: 'Morning', customer: 'Alice Brown', phone: '9876543212', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
+            "2026-01-15": [{ mahalId: 1, shift: 'Evening', customer: 'Bob Wilson', phone: '9876543213', paymentMode: 'Offline - UPI', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }],
+            "2026-01-20": [
+                { mahalId: 1, shift: 'Morning', customer: 'Charlie Davis', phone: '9876543214', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' },
+                { mahalId: 1, shift: 'Evening', customer: 'Dave Miller', phone: '9876543215', paymentMode: 'Offline - Cash', paymentStatus: 'Partial', bookingStatus: 'Confirmed' }
             ],
-            "2026-01-20": [{ shift: 'Full Day', customer: 'Eve Jhon', phone: '202', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
+            // Future
+            "2026-02-14": [{ mahalId: 1, shift: 'Full Day', customer: 'Valentine Wedding', phone: '9876543216', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
+            "2026-03-01": [{ mahalId: 1, shift: 'Morning', customer: 'Spring Fest', phone: '9876543217', paymentMode: 'Offline - UPI', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }],
 
-            "2026-02-14": [
-                { shift: 'Morning', customer: 'Romeo', phone: '303', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' },
-                { shift: 'Evening', customer: 'Maaz', phone: '30300', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }
-            ],
-            "2026-02-28": [{ shift: 'Full Day', customer: 'Wedding', phone: '404', paymentMode: 'Offline - Cash', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }]
+            // --- MAHAL ID 2: Sunset Garden Hall ---
+            // Past
+            "2025-12-02": [{ mahalId: 2, shift: 'Evening', customer: 'Emily Clark', phone: '8765432109', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Completed' }],
+            "2025-12-12": [{ mahalId: 2, shift: 'Morning', customer: 'Frank White', phone: '8765432108', paymentMode: 'Offline - Cash', paymentStatus: 'Paid', bookingStatus: 'Completed' }],
+            // Present / Near Future (Jan 2026)
+            "2026-01-08": [{ mahalId: 2, shift: 'Full Day', customer: 'Corporate Event', phone: '8765432107', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
+            "2026-01-12": [{ mahalId: 2, shift: 'Morning', customer: 'Grace Hall', phone: '8765432106', paymentMode: 'Offline - UPI', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }],
+            "2026-01-25": [{ mahalId: 2, shift: 'Evening', customer: 'Henry Ford', phone: '8765432105', paymentMode: 'Offline - Cash', paymentStatus: 'Partial', bookingStatus: 'Confirmed' }],
+            // Future
+            "2026-02-20": [{ mahalId: 2, shift: 'Full Day', customer: 'Silver Jubilee', phone: '8765432104', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
+            "2026-03-10": [
+                { mahalId: 2, shift: 'Morning', customer: 'Morning Prayer', phone: '8765432103', paymentMode: 'Offline - UPI', paymentStatus: 'Paid', bookingStatus: 'Confirmed' },
+                { mahalId: 2, shift: 'Evening', customer: 'Evening Reception', phone: '8765432102', paymentMode: 'Online', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }
+            ]
         };
     });
 
@@ -37,7 +75,7 @@ const VendorAvailability = () => {
     const [formData, setFormData] = useState({
         customerName: '',
         customerPhone: '',
-        shift: 'Morning', // Morning, Evening, Full Day
+        shift: 'Morning',
         paymentMode: 'Offline - Cash',
         paymentStatus: 'Pending',
         bookingStatus: 'Confirmed'
@@ -66,16 +104,29 @@ const VendorAvailability = () => {
 
     const [editingUpdates, setEditingUpdates] = useState({});
 
-    const handleDateClick = (dayStr) => {
-        const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(dayStr).padStart(2, '0')}`;
+    // --- Helper to Filter Bookings by Mahal ---
+    const getBookingsForDateAndMahal = (dateStr) => {
         const dayBookings = bookings[dateStr] || [];
+        if (!selectedMahalId) return [];
+        // Filter by ID. If legacy booking has no ID, assume match if it's the first mahal (optional fallback)
+        return dayBookings.filter(b => b.mahalId === selectedMahalId || (b.mahalId === undefined && selectedMahalId === mahals[0]?.id));
+    };
 
-        // Determine available shift default
-        const hasMorning = dayBookings.some(b => b.shift === 'Morning');
-        const hasEvening = dayBookings.some(b => b.shift === 'Evening');
+    const handleDateClick = (dayStr) => {
+        if (!selectedMahalId) {
+            alert("Please select a Mahal first.");
+            return;
+        }
+        const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(dayStr).padStart(2, '0')}`;
+
+        // Filter bookings for this Date AND Selected Mahal
+        const relevantBookings = getBookingsForDateAndMahal(dateStr);
+
+        const hasMorning = relevantBookings.some(b => b.shift === 'Morning');
+        const hasEvening = relevantBookings.some(b => b.shift === 'Evening');
 
         setSelectedDate(dateStr);
-        setEditingUpdates({}); // Reset local edits
+        setEditingUpdates({});
         setFormData({
             customerName: '',
             customerPhone: '',
@@ -87,33 +138,41 @@ const VendorAvailability = () => {
         setShowModal(true);
     };
 
-    // Track local changes for existing bookings
     const handleLocalUpdate = (index, field, value) => {
-        setEditingUpdates(prev => ({
-            ...prev,
-            [index]: {
-                ...prev[index],
-                [field]: value
-            }
-        }));
+        setEditingUpdates(prev => ({ ...prev, [index]: { ...prev[index], [field]: value } }));
     };
 
-    // Save changes for a specific booking
-    const handleSaveChanges = (index) => {
-        const updates = editingUpdates[index];
-        if (!updates) return;
+    const handleSaveChanges = (bookingIndex) => {
+        // Note: bookingIndex here refers to the index in the *filtered* list used in the modal?
+        // Actually, to update the main state correctly, we need to know the index in the main `bookings[dateStr]` array.
+        // Simpler approach: find the specific booking object in the main array and update it.
+        // But since we don't have unique IDs for bookings, we'll rely on the filter.
 
-        const dateBookings = [...bookings[selectedDate]];
-        dateBookings[index] = { ...dateBookings[index], ...updates };
+        const dateStr = selectedDate;
+        const allDateBookings = bookings[dateStr] || [];
 
-        const updatedBookings = { ...bookings, [selectedDate]: dateBookings };
+        // Retrieve the specific booking being edited from the Filtered view
+        const filteredList = getBookingsForDateAndMahal(dateStr);
+        const bookingToUpdate = filteredList[bookingIndex]; // This is the old object
+
+        const updates = editingUpdates[bookingIndex];
+        if (!updates || !bookingToUpdate) return;
+
+        // Find index in master list
+        const masterIndex = allDateBookings.indexOf(bookingToUpdate);
+        if (masterIndex === -1) return;
+
+        const updatedBooking = { ...allDateBookings[masterIndex], ...updates };
+        const newAllDateBookings = [...allDateBookings];
+        newAllDateBookings[masterIndex] = updatedBooking;
+
+        const updatedBookings = { ...bookings, [dateStr]: newAllDateBookings };
         setBookings(updatedBookings);
         localStorage.setItem('vendor_bookings_v2', JSON.stringify(updatedBookings));
 
-        // Clear local edits for this item
         setEditingUpdates(prev => {
             const newState = { ...prev };
-            delete newState[index];
+            delete newState[bookingIndex];
             return newState;
         });
     };
@@ -130,30 +189,23 @@ const VendorAvailability = () => {
 
     const handleSaveBooking = (e) => {
         e.preventDefault();
+        if (!selectedMahalId) return;
 
-        const existing = bookings[selectedDate] || [];
-        const isFullDay = existing.some(b => b.shift === 'Full Day');
-        const hasMorning = existing.some(b => b.shift === 'Morning');
-        const hasEvening = existing.some(b => b.shift === 'Evening');
+        const dateStr = selectedDate;
+        const existingAll = bookings[dateStr] || [];
+        const existingForMahal = getBookingsForDateAndMahal(dateStr);
 
-        if (isFullDay) {
-            alert("This date is already fully booked!");
-            return;
-        }
-        if (formData.shift === 'Full Day' && existing.length > 0) {
-            alert("Cannot book Full Day as there are existing bookings.");
-            return;
-        }
-        if (formData.shift === 'Morning' && hasMorning) {
-            alert("Morning shift is already booked.");
-            return;
-        }
-        if (formData.shift === 'Evening' && hasEvening) {
-            alert("Evening shift is already booked.");
-            return;
-        }
+        const isFullDay = existingForMahal.some(b => b.shift === 'Full Day');
+        const hasMorning = existingForMahal.some(b => b.shift === 'Morning');
+        const hasEvening = existingForMahal.some(b => b.shift === 'Evening');
+
+        if (isFullDay) return alert("This date is already fully booked!");
+        if (formData.shift === 'Full Day' && existingForMahal.length > 0) return alert("Cannot book Full Day with existing bookings.");
+        if (formData.shift === 'Morning' && hasMorning) return alert("Morning shift is already booked.");
+        if (formData.shift === 'Evening' && hasEvening) return alert("Evening shift is already booked.");
 
         const newBooking = {
+            mahalId: selectedMahalId, // CRITICAL: Link to Mahal
             shift: formData.shift,
             customer: formData.customerName,
             phone: formData.customerPhone,
@@ -162,11 +214,9 @@ const VendorAvailability = () => {
             bookingStatus: formData.bookingStatus
         };
 
-        const updatedBookings = { ...bookings, [selectedDate]: [...existing, newBooking] };
+        const updatedBookings = { ...bookings, [dateStr]: [...existingAll, newBooking] };
         setBookings(updatedBookings);
         localStorage.setItem('vendor_bookings_v2', JSON.stringify(updatedBookings));
-        // Don't close modal to allow further edits/adds if needed, or close as preferred. 
-        // User flow usually expects close on "Add".
         setShowModal(false);
     };
 
@@ -182,15 +232,15 @@ const VendorAvailability = () => {
         const isPast = dateObj < today;
 
         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayBookings = bookings[dateStr] || [];
+
+        // USE FILTERED BOOKINGS
+        const dayBookings = getBookingsForDateAndMahal(dateStr);
 
         // Past Dates Logic
         if (isPast) {
             if (dayBookings.length === 0) {
-                // Past with no bookings -> Disabled
                 return { status: 'Disabled', color: 'bg-light text-muted opacity-50', headerColor: 'bg-light', headerText: 'text-muted', isPast: true, isDisabled: true };
             }
-            // Past with bookings -> Completed (Green Header)
             return { status: 'Completed', color: 'bg-white', headerColor: 'bg-success', headerText: 'text-white', isPast: true };
         }
 
@@ -200,7 +250,6 @@ const VendorAvailability = () => {
         const hasMorning = dayBookings.some(b => b.shift === 'Morning');
         const hasEvening = dayBookings.some(b => b.shift === 'Evening');
 
-        // Combined logic (Purple for split usage)
         if (hasMorning && hasEvening) return { status: 'Full', color: 'bg-white', headerStyle: { backgroundColor: '#800080' }, headerText: 'text-white', isPast };
 
         if (hasMorning) return { status: 'Morning Booked', color: 'bg-white', headerColor: 'bg-warning', headerText: 'text-dark', isPast };
@@ -218,14 +267,36 @@ const VendorAvailability = () => {
         else if (viewMode === 'year') title = `${yearRangeStart} - ${yearRangeStart + 19}`;
 
         return (
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <button className="btn btn-light rounded-circle shadow-sm" onClick={() => changePeriod(-1)}><FaChevronLeft /></button>
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+                {/* 1. Left: Mahal Selector */}
+                <div className="d-flex align-items-center gap-2">
+                    <span className="fw-bold text-secondary text-uppercase small d-none d-md-block">Viewing:</span>
+                    <div className="input-group">
+                        <span className="input-group-text bg-white border-end-0 text-primary">
+                            <FaBuilding />
+                        </span>
+                        <select
+                            className="form-select border-start-0 fw-bold shadow-sm"
+                            style={{ maxWidth: '250px', cursor: 'pointer' }}
+                            value={selectedMahalId || ''}
+                            onChange={(e) => setSelectedMahalId(Number(e.target.value))}
+                        >
+                            {mahals.map(m => (
+                                <option key={m.id} value={m.id}>{m.hallName}</option>
+                            ))}
+                            {mahals.length === 0 && <option value="">No Mahals Found</option>}
+                        </select>
+                    </div>
+                </div>
 
-                <h4 className="fw-bold mb-0 text-dark cursor-pointer hover-opacity" onClick={toggleViewMode} style={{ cursor: 'pointer' }}>
-                    {title} <small className="text-muted ms-2" style={{ fontSize: '0.6em' }}><i className="bi bi-caret-down-fill"></i></small>
-                </h4>
-
-                <button className="btn btn-light rounded-circle shadow-sm" onClick={() => changePeriod(1)}><FaChevronRight /></button>
+                {/* 2. Middle/Right: Date Navigation */}
+                <div className="d-flex align-items-center gap-3">
+                    <button className="btn btn-light rounded-circle shadow-sm" onClick={() => changePeriod(-1)}><FaChevronLeft /></button>
+                    <h4 className="fw-bold mb-0 text-dark cursor-pointer hover-opacity" onClick={toggleViewMode} style={{ cursor: 'pointer', minWidth: '150px', textAlign: 'center' }}>
+                        {title}
+                    </h4>
+                    <button className="btn btn-light rounded-circle shadow-sm" onClick={() => changePeriod(1)}><FaChevronRight /></button>
+                </div>
             </div>
         );
     };
@@ -235,18 +306,9 @@ const VendorAvailability = () => {
             {Array.from({ length: 12 }).map((_, i) => {
                 const isSelected = currentDate.getMonth() === i;
                 const monthStr = new Date(0, i).toLocaleString('default', { month: 'long' });
-                const now = new Date();
-                const isCurrentMonth = now.getMonth() === i && now.getFullYear() === currentDate.getFullYear();
-
                 return (
-                    <div
-                        key={i}
-                        className={`rounded-3 p-4 text-center fw-bold transition-all shadow-sm cursor-pointer ${isSelected ? 'bg-danger text-white' : 'bg-light text-dark'} ${isCurrentMonth && !isSelected ? 'border border-danger text-danger' : ''}`}
-                        style={{ cursor: 'pointer', border: isSelected ? 'none' : '1px solid #e2e8f0' }}
-                        onClick={() => handleMonthSelect(i)}
-                    >
+                    <div key={i} className={`rounded-3 p-4 text-center fw-bold shadow-sm cursor-pointer ${isSelected ? 'bg-danger text-white' : 'bg-light'}`} onClick={() => handleMonthSelect(i)}>
                         {monthStr}
-                        {isCurrentMonth && <div style={{ fontSize: '0.6rem', fontWeight: 'normal', marginTop: '4px', textTransform: 'uppercase' }}>Current</div>}
                     </div>
                 );
             })}
@@ -258,14 +320,8 @@ const VendorAvailability = () => {
             {Array.from({ length: 20 }).map((_, i) => {
                 const year = yearRangeStart + i;
                 const isSelected = currentDate.getFullYear() === year;
-                const isCurrentYear = new Date().getFullYear() === year;
                 return (
-                    <div
-                        key={i}
-                        className={`rounded-3 p-3 text-center fw-bold transition-all shadow-sm cursor-pointer ${isSelected ? 'bg-danger text-white' : 'bg-light text-dark'} ${isCurrentYear && !isSelected ? 'border border-danger text-danger' : ''}`}
-                        style={{ cursor: 'pointer', border: isSelected ? 'none' : '1px solid #e2e8f0' }}
-                        onClick={() => handleYearSelect(year)}
-                    >
+                    <div key={i} className={`rounded-3 p-3 text-center fw-bold shadow-sm cursor-pointer ${isSelected ? 'bg-danger text-white' : 'bg-light'}`} onClick={() => handleYearSelect(year)}>
                         {year}
                     </div>
                 );
@@ -275,123 +331,55 @@ const VendorAvailability = () => {
 
     const renderLegend = () => (
         <div className="d-flex flex-wrap align-items-center gap-4 mb-4 p-3 rounded-4 border bg-white shadow-sm">
-            <span className="small fw-bold text-uppercase text-muted ls-1">Availability Key:</span>
-            <div className="d-flex align-items-center">
-                <i className="bi bi-brightness-high-fill text-warning fs-5 me-2"></i>
-                <span className="small fw-bold text-dark">Morning</span>
-            </div>
-            <div className="d-flex align-items-center">
-                <i className="bi bi-moon-stars-fill text-info fs-5 me-2"></i>
-                <span className="small fw-bold text-dark">Evening</span>
-            </div>
-            <div className="d-flex align-items-center">
-                <i className="bi bi-calendar-check-fill text-danger fs-5 me-2"></i>
-                <span className="small fw-bold text-dark">Full Day</span>
-            </div>
-            <div className="d-flex align-items-center">
-                <div className="rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '20px', height: '20px', backgroundColor: '#800080', color: 'white', fontSize: '10px' }}>
-                    <i className="bi bi-arrows-collapse"></i>
-                </div>
-                <span className="small fw-bold text-dark">Split (Purple)</span>
-            </div>
-            <div className="d-flex align-items-center">
-                <i className="bi bi-check-circle-fill text-success fs-5 me-2"></i>
-                <span className="small fw-bold text-dark">Completed</span>
-            </div>
-            <div className="ms-auto">
-                <span className="badge bg-light text-secondary border">Click date to edit</span>
-            </div>
+            <span className="small fw-bold text-uppercase text-muted ls-1">Key:</span>
+            <div className="d-flex align-items-center"><i className="bi bi-brightness-high-fill text-warning fs-5 me-2"></i><span className="small">Morning</span></div>
+            <div className="d-flex align-items-center"><i className="bi bi-moon-stars-fill text-info fs-5 me-2"></i><span className="small">Evening</span></div>
+            <div className="d-flex align-items-center"><i className="bi bi-calendar-check-fill text-danger fs-5 me-2"></i><span className="small">Full Day</span></div>
+            <div className="d-flex align-items-center"><div className="rounded-circle me-2" style={{ width: '15px', height: '15px', backgroundColor: '#800080' }}></div><span className="small">Both</span></div>
         </div>
     );
 
     const renderCalendarGrid = () => (
         <>
             <div className="d-grid text-center mb-3" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} className="small fw-bold text-secondary text-uppercase tracking-wide" style={{ fontSize: '0.75rem' }}>{day}</div>
-                ))}
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="small text-secondary fw-bold text-uppercase">{d}</div>)}
             </div>
             <div className="d-grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
                 {blankDays.map((_, i) => <div key={`blank-${i}`} />)}
                 {days.map(day => {
                     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const dayBookings = bookings[dateStr] || [];
+                    // USE FILTERED BOOKINGS HERE
+                    const dayBookings = getBookingsForDateAndMahal(dateStr);
                     const { status, color, style, isDisabled, isPast, headerColor, headerText, headerStyle } = checkAvailability(day);
 
                     return (
                         <div
                             key={day}
-                            className={`rounded-3 text-start position-relative shadow-sm transition-all hover-scale border-0 ${color}`}
-                            style={{
-                                minHeight: '110px',
-                                cursor: isDisabled ? 'not-allowed' : 'pointer',
-                                overflow: 'hidden',
-                                ...style
-                            }}
+                            className={`rounded-3 text-start position-relative shadow-sm hover-scale border-0 ${color}`}
+                            style={{ minHeight: '110px', cursor: isDisabled ? 'not-allowed' : 'pointer', overflow: 'hidden', ...style }}
                             onClick={() => !isDisabled && handleDateClick(day)}
                         >
-                            {/* Colored Header Spanning Full Width */}
                             <div className={`d-flex justify-content-between align-items-center px-3 py-2 ${headerColor} ${headerText}`} style={{ ...headerStyle }}>
-                                <span className="fw-bold fs-5">{day}</span>
+                                <span className="fw-bold">{day}</span>
                                 {status !== 'Available' && status !== 'Disabled' && (
-                                    <div className="d-flex gap-1 align-items-center">
-                                        {status === 'Completed' ? (
-                                            // Past Icons
-                                            (() => {
-                                                const hasFull = dayBookings.some(b => b.shift === 'Full Day');
-                                                const hasMor = dayBookings.some(b => b.shift === 'Morning');
-                                                const hasEve = dayBookings.some(b => b.shift === 'Evening');
-
-                                                if (hasFull) return <i className="bi bi-calendar-event-fill text-white fs-5"></i>;
-                                                if (hasMor && hasEve) return (
-                                                    <>
-                                                        <i className="bi bi-brightness-high-fill text-white fs-6"></i>
-                                                        <i className="bi bi-moon-stars-fill text-white fs-6"></i>
-                                                    </>
-                                                );
-                                                if (hasMor) return <i className="bi bi-brightness-high-fill fs-5 text-dark"></i>;
-                                                if (hasEve) return <i className="bi bi-moon-stars-fill fs-5 text-white"></i>;
-                                                return <i className="bi bi-check-circle-fill text-white"></i>;
-                                            })()
-                                        ) : (
-                                            // Future Icons
-                                            (() => {
-                                                const hasFull = dayBookings.some(b => b.shift === 'Full Day');
-                                                const hasMor = dayBookings.some(b => b.shift === 'Morning');
-                                                const hasEve = dayBookings.some(b => b.shift === 'Evening');
-
-                                                if (hasFull) return <i className="bi bi-calendar-event-fill text-white fs-5"></i>;
-                                                if (hasMor && hasEve) return (
-                                                    <>
-                                                        <i className="bi bi-brightness-high-fill text-white fs-6"></i>
-                                                        <i className="bi bi-moon-stars-fill text-white fs-6"></i>
-                                                    </>
-                                                );
-                                                if (hasMor) return <i className="bi bi-brightness-high-fill text-dark fs-5"></i>;
-                                                if (hasEve) return <i className="bi bi-moon-stars-fill text-dark fs-5"></i>;
-                                                return null;
-                                            })()
-                                        )}
+                                    <div className="d-flex gap-1">
+                                        {dayBookings.some(b => b.shift === 'Morning') && <i className="bi bi-brightness-high-fill text-dark small"></i>}
+                                        {dayBookings.some(b => b.shift === 'Evening') && <i className="bi bi-moon-stars-fill text-white small"></i>}
+                                        {dayBookings.some(b => b.shift === 'Full Day') && <i className="bi bi-calendar-event-fill text-white small"></i>}
                                     </div>
                                 )}
                             </div>
-
-                            {/* Card Body - Booking Details */}
                             <div className="d-flex flex-column gap-1 p-2">
-                                {dayBookings.length > 0 ? dayBookings.map((bk, idx) => (
-                                    <div key={idx} className="d-flex align-items-center px-1 py-1">
-                                        <div className="text-truncate w-100 fw-bold" style={{ fontSize: '0.7rem', color: '#444' }}>
-                                            {/* Shift Icon beside Customer Name */}
+                                {dayBookings.map((bk, idx) => (
+                                    <div key={idx} className="d-flex align-items-center px-1">
+                                        <div className="text-truncate fw-bold w-100" style={{ fontSize: '0.7rem', color: '#444' }}>
                                             {bk.shift === 'Morning' && <i className="bi bi-brightness-high-fill text-warning me-1"></i>}
                                             {bk.shift === 'Evening' && <i className="bi bi-moon-stars-fill text-info me-1"></i>}
                                             {bk.shift === 'Full Day' && <i className="bi bi-calendar-event-fill text-danger me-1"></i>}
-
-                                            {bk.customer} {isPast && <span className="ms-1 opacity-75 fw-normal">(Ended)</span>}
+                                            {bk.customer}
                                         </div>
                                     </div>
-                                )) : (
-                                    <span style={{ fontSize: '0.65rem' }} className="text-muted px-1">{status === 'Disabled' ? '' : 'Available'}</span>
-                                )}
+                                ))}
                             </div>
                         </div>
                     );
@@ -400,225 +388,103 @@ const VendorAvailability = () => {
         </>
     );
 
-    // Helper for Modal Logic
-    const currentDayBookings = bookings[selectedDate] || [];
-    const hasFullDay = currentDayBookings.some(b => b.shift === 'Full Day');
-    const hasMorning = currentDayBookings.some(b => b.shift === 'Morning');
-    const hasEvening = currentDayBookings.some(b => b.shift === 'Evening');
+    // Modal Helpers
+    const filteredModalBookings = getBookingsForDateAndMahal(selectedDate);
+    const hasFullDay = filteredModalBookings.some(b => b.shift === 'Full Day');
+    const hasMorning = filteredModalBookings.some(b => b.shift === 'Morning');
+    const hasEvening = filteredModalBookings.some(b => b.shift === 'Evening');
     const isDayFull = hasFullDay || (hasMorning && hasEvening);
-    const selectedDateObj = selectedDate ? new Date(selectedDate) : new Date();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const isPastSelected = selectedDateObj < today;
+    const isPastSelected = selectedDate ? new Date(selectedDate) < new Date().setHours(0, 0, 0, 0) : false;
 
     return (
         <div className="card border-0 shadow-sm p-4 h-100">
             {renderHeader()}
-
             {viewMode === 'calendar' && renderLegend()}
             {viewMode === 'calendar' && renderCalendarGrid()}
             {viewMode === 'month' && renderMonthGrid()}
             {viewMode === 'year' && renderYearGrid()}
 
-            {/* Modal */}
             {showModal && (
                 <div className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', zIndex: 1050 }}>
-                    <div className="bg-white rounded-4 shadow-lg" style={{ width: '400px', maxWidth: '90%', border: '1px solid rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+                    <div className="bg-white rounded-4 shadow-lg" style={{ width: '400px', maxWidth: '90%' }}>
                         <div className="d-flex justify-content-between align-items-center p-4 border-bottom">
                             <div>
-                                <h3 className="modal-title fs-5 fw-bold mb-1">
-                                    {bookings[selectedDate] && bookings[selectedDate].length > 0 ? 'Manage Bookings' : 'Add Booking'}
-                                </h3>
+                                <h3 className="modal-title fs-5 fw-bold mb-1">{filteredModalBookings.length > 0 ? 'Manage Bookings' : 'Add Booking'}</h3>
                                 <div className="text-muted small">{new Date(selectedDate).toDateString()}</div>
                             </div>
-                            <button className="btn btn-sm btn-light rounded-circle shadow-sm" onClick={() => setShowModal(false)}><FaTimes /></button>
+                            <button className="btn btn-sm btn-light rounded-circle" onClick={() => setShowModal(false)}><FaTimes /></button>
                         </div>
-
                         <div className="modal-body p-4" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
-                            {/* Existing Bookings List */}
-                            {bookings[selectedDate] && bookings[selectedDate].length > 0 && (
+                            {filteredModalBookings.length > 0 && (
                                 <div className="mb-4">
-                                    <h6 className="sa-section-title border-bottom pb-2 mb-3" style={{ fontSize: '0.85rem' }}>Existing Bookings ({bookings[selectedDate].length})</h6>
-                                    <div className="d-flex flex-column gap-3">
-                                        {bookings[selectedDate].map((booking, idx) => {
-                                            const updates = editingUpdates[idx] || {};
-                                            const currentPaymentStatus = updates.paymentStatus || booking.paymentStatus || 'Pending';
-                                            const currentBookingStatus = updates.bookingStatus || booking.bookingStatus || 'Confirmed';
-                                            const hasChanges = Object.keys(updates).length > 0;
-
-                                            return (
-                                                <div key={idx} className="p-3 bg-light rounded-3 border">
-                                                    <div className="d-flex justify-content-between align-items-center mb-2">
-                                                        <div>
-                                                            <span className={`badge ${booking.shift === 'Full Day' ? 'bg-danger' : 'bg-primary'} mb-1 me-2`}>{booking.shift}</span>
-                                                            <span className={`badge ${booking.bookingStatus === 'Cancelled' ? 'bg-secondary' : booking.bookingStatus === 'Confirmed' ? 'bg-success' : 'bg-warning text-dark'} mb-1`}>{booking.bookingStatus || 'Confirmed'}</span>
-
-                                                            {booking.paymentStatus === 'Paid' ? (
-                                                                <h6 className="mb-0 fw-bold text-success mt-1">{booking.customer} <i className="bi bi-check-circle-fill small"></i> (Paid)</h6>
-                                                            ) : (
-                                                                <h6 className="mb-0 fw-bold mt-1">{booking.customer}</h6>
-                                                            )}
-                                                            <small className="text-muted d-block">{booking.phone}</small>
-                                                        </div>
-                                                        {hasChanges && (
-                                                            <button
-                                                                className="btn btn-sm btn-dark shadow-sm px-3"
-                                                                onClick={() => handleSaveChanges(idx)}
-                                                            >
-                                                                Update
-                                                            </button>
-                                                        )}
+                                    <h6 className="sa-section-title border-bottom pb-2 mb-3">Existing Bookings</h6>
+                                    {filteredModalBookings.map((booking, idx) => {
+                                        // Since we are iterating filtering logic, idx here matches idx used in render -> but update needs care.
+                                        // We use handleSaveChanges(idx) where idx is the index IN THE FILTERED LIST.
+                                        const updates = editingUpdates[idx] || {};
+                                        const payStatus = updates.paymentStatus || booking.paymentStatus;
+                                        const bookStatus = updates.bookingStatus || booking.bookingStatus;
+                                        return (
+                                            <div key={idx} className="p-3 bg-light rounded-3 border mb-3">
+                                                <div className="d-flex justify-content-between mb-2">
+                                                    <div><span className="badge bg-primary me-2">{booking.shift}</span><h6 className="d-inline">{booking.customer}</h6></div>
+                                                    {(updates.paymentStatus || updates.bookingStatus) && <button className="btn btn-xs btn-dark" onClick={() => handleSaveChanges(idx)}>Save</button>}
+                                                </div>
+                                                <div className="row g-2">
+                                                    <div className="col-6">
+                                                        <select className="form-select form-select-sm" value={payStatus} onChange={(e) => handleLocalUpdate(idx, 'paymentStatus', e.target.value)}>
+                                                            <option value="Pending">Pending</option><option value="Paid">Paid</option>
+                                                        </select>
                                                     </div>
-                                                    <div className="d-flex justify-content-between align-items-center mt-2 border-top pt-2">
-                                                        <div className="d-flex align-items-center gap-2">
-                                                            <small className="text-muted fw-bold" style={{ fontSize: '0.7rem' }}>Payment:</small>
-                                                            {isPastSelected && booking.paymentStatus === 'Paid' ? (
-                                                                <span className="badge bg-success">Paid</span>
-                                                            ) : (
-                                                                <select
-                                                                    className="form-select form-select-sm py-0"
-                                                                    style={{ width: '90px', fontSize: '0.75rem' }}
-                                                                    value={currentPaymentStatus}
-                                                                    onChange={(e) => handleLocalUpdate(idx, 'paymentStatus', e.target.value)}
-                                                                >
-                                                                    <option value="Pending">Pending</option>
-                                                                    <option value="Paid">Paid</option>
-                                                                    <option value="Partial">Partial</option>
-                                                                </select>
-                                                            )}
-                                                        </div>
-                                                        <div className="d-flex align-items-center gap-2">
-                                                            <small className="text-muted fw-bold" style={{ fontSize: '0.7rem' }}>Status:</small>
-                                                            <select
-                                                                className="form-select form-select-sm py-0"
-                                                                style={{ width: '100px', fontSize: '0.75rem' }}
-                                                                value={currentBookingStatus}
-                                                                onChange={(e) => handleLocalUpdate(idx, 'bookingStatus', e.target.value)}
-                                                            >
-                                                                <option value="Confirmed">Confirmed</option>
-                                                                <option value="Pending">Pending</option>
-                                                                <option value="Cancelled">Cancelled</option>
-                                                                <option value="Completed">Completed</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-end mt-1">
-                                                        <small className="text-muted" style={{ fontSize: '0.65rem' }}>{booking.paymentMode}</small>
+                                                    <div className="col-6">
+                                                        <select className="form-select form-select-sm" value={bookStatus} onChange={(e) => handleLocalUpdate(idx, 'bookingStatus', e.target.value)}>
+                                                            <option value="Confirmed">Confirmed</option><option value="Cancelled">Cancelled</option>
+                                                        </select>
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             )}
 
-                            {(!isDayFull && !isPastSelected) && (
-                                <>
-                                    {bookings[selectedDate] && bookings[selectedDate].length > 0 && <hr className="my-4" />}
-                                    <h6 className="sa-section-title border-bottom pb-2 mb-3" style={{ fontSize: '0.85rem' }}>Add New Booking</h6>
-
-                                    <form onSubmit={handleSaveBooking}>
-                                        <div className="mb-3">
-                                            <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Customer Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                style={{ padding: '10px 15px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}
-                                                required
-                                                value={formData.customerName}
-                                                placeholder="Enter name"
-                                                onChange={e => setFormData({ ...formData, customerName: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Phone Number</label>
-                                            <input
-                                                type="tel"
-                                                className="form-control"
-                                                style={{ padding: '10px 15px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}
-                                                required
-                                                value={formData.customerPhone}
-                                                placeholder="Enter phone"
-                                                onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Shift Selection</label>
-                                            <select
-                                                className="form-select"
-                                                style={{ padding: '10px 15px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', cursor: 'pointer' }}
-                                                value={formData.shift}
-                                                onChange={e => setFormData({ ...formData, shift: e.target.value })}
-                                            >
-                                                <option value="Morning">Morning Shift</option>
-                                                <option value="Evening">Evening Shift</option>
-                                                <option value="Full Day">Full Day</option>
+                            {!isDayFull && !isPastSelected && (
+                                <form onSubmit={handleSaveBooking}>
+                                    <h6 className="sa-section-title border-bottom pb-2 mb-3">New Booking ({mahals.find(m => m.id === selectedMahalId)?.hallName})</h6>
+                                    <div className="mb-3"><input className="form-control" placeholder="Name" required value={formData.customerName} onChange={e => setFormData({ ...formData, customerName: e.target.value })} /></div>
+                                    <div className="mb-3"><input className="form-control" placeholder="Phone" required value={formData.customerPhone} onChange={e => setFormData({ ...formData, customerPhone: e.target.value })} /></div>
+                                    <div className="mb-3">
+                                        <select className="form-select" value={formData.shift} onChange={e => setFormData({ ...formData, shift: e.target.value })}>
+                                            <option value="Morning">Morning</option><option value="Evening">Evening</option><option value="Full Day">Full Day</option>
+                                        </select>
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Payment Mode</label>
+                                        <select className="form-select" value={formData.paymentMode} onChange={e => setFormData({ ...formData, paymentMode: e.target.value })}>
+                                            <option value="Offline - Cash">Offline - Cash</option>
+                                            <option value="Offline - UPI">Offline - UPI</option>
+                                            <option value="Online">Online</option>
+                                        </select>
+                                    </div>
+                                    <div className="row g-2 mb-3">
+                                        <div className="col-6">
+                                            <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Payment Status</label>
+                                            <select className="form-select" value={formData.paymentStatus} onChange={e => setFormData({ ...formData, paymentStatus: e.target.value })}>
+                                                <option value="Pending">Pending</option>
+                                                <option value="Paid">Paid</option>
+                                                <option value="Partial">Partial</option>
                                             </select>
                                         </div>
-
-                                        <div className="row g-3 mb-4">
-                                            <div className="col-12">
-                                                <h6 className="sa-section-title border-bottom pb-2 mb-3" style={{ fontSize: '0.85rem' }}>Payment & Status</h6>
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Payment Mode</label>
-                                                <select
-                                                    className="form-select"
-                                                    style={{ padding: '10px 15px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}
-                                                    value={formData.paymentMode}
-                                                    onChange={e => setFormData({ ...formData, paymentMode: e.target.value })}
-                                                >
-                                                    <option value="Offline - Cash">Offline - Cash</option>
-                                                    <option value="Offline - UPI">Offline - UPI</option>
-                                                    <option value="Online">Online (System)</option>
-                                                </select>
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Payment Status</label>
-                                                <select
-                                                    className="form-select"
-                                                    style={{ padding: '10px 15px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}
-                                                    value={formData.paymentStatus}
-                                                    onChange={e => setFormData({ ...formData, paymentStatus: e.target.value })}
-                                                >
-                                                    <option value="Pending">Pending</option>
-                                                    <option value="Paid">Paid</option>
-                                                    <option value="Partial">Partial</option>
-                                                </select>
-                                            </div>
-                                            <div className="col-12">
-                                                <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Booking Status</label>
-                                                <select
-                                                    className="form-select"
-                                                    style={{ padding: '10px 15px', borderRadius: '10px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}
-                                                    value={formData.bookingStatus}
-                                                    onChange={e => setFormData({ ...formData, bookingStatus: e.target.value })}
-                                                >
-                                                    <option value="Confirmed">Confirmed</option>
-                                                    <option value="Pending">Pending</option>
-                                                </select>
-                                            </div>
+                                        <div className="col-6">
+                                            <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Booking Status</label>
+                                            <select className="form-select" value={formData.bookingStatus} onChange={e => setFormData({ ...formData, bookingStatus: e.target.value })}>
+                                                <option value="Confirmed">Confirmed</option>
+                                                <option value="Pending">Pending</option>
+                                            </select>
                                         </div>
-
-                                        <div className="d-grid mt-4">
-                                            <button
-                                                type="submit"
-                                                className="btn text-white fw-bold shadow-sm"
-                                                style={{
-                                                    background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                                                    padding: '12px',
-                                                    borderRadius: '10px',
-                                                    border: 'none',
-                                                    letterSpacing: '0.05em',
-                                                    textTransform: 'uppercase',
-                                                    fontSize: '0.9rem'
-                                                }}
-                                            >
-                                                Confirm Booking
-                                            </button>
-                                        </div>
-                                    </form>
-                                </>
+                                    </div>
+                                    <button type="submit" className="btn btn-danger w-100">Confirm Booking</button>
+                                </form>
                             )}
                         </div>
                     </div>

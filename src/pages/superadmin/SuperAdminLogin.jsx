@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../../utils/function';
 import '../../styles/superadmin/SuperAdminLogin.css';
 
 const SuperAdminLogin = () => {
@@ -19,6 +21,11 @@ const SuperAdminLogin = () => {
     const [generatedOTP, setGeneratedOTP] = useState('');
     const [showOTPModal, setShowOTPModal] = useState(false);
 
+    // UI Feedback
+    const [loginError, setLoginError] = useState('');
+    const [otpError, setOtpError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
+
     const calculateStrength = (password) => {
         let strength = 0;
         if (!password) return 0;
@@ -30,33 +37,51 @@ const SuperAdminLogin = () => {
 
     const handleLoginChange = (e) => {
         setLoginData({ ...loginData, [e.target.name]: e.target.value });
+        if (loginError) setLoginError('');
+        if (successMsg) setSuccessMsg('');
     };
 
     const handleResetChange = (e) => {
         const { name, value } = e.target;
         setResetData(prev => ({ ...prev, [name]: value }));
 
+        if (name === 'otp' && otpError) setOtpError('');
         if (name === 'password' || name === 'confirmPassword') setPasswordError('');
         if (name === 'password') {
             setPasswordStrength(value ? calculateStrength(value) : 0);
         }
     };
 
-    const handleLoginSubmit = (e) => {
+    const handleLoginSubmit = async (e) => {
         e.preventDefault();
-        const storedVendor = JSON.parse(localStorage.getItem('mock_vendor_user') || '{}');
-        if (
-            (storedVendor.email && storedVendor.email.toLowerCase() === loginData.email.toLowerCase()) ||
-            loginData.email.toLowerCase().includes('vendor')
-        ) {
-            navigate('/vendor/dashboard');
-        } else {
-            navigate('/superadmin/dashboard');
+
+        try {
+            const response = await axios.post(`${API_URL}/auth/login`, loginData);
+
+            if (response.status === 200) {
+                // Save user data (and token if available later)
+                const userData = response.data.vendor;
+                localStorage.setItem('vendor_user', JSON.stringify(userData));
+
+                // Role-based navigation
+                if (userData.role === 'superadmin') {
+                    navigate('/superadmin/dashboard');
+                } else {
+                    navigate('/vendor/dashboard');
+                }
+            }
+        } catch (error) {
+            console.error('Login Error:', error);
+            const msg = error.response?.data?.msg || 'Login failed';
+            setLoginError(msg);
+            setShakeTrigger(prev => prev + 1);
         }
     };
 
     const handleSendOTP = (e) => {
         e.preventDefault();
+        setLoginError('');
+        setSuccessMsg('');
         const code = Math.floor(1000 + Math.random() * 9000).toString();
         setGeneratedOTP(code);
         setShowOTPModal(true);
@@ -67,8 +92,10 @@ const SuperAdminLogin = () => {
         e.preventDefault();
         if (resetData.otp === generatedOTP) {
             setView('reset');
+            setOtpError('');
         } else {
-            alert('Invalid OTP. Please check the code.');
+            setOtpError('Invalid OTP. Please check the code.');
+            setShakeTrigger(prev => prev + 1);
         }
     };
 
@@ -80,7 +107,7 @@ const SuperAdminLogin = () => {
             return;
         }
         // Success
-        alert('Password Reset Successfully!');
+        setSuccessMsg('Password Reset Successfully!');
         setView('login');
     };
 
@@ -96,6 +123,14 @@ const SuperAdminLogin = () => {
                     <>
                         <h2 className="sa-login-title">Welcome Back</h2>
                         <p className="sa-login-subtitle">Enter your credentials to access the admin panel</p>
+
+                        {successMsg && (
+                            <div className="d-flex align-items-center gap-2 mb-3 justify-content-center" style={{ color: '#4ade80', fontSize: '0.9rem' }}>
+                                <i className="bi bi-check-circle-fill"></i>
+                                <span>{successMsg}</span>
+                            </div>
+                        )}
+
                         <form onSubmit={handleLoginSubmit} className="sa-login-form">
                             <div className="mb-3">
                                 <label className="form-label">Email Address</label>
@@ -131,7 +166,20 @@ const SuperAdminLogin = () => {
                                     Forgot Password?
                                 </button>
                             </div>
-                            <button type="submit" className="btn btn-primary sa-login-btn mt-2">Login</button>
+                            <button
+                                type="submit"
+                                className="btn btn-primary sa-login-btn mt-2"
+                            >
+                                Login
+                            </button>
+
+                            {loginError && (
+                                <div key={shakeTrigger} className="animate-shake d-flex align-items-center justify-content-center gap-2 mt-3" style={{ color: '#ef4444', fontSize: '0.85rem' }}>
+                                    <i className="bi bi-exclamation-triangle-fill"></i>
+                                    <span>{loginError}</span>
+                                </div>
+                            )}
+
                             <div className="text-center mt-4">
                                 <button type="button" onClick={() => navigate('/vendor/register')} className="btn btn-link text-decoration-none text-light opacity-75" style={{ fontSize: '0.9rem' }}>
                                     Don't have an account? <span className="text-warning fw-bold">Register as Vendor</span>
@@ -186,6 +234,14 @@ const SuperAdminLogin = () => {
                                 />
                                 <div className="form-text text-white-50 text-center mt-2">Check your email for the code</div>
                             </div>
+
+                            {otpError && (
+                                <div key={shakeTrigger} className="animate-shake d-flex align-items-center justify-content-center gap-2 mb-3" style={{ color: '#ef4444', fontSize: '0.85rem' }}>
+                                    <i className="bi bi-exclamation-circle-fill"></i>
+                                    <span>{otpError}</span>
+                                </div>
+                            )}
+
                             <button type="submit" className="btn btn-primary sa-login-btn">Verify</button>
                             <div className="text-center mt-3">
                                 <button type="button" onClick={() => setView('forgot')} className="btn btn-link text-white-50 text-decoration-none">Resend Code</button>

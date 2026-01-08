@@ -126,10 +126,6 @@ const SuperAdminLayout = () => {
                         <i className="bi bi-people-fill"></i>
                         <span className="sa-dock-label">Users</span>
                     </NavLink>
-                    <NavLink to="/superadmin/plans" className="sa-dock-item">
-                        <i className="bi bi-kanban"></i>
-                        <span className="sa-dock-label">Plans</span>
-                    </NavLink>
                     <NavLink to="/superadmin/payments" className="sa-dock-item">
                         <i className="bi bi-cash-stack"></i>
                         <span className="sa-dock-label">Payments</span>
