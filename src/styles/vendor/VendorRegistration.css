@@ -242,3 +242,12 @@
         max-width: 100%;
     }
 }
+
+/* Fix for disabled button state */
+.sa-login-btn:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.3);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
