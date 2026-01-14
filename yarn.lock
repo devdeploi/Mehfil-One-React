@@ -978,6 +978,8 @@ __metadata:
     react-dom: "npm:^19.2.0"
     react-icons: "npm:^5.5.0"
     react-router-dom: "npm:^7.11.0"
+    three: "npm:^0.182.0"
+    vanta: "npm:^0.5.24"
     vite: "npm:^7.2.4"
   languageName: unknown
   linkType: soft
@@ -2596,6 +2598,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"three@npm:^0.182.0":
+  version: 0.182.0
+  resolution: "three@npm:0.182.0"
+  checksum: 10c0/8ddb3380dc881c75a91cb9fb29a3610b1d01de7feff4b7610fb305a24efc51c98d51b8bcef6ab74e82a1af1947bc81343a9eab1dc9ebe17b504eab19a321430b
+  languageName: node
+  linkType: hard
+
 "tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.15":
   version: 0.2.15
   resolution: "tinyglobby@npm:0.2.15"
@@ -2653,6 +2662,13 @@ __metadata:
   dependencies:
     punycode: "npm:^2.1.0"
   checksum: 10c0/4ef57b45aa820d7ac6496e9208559986c665e49447cb072744c13b66925a362d96dd5a46c4530a6b8e203e5db5fe849369444440cb22ecfc26c679359e5dfa3c
+  languageName: node
+  linkType: hard
+
+"vanta@npm:^0.5.24":
+  version: 0.5.24
+  resolution: "vanta@npm:0.5.24"
+  checksum: 10c0/1cdcb4554509d0365c4a5430f8c3369d5147b50d5cf7622c161f08b3db954407d140328bc1d832ec87a02152d0f13df88f437ea22e1d5e770b82b94e0ffa0255
   languageName: node
   linkType: hard
 

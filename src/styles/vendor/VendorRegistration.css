@@ -16,18 +16,25 @@
 }
 
 .vr-step {
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
     transition: all 0.3s;
+    border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .vr-step.active {
-    color: #fbbf24;
-    /* Amber/Gold to match login accent */
-    text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+    background: #fac371;
+    color: #000;
+    border-color: #fac371;
+    box-shadow: 0 0 15px rgba(250, 195, 113, 0.4);
 }
 
 .vr-line {
