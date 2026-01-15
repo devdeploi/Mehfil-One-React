@@ -1,260 +1,443 @@
-/* Inherit container styles from SuperAdminLogin.css, but we need some specific overrides for the internals */
+/* VendorRegistration.css - Clean White/Red Theme */
 
-/* Wider card for registration flow */
-.sa-login-card.vr-card-wide {
-    max-width: 800px;
-    padding: 30px;
+.vr-page-container {
+    min-height: 100vh;
+    /* background: #f8fafc; Removed for Vanta Fog */
+    display: flex;
+    flex-direction: column;
 }
 
-/* Steps Indicator - Dark Theme */
+/* Navbar */
+.vr-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 5%;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.vr-nav-brand {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    background: linear-gradient(135deg, #C8102E 0%, #9B0C23 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+}
+
+.vr-nav-btn {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.vr-nav-btn:hover {
+    border-color: #C8102E;
+    color: #C8102E;
+}
+
+/* Content Wrapper */
+.vr-content-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem 1rem;
+}
+
+/* Card Overrides for Light Theme */
+.sa-login-card.vr-card-wide {
+    max-width: 900px;
+    padding: 40px;
+    background: white;
+    box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.05);
+    /* Soft shadow */
+    border: 1px solid #f1f5f9;
+    border-radius: 20px;
+    backdrop-filter: none;
+    animation: none;
+    /* Disable float animation for stable form */
+}
+
+/* Title & Headers */
+.sa-login-title {
+    background: none;
+    -webkit-text-fill-color: #1e293b;
+    /* Dark Slate */
+    color: #1e293b;
+    margin-bottom: 2rem;
+}
+
+.sa-login-title::after {
+    background: #C8102E;
+    /* Red underline */
+}
+
+.vr-form-header h3 {
+    color: #1e293b;
+}
+
+/* Back Button */
+/* Back Button styles moved to Buttons section */
+
+/* Steps Indicator */
 .vr-steps {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 2rem;
-    gap: 1rem;
+    margin-bottom: 3rem;
+    gap: 0.5rem;
 }
 
 .vr-step {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.6);
+    background: white;
+    color: #cbd5e1;
+    border: 2px solid #e2e8f0;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 1.1rem;
     transition: all 0.3s;
-    border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .vr-step.active {
-    background: #fac371;
-    color: #000;
-    border-color: #fac371;
-    box-shadow: 0 0 15px rgba(250, 195, 113, 0.4);
+    background: #C8102E;
+    color: white;
+    border-color: #C8102E;
+    box-shadow: 0 4px 12px rgba(200, 16, 46, 0.3);
+    transform: scale(1.1);
 }
 
 .vr-line {
     height: 2px;
     width: 40px;
-    background: rgba(255, 255, 255, 0.1);
+    background: #e2e8f0;
 }
 
-/* Plan Selection Cards - Dark Theme */
+/* Plan Cards */
 .vr-plans-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
 }
 
 .vr-plan-card {
-    background: rgba(255, 255, 255, 0.03);
-    padding: 2rem;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    /* Stronger shadow */
+    padding: 2.5rem;
+    border-radius: 20px;
     position: relative;
     overflow: hidden;
-    color: #fff;
     text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
 }
 
 .vr-plan-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.08);
-    /* Slightly lighter on hover */
-    border-color: #fbbf24;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+    transform: translateY(-8px);
+    border-color: #C8102E;
+    box-shadow: 0 20px 25px -5px rgba(200, 16, 46, 0.15);
 }
 
 .vr-plan-card.selected {
-    border-color: #dc2626;
-    /* match login primary red */
-    background: rgba(220, 38, 38, 0.1);
-    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.4);
+    border-color: #C8102E;
+    background: #fffafa;
+    /* Very subtle red tint */
+    box-shadow: 0 0 0 3px rgba(200, 16, 46, 0.2);
 }
 
 .vr-plan-badge {
+    background: #C8102E;
+    color: white;
     position: absolute;
-    top: 15px;
-    right: -32px;
-    background: linear-gradient(90deg, #dc2626, #fbbf24);
-    color: #fff;
-    padding: 5px 40px;
+    top: 20px;
+    right: -35px;
     transform: rotate(45deg);
+    padding: 5px 40px;
     font-size: 0.75rem;
-    font-weight: bold;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 10;
 }
 
 .vr-plan-card h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
     margin-bottom: 0.5rem;
-    font-size: 1.4rem;
-    font-weight: 700;
+    color: #1e293b;
 }
 
 .vr-price {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 1rem 0;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    font-size: 3rem;
+    font-weight: 800;
+    color: #C8102E;
+    /* Price in Red */
+    margin: 1.5rem 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
 }
 
 .vr-price span {
+    color: #64748b;
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.6);
-    font-weight: 400;
+    font-weight: 600;
 }
 
 .vr-features {
     list-style: none;
     padding: 0;
-    margin: 1.5rem 0;
+    margin: 0 0 2rem 0;
     text-align: left;
+    flex-grow: 1;
+    /* Push button down */
 }
 
 .vr-features li {
-    margin-bottom: 0.8rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: #475569;
+    margin-bottom: 1rem;
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    font-size: 0.9rem;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 
 .vr-features li svg {
-    color: #4ade80;
-    /* Green for checks */
+    color: #C8102E !important;
+    /* Red checks */
+    font-size: 1.1em;
+    flex-shrink: 0;
 }
 
-/* Button override to match login button style if needed, or use sa-login-btn directly */
+/* Buttons */
+/* Buttons */
 .vr-btn-select {
     width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
-    font-weight: 600;
+    padding: 1rem;
+    background: transparent;
+    color: #C8102E;
+    border: 2px solid #C8102E;
+    border-radius: 12px;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
     text-transform: uppercase;
-    font-size: 0.85rem;
     letter-spacing: 0.1em;
+    font-size: 0.9rem;
+    margin-top: auto;
+    /* Push to bottom if flex column */
 }
 
 .vr-btn-select:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #fff;
+    background: #C8102E;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(200, 16, 46, 0.3);
 }
 
-/* Forms - reusing sa-login-form styles mostly, but layout tweaks */
-.vr-form-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 2rem;
-    gap: 1rem;
+
+/* Autofill Override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: #1e293b !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
 
-.vr-form-header h3 {
-    margin: 0;
-    color: #fff;
-    font-size: 1.5rem;
+/* Text Selection Visibility */
+::selection {
+    background: #C8102E;
+    color: white;
+}
+
+.sa-login-btn {
+    width: 100%;
+    padding: 1rem;
     font-weight: 700;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #C8102E 0%, #9B0C23 100%);
+    border: none;
+    color: white;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 20px -5px rgba(200, 16, 46, 0.4);
+    margin-top: 1.5rem;
 }
 
+.sa-login-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px -5px rgba(200, 16, 46, 0.5);
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.sa-login-btn:disabled {
+    background: #cbd5e1;
+    color: #94a3b8;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Back Button */
 .vr-back-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: #fff;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .vr-back-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fbbf24;
+    border-color: #C8102E;
+    color: #C8102E;
+    background: #fffafa;
+    transform: translateX(-3px);
 }
 
-/* Payment Summary */
-.vr-summary-card {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 1.5rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+/* Form Inputs */
+.sa-login-form .form-label {
+    color: #64748b;
+}
+
+.sa-login-form .form-control {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+}
+
+.sa-login-form .form-control:focus {
+    background: white;
+    border-color: #C8102E;
+    box-shadow: 0 0 0 4px rgba(200, 16, 46, 0.1);
+}
+
+.sa-login-form .form-control::placeholder {
     color: #cbd5e1;
 }
 
-.vr-summary-card strong {
-    color: #fff;
+.sa-password-toggle {
+    color: #94a3b8;
 }
 
-.vr-summary-card .text-primary {
-    color: #fbbf24 !important;
-    /* Override bootstrap primary with Gold */
+.sa-password-toggle:hover {
+    color: #C8102E;
 }
 
-.vr-input-icon {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.5);
+/* Footer */
+.vr-footer {
+    margin-top: auto;
+    padding: 2rem 5%;
+    border-top: 1px solid #e2e8f0;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #64748b;
+    z-index: 10;
 }
 
-@keyframes shake {
-
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-
-    10%,
-    30%,
-    50%,
-    70%,
-    90% {
-        transform: translateX(-5px);
-    }
-
-    20%,
-    40%,
-    60%,
-    80% {
-        transform: translateX(5px);
-    }
+.vr-footer-brand {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 1rem;
 }
 
-.animate-shake {
-    animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+.vr-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-.vr-short-input {
-    max-width: 70%;
+.vr-footer-sep {
+    color: #cbd5e1;
 }
 
+.vr-footer a {
+    color: #C8102E;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.vr-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-    .vr-short-input {
-        max-width: 100%;
+    .vr-navbar {
+        padding: 1rem 1.5rem;
+    }
+
+    .vr-footer {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .vr-footer-right {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .vr-footer-sep {
+        display: none;
     }
 }
 
-/* Fix for disabled button state */
-.sa-login-btn:disabled {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.3);
-    box-shadow: none;
-    cursor: not-allowed;
-    transform: none;
+/* Fix for Time Picker Icon Visibility */
+input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.5);
+    /* Make it dark gray to match theme */
+    opacity: 0.6;
+    transition: all 0.2s;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    color: #C8102E;
+    /* Red hover */
+    filter: invert(16%) sepia(96%) saturate(6050%) hue-rotate(341deg) brightness(85%) contrast(105%);
+    /* Red filter */
+}
+
+/* Ensure padding for the icon */
+input[type="time"] {
+    padding-right: 10px;
 }

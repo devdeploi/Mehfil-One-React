@@ -1,83 +1,121 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { SUBSCRIPTION_PLANS } from '../../utils/constants';
+import { API_URL } from '../../utils/function';
 import '../../styles/superadmin/Dashboard.css';
 
 const VendorDashboard = () => {
     // State
+    const [vendorProfile, setVendorProfile] = useState(null);
     const [stats, setStats] = useState({
         totalBookings: 0,
         confirmed: 0,
         pending: 0,
         online: 0,
         offline: 0,
-        totalRevenue: 250000 // Mock starting revenue
+        totalRevenue: 0
     });
     const [upcomingEvents, setUpcomingEvents] = useState([]);
     const [allBookings, setAllBookings] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Load bookings
-        const savedBookings = JSON.parse(localStorage.getItem('vendor_bookings_v2') || 'null');
+        const fetchDashboardData = async () => {
+            const rawUser = localStorage.getItem('vendor_user');
 
-        // Static Mock Data (Fallback)
-        const mockBookings = {
-            "2026-01-05": [{ shift: 'Morning', customer: 'Alice', phone: '123', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
-            "2026-01-08": [{ shift: 'Evening', customer: 'Bob', phone: '456', paymentMode: 'Offline - Cash', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }],
-            "2026-01-12": [
-                { shift: 'Morning', customer: 'Charlie', phone: '789', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' },
-                { shift: 'Evening', customer: 'Dave', phone: '101', paymentMode: 'Offline - UPI', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }
-            ],
-            "2026-01-20": [{ shift: 'Full Day', customer: 'Eve Jhon', phone: '202', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
-            "2026-02-14": [{ shift: 'Morning', customer: 'Romeo', time: '10:00 AM', paymentMode: 'Online', paymentStatus: 'Paid' }],
-            "2026-03-01": [{ shift: 'Full Day', customer: 'Summer Fest', phone: '999', paymentMode: 'Offline - Cash', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }]
+            const user = JSON.parse(rawUser || '{}');
+
+            // Handle both 'id' (from simple object) and '_id' (from Mongo document)
+            const userId = user.id || user._id;
+
+            if (!userId) {
+                console.warn("No user ID found, skipping fetch.");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Parallel requests for better performance
+                const [bookingsRes, vendorRes] = await Promise.all([
+                    axios.get(`${API_URL}/bookings?vendorId=${userId}&all=true`),
+                    axios.get(`${API_URL}/vendors/${userId}`)
+                ]);
+
+                // Update Vendor Profile
+                if (vendorRes.data) {
+                    setVendorProfile(vendorRes.data);
+                    localStorage.setItem('vendor_user', JSON.stringify(vendorRes.data));
+                }
+
+                const bookings = bookingsRes.data.bookings || [];
+
+
+                let total = 0;
+                let confirm = 0;
+                let pend = 0;
+                let on = 0;
+                let off = 0;
+                let list = [];
+
+                // Process bookings
+                bookings.forEach(booking => {
+                    total++;
+                    // Status Check
+                    if (booking.bookingStatus === 'Confirmed') confirm++;
+                    else if (booking.bookingStatus === 'Pending') pend++;
+
+                    // Payment Mode Check
+                    if (booking.paymentMode?.toLowerCase().includes('online')) on++;
+                    else off++;
+
+                    // Format date for display
+                    const dateObj = new Date(booking.date);
+                    const dateStr = dateObj.toISOString().split('T')[0];
+
+                    list.push({
+                        ...booking,
+                        date: dateStr,
+                        customer: booking.customerName || booking.customer
+                    });
+                });
+
+                // Sort by date upcoming
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                list.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                const futureEvents = list.filter(b => new Date(b.date) >= today).slice(0, 5);
+
+                setStats(prev => ({
+                    ...prev,
+                    totalBookings: total,
+                    confirmed: confirm,
+                    pending: pend,
+                    online: on,
+                    offline: off
+                }));
+                setUpcomingEvents(futureEvents);
+                setAllBookings(list);
+
+            } catch (error) {
+                console.error("Error fetching dashboard data", error);
+            } finally {
+                setLoading(false);
+            }
         };
 
-        const dataToUse = savedBookings || mockBookings;
-
-        let total = 0;
-        let confirm = 0;
-        let pend = 0;
-        let on = 0;
-        let off = 0;
-        let list = [];
-
-        Object.keys(dataToUse).forEach(date => {
-            dataToUse[date].forEach(booking => {
-                total++;
-                if (booking.bookingStatus === 'Confirmed' || !booking.bookingStatus) confirm++;
-                else pend++;
-
-                if (booking.paymentMode?.toLowerCase().includes('online')) on++;
-                else off++;
-
-                list.push({ ...booking, date });
-            });
-        });
-
-        // Sort by date upcoming
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        list.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        const futureEvents = list.filter(b => new Date(b.date) >= today).slice(0, 5);
-
-        setStats(prev => ({
-            ...prev,
-            totalBookings: total,
-            confirmed: confirm,
-            pending: pend,
-            online: on,
-            offline: off
-        }));
-        setUpcomingEvents(futureEvents);
-        setAllBookings(list);
-
+        fetchDashboardData();
     }, []);
 
-    const user = JSON.parse(localStorage.getItem('vendor_user') || '{}');
-    const currentPlanName = user.plan || 'Standard';
+    const localUser = JSON.parse(localStorage.getItem('vendor_user') || '{}');
+    const displayUser = vendorProfile || localUser;
+    const currentPlanName = displayUser.plan || 'Standard';
     const currentPlan = SUBSCRIPTION_PLANS.find(p => p.name === currentPlanName) || SUBSCRIPTION_PLANS[0];
+
+    if (loading) {
+        return <div className="p-5 text-center">Loading Dashboard...</div>;
+    }
 
     return (
         <div className="container-fluid">

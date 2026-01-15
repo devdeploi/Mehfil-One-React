@@ -432,9 +432,41 @@ const VendorList = () => {
                                         {/* Proof Document Section */}
                                         <div className="col-12">
                                             <div className="p-4 bg-white rounded-4 shadow-sm border border-light">
-                                                <div className="d-flex align-items-center gap-2 mb-3 border-bottom pb-2">
-                                                    <i className="bi bi-file-earmark-image text-primary fs-5"></i>
-                                                    <h6 className="text-uppercase text-secondary fw-bold mb-0 small">Proof Document</h6>
+                                                <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        <i className="bi bi-file-earmark-image text-primary fs-5"></i>
+                                                        <h6 className="text-uppercase text-secondary fw-bold mb-0 small">Proof Document</h6>
+                                                    </div>
+                                                    {viewModal.vendor.proofDocument && (
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.preventDefault();
+                                                                const fileUrl = `${API_URL.replace('/api', '')}/${viewModal.vendor.proofDocument}`;
+                                                                const fileName = viewModal.vendor.proofDocument.split(/[/\\]/).pop();
+                                                                try {
+                                                                    const response = await fetch(fileUrl);
+                                                                    const blob = await response.blob();
+                                                                    const url = window.URL.createObjectURL(blob);
+                                                                    const a = document.createElement('a');
+                                                                    a.style.display = 'none';
+                                                                    a.href = url;
+                                                                    a.download = fileName;
+                                                                    document.body.appendChild(a);
+                                                                    a.click();
+                                                                    window.URL.revokeObjectURL(url);
+                                                                    document.body.removeChild(a);
+                                                                } catch (err) {
+                                                                    console.error("Download failed", err);
+                                                                    window.open(fileUrl, '_blank');
+                                                                }
+                                                            }}
+                                                            className="btn btn-sm btn-outline-primary rounded-pill d-flex align-items-center gap-2"
+                                                            style={{ fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}
+                                                            title="Download Document"
+                                                        >
+                                                            <FaFileDownload /> Download
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 {viewModal.vendor.proofDocument ? (
                                                     (() => {

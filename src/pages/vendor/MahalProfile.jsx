@@ -45,7 +45,8 @@ const MahalProfile = () => {
             const storedUser = localStorage.getItem('vendor_user');
             if (storedUser) {
                 const user = JSON.parse(storedUser);
-                const response = await axios.get(`${API_URL}/mahals?vendorId=${user.id}`);
+                const userId = user.id || user._id;
+                const response = await axios.get(`${API_URL}/mahals?vendorId=${userId}`);
                 setHalls(response.data.mahals);
             }
         } catch (error) {
@@ -58,7 +59,8 @@ const MahalProfile = () => {
             const storedUser = localStorage.getItem('vendor_user');
             if (storedUser) {
                 const user = JSON.parse(storedUser);
-                const response = await axios.get(`${API_URL}/vendors/${user.id}`);
+                const userId = user.id || user._id;
+                const response = await axios.get(`${API_URL}/vendors/${userId}`);
                 setVendorData(response.data);
             }
         } catch (error) {
@@ -411,6 +413,48 @@ const MahalProfile = () => {
             return;
         }
         const user = JSON.parse(storedUser);
+        const userId = user.id || user._id;
+        // ...
+
+        // Required Fields Manual Validation
+        const requiredFields = [
+            { key: 'mahalName', label: 'Mahal Name' },
+            { key: 'mahalType', label: 'Mahal Type' },
+            { key: 'mobile', label: 'Mobile Number' },
+            { key: 'description', label: 'Description' },
+            { key: 'doorNo', label: 'Door No' },
+            { key: 'street', label: 'Street' },
+            { key: 'city', label: 'City' },
+            { key: 'district', label: 'District' },
+            { key: 'state', label: 'State' },
+            { key: 'pincode', label: 'Pincode' },
+            { key: 'mapUrl', label: 'Google Map Link' },
+            { key: 'seatingCapacity', label: 'Seating Capacity' },
+            { key: 'diningCapacity', label: 'Dining Capacity' },
+            { key: 'fullDayPrice', label: 'Full Day Price' },
+            { key: 'terms', label: 'Terms & Conditions' }
+        ];
+
+        for (const field of requiredFields) {
+            if (!currentHall[field.key]) {
+                showToast(`Please fill the required field: ${field.label}`, 'error');
+                setLoading(false);
+                return; // Stop execution
+            }
+        }
+
+        // Image Validation
+        if (!currentHall.coverImage) {
+            showToast('Please upload a Main Cover Image.', 'error');
+            setLoading(false);
+            return;
+        }
+
+        if (!currentHall.galleryImages || currentHall.galleryImages.length < 3) {
+            showToast('Please upload at least 3 Gallery Images.', 'error');
+            setLoading(false);
+            return;
+        }
 
         // Validation for Mobile length before saving (Double check)
         if (currentHall.mobile && currentHall.mobile.length !== 10) {
@@ -420,7 +464,7 @@ const MahalProfile = () => {
         }
 
         const formData = new FormData();
-        formData.append('vendorId', user.id);
+        formData.append('vendorId', userId);
 
         // Append all text fields
         Object.keys(currentHall).forEach(key => {
@@ -679,11 +723,11 @@ const MahalProfile = () => {
                                             <h4 style={sectionTitleStyle}>1. Basic Details</h4>
                                             <div className="row g-3">
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-bold small text-secondary">Mahal Name *</label>
+                                                    <label className="form-label fw-bold small text-secondary">Mahal Name <span className="text-danger">*</span></label>
                                                     <input type="text" className="form-control" style={inputStyle} name="mahalName" value={currentHall.mahalName} onChange={handleFormChange} required />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-bold small text-secondary">Mahal Type *</label>
+                                                    <label className="form-label fw-bold small text-secondary">Mahal Type <span className="text-danger">*</span></label>
                                                     <select className="form-select" style={inputStyle} name="mahalType" value={currentHall.mahalType} onChange={handleFormChange} required>
                                                         <option value="">Select Type</option>
                                                         <option value="Wedding Hall">Wedding Hall</option>
@@ -692,11 +736,11 @@ const MahalProfile = () => {
                                                     </select>
                                                 </div>
                                                 <div className="col-md-4">
-                                                    <label className="form-label fw-bold small text-secondary">Owner / Vendor Name *</label>
+                                                    <label className="form-label fw-bold small text-secondary">Owner / Vendor Name <span className="text-danger">*</span></label>
                                                     <input type="text" className="form-control" style={inputStyle} name="ownerName" value={currentHall.ownerName} onChange={handleFormChange} required readOnly />
                                                 </div>
                                                 <div className="col-md-4">
-                                                    <label className="form-label fw-bold small text-secondary">Mobile Number *</label>
+                                                    <label className="form-label fw-bold small text-secondary">Mobile Number <span className="text-danger">*</span></label>
                                                     <input type="tel" className="form-control" style={inputStyle} name="mobile" value={currentHall.mobile} onChange={handleFormChange} required readOnly />
                                                 </div>
                                                 <div className="col-md-4">
@@ -712,7 +756,7 @@ const MahalProfile = () => {
                                                     <input type="tel" className="form-control" style={inputStyle} name="whatsapp" value={currentHall.whatsapp} onChange={handleFormChange} />
                                                 </div>
                                                 <div className="col-12">
-                                                    <label className="form-label fw-bold small text-secondary">Description / About Mahal *</label>
+                                                    <label className="form-label fw-bold small text-secondary">Description / About Mahal <span className="text-danger">*</span></label>
                                                     <textarea className="form-control" style={inputStyle} rows="3" name="description" value={currentHall.description} onChange={handleFormChange} required></textarea>
                                                 </div>
                                             </div>
@@ -725,13 +769,13 @@ const MahalProfile = () => {
                                             <h4 style={sectionTitleStyle}>2. Address & Location</h4>
                                             <div className="row g-3">
                                                 {/* Address Fields */}
-                                                <div className="col-md-6"><label className="form-label fw-bold small text-secondary">Door No / Building Name *</label><input type="text" className="form-control" style={inputStyle} name="doorNo" value={currentHall.doorNo} onChange={handleFormChange} required /></div>
-                                                <div className="col-md-6"><label className="form-label fw-bold small text-secondary">Street / Area *</label><input type="text" className="form-control" style={inputStyle} name="street" value={currentHall.street} onChange={handleFormChange} required /></div>
-                                                <div className="col-md-4"><label className="form-label fw-bold small text-secondary">City *</label><input type="text" className="form-control" style={inputStyle} name="city" value={currentHall.city} onChange={handleFormChange} required /></div>
-                                                <div className="col-md-4"><label className="form-label fw-bold small text-secondary">District *</label><input type="text" className="form-control" style={inputStyle} name="district" value={currentHall.district} onChange={handleFormChange} required /></div>
-                                                <div className="col-md-4"><label className="form-label fw-bold small text-secondary">State *</label><input type="text" className="form-control" style={inputStyle} name="state" value={currentHall.state} onChange={handleFormChange} required /></div>
-                                                <div className="col-md-4"><label className="form-label fw-bold small text-secondary">Pincode *</label><input type="text" className="form-control" style={inputStyle} name="pincode" value={currentHall.pincode} onChange={handleFormChange} required /></div>
-                                                <div className="col-md-8"><label className="form-label fw-bold small text-secondary">Google Map Location / Map Link *</label><input type="url" className="form-control" style={inputStyle} name="mapUrl" value={currentHall.mapUrl} onChange={handleFormChange} required /></div>
+                                                <div className="col-md-6"><label className="form-label fw-bold small text-secondary">Door No / Building Name <span className="text-danger">*</span></label><input type="text" className="form-control" style={inputStyle} name="doorNo" value={currentHall.doorNo} onChange={handleFormChange} required /></div>
+                                                <div className="col-md-6"><label className="form-label fw-bold small text-secondary">Street / Area <span className="text-danger">*</span></label><input type="text" className="form-control" style={inputStyle} name="street" value={currentHall.street} onChange={handleFormChange} required /></div>
+                                                <div className="col-md-4"><label className="form-label fw-bold small text-secondary">City <span className="text-danger">*</span></label><input type="text" className="form-control" style={inputStyle} name="city" value={currentHall.city} onChange={handleFormChange} required /></div>
+                                                <div className="col-md-4"><label className="form-label fw-bold small text-secondary">District <span className="text-danger">*</span></label><input type="text" className="form-control" style={inputStyle} name="district" value={currentHall.district} onChange={handleFormChange} required /></div>
+                                                <div className="col-md-4"><label className="form-label fw-bold small text-secondary">State <span className="text-danger">*</span></label><input type="text" className="form-control" style={inputStyle} name="state" value={currentHall.state} onChange={handleFormChange} required /></div>
+                                                <div className="col-md-4"><label className="form-label fw-bold small text-secondary">Pincode <span className="text-danger">*</span></label><input type="text" className="form-control" style={inputStyle} name="pincode" value={currentHall.pincode} onChange={handleFormChange} required /></div>
+                                                <div className="col-md-8"><label className="form-label fw-bold small text-secondary">Google Map Location / Map Link <span className="text-danger">*</span></label><input type="url" className="form-control" style={inputStyle} name="mapUrl" value={currentHall.mapUrl} onChange={handleFormChange} required /></div>
                                                 <div className="col-md-12"><label className="form-label fw-bold small text-secondary">Landmark</label><input type="text" className="form-control" style={inputStyle} name="landmark" value={currentHall.landmark} onChange={handleFormChange} /></div>
                                             </div>
                                         </div>
@@ -742,8 +786,8 @@ const MahalProfile = () => {
                                         <div className="card border-0 shadow-sm rounded-4 p-4">
                                             <h4 style={sectionTitleStyle}>3. Hall Capacity</h4>
                                             <div className="row g-3">
-                                                <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Seating Capacity *</label><input type="number" className="form-control" style={inputStyle} name="seatingCapacity" value={currentHall.seatingCapacity} onChange={handleFormChange} required /></div>
-                                                <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Dining Capacity *</label><input type="number" className="form-control" style={inputStyle} name="diningCapacity" value={currentHall.diningCapacity} onChange={handleFormChange} required /></div>
+                                                <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Seating Capacity <span className="text-danger">*</span></label><input type="number" className="form-control" style={inputStyle} name="seatingCapacity" value={currentHall.seatingCapacity} onChange={handleFormChange} required /></div>
+                                                <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Dining Capacity <span className="text-danger">*</span></label><input type="number" className="form-control" style={inputStyle} name="diningCapacity" value={currentHall.diningCapacity} onChange={handleFormChange} required /></div>
                                                 <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Parking Capacity</label><input type="number" className="form-control" style={inputStyle} name="parkingCapacity" value={currentHall.parkingCapacity} onChange={handleFormChange} /></div>
                                                 <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Total Rooms</label><input type="number" className="form-control" style={inputStyle} name="totalRooms" value={currentHall.totalRooms} onChange={handleFormChange} /></div>
                                                 <div className="col-md-6 d-flex align-items-center gap-3 mt-4">
@@ -763,7 +807,7 @@ const MahalProfile = () => {
                                                 {/* Rent Type Removed */}
                                                 <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Morning Slot Price</label><input type="number" className="form-control" style={inputStyle} name="morningPrice" value={currentHall.morningPrice} onChange={handleFormChange} /></div>
                                                 <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Evening Slot Price</label><input type="number" className="form-control" style={inputStyle} name="eveningPrice" value={currentHall.eveningPrice} onChange={handleFormChange} /></div>
-                                                <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Full Day Price *</label><input type="number" className="form-control" style={inputStyle} name="fullDayPrice" value={currentHall.fullDayPrice} onChange={handleFormChange} required /></div>
+                                                <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Full Day Price <span className="text-danger">*</span></label><input type="number" className="form-control" style={inputStyle} name="fullDayPrice" value={currentHall.fullDayPrice} onChange={handleFormChange} required /></div>
                                                 <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Extra Hour Charges</label><input type="number" className="form-control" style={inputStyle} name="extraHourPrice" value={currentHall.extraHourPrice} onChange={handleFormChange} /></div>
                                                 <div className="col-md-6"><label className="form-label fw-bold small text-secondary">Advance Amount</label><input type="number" className="form-control" style={inputStyle} name="advanceAmount" value={currentHall.advanceAmount} onChange={handleFormChange} /></div>
                                                 <div className="col-12"><label className="form-label fw-bold small text-secondary">Refund Policy</label><textarea className="form-control" style={inputStyle} rows="2" name="refundPolicy" value={currentHall.refundPolicy} onChange={handleFormChange}></textarea></div>
@@ -824,7 +868,7 @@ const MahalProfile = () => {
                                     <div className="col-12 col-xl-10"><div className="card border-0 shadow-sm rounded-4 p-4"><h4 style={sectionTitleStyle}>6. Facilities / Amenities</h4><div className="row g-3"><div className="col-12 d-flex flex-wrap gap-4 mb-3">{['ac', 'generator', 'parking', 'lift', 'drinkingWater', 'cleaning', 'soundSystem', 'stage', 'cctv'].map(key => (<div className="form-check form-switch" key={key}><input className="form-check-input" type="checkbox" role="switch" id={key} name={key} checked={currentHall[key]} onChange={handleFormChange} /><label className="form-check-label fw-bold small text-capitalize" htmlFor={key}>{key.replace(/([A-Z])/g, ' $1').trim()} Available</label></div>))}</div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Power Supply Details</label><input type="text" className="form-control" style={inputStyle} name="powerSupply" value={currentHall.powerSupply} onChange={handleFormChange} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Rest Rooms Count</label><input type="number" className="form-control" style={inputStyle} name="restRooms" value={currentHall.restRooms} onChange={handleFormChange} /></div></div></div></div>
 
                                     {/* 7. Images (Updated logic for existing vs new) */}
-                                    <div className="col-12 col-xl-10"><div className="card border-0 shadow-sm rounded-4 p-4"><h4 style={sectionTitleStyle}>7. Images / Media</h4><div className="row g-4"><div className="col-md-4"><label className="form-label fw-bold small text-secondary mb-2">Main Cover Image *</label><div className="position-relative rounded-3 bg-light border d-flex align-items-center justify-content-center" style={{ height: '200px', cursor: 'pointer' }} onClick={() => coverImageRef.current.click()}>{currentHall.coverImage ? (<img src={getPreview(currentHall.coverImage)} alt="Cover" className="w-100 h-100 object-fit-cover rounded-3" />) : (<div className="text-center text-muted"><FaCamera size={24} /><p className="small mb-0 mt-2">Upload Cover</p></div>)}</div><input type="file" ref={coverImageRef} accept="image/*" className="d-none" onChange={(e) => handleFileChange(e, 'coverImage')} /></div><div className="col-md-8"><div className="d-flex justify-content-between align-items-center mb-2"><label className="form-label fw-bold small text-secondary mb-0">Gallery Images (min 3) *</label><button type="button" className="btn btn-sm btn-outline-danger" onClick={() => galleryImagesRef.current.click()}>+ Add Images</button></div><div className="d-flex gap-2 overflow-auto pb-2" style={{ whiteSpace: 'nowrap' }}>{currentHall.galleryImages.map((img, idx) => (<div key={idx} className="position-relative d-inline-block" style={{ width: '120px', height: '100px' }}><img src={getPreview(img)} alt="Gallery" className="w-100 h-100 object-fit-cover rounded shadow-sm border" /><button type="button" className="btn btn-danger btn-sm p-0 position-absolute top-0 end-0 m-1 rounded-circle" style={{ width: '20px', height: '20px' }} onClick={() => removeImage(idx, 'galleryImages')}><FaTrash size={10} /></button></div>))}</div><input type="file" ref={galleryImagesRef} accept="image/*" className="d-none" onChange={(e) => handleFileChange(e, 'galleryImages')} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Video URL (YouTube/Drive)</label><input type="url" className="form-control" style={inputStyle} name="videoUrl" value={currentHall.videoUrl} onChange={handleFormChange} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Brochure PDF (Optional)</label><input type="file" className="form-control" style={inputStyle} accept=".pdf" onChange={(e) => handleFileChange(e, 'brochureUrl')} /></div></div></div></div>
+                                    <div className="col-12 col-xl-10"><div className="card border-0 shadow-sm rounded-4 p-4"><h4 style={sectionTitleStyle}>7. Images / Media</h4><div className="row g-4"><div className="col-md-4"><label className="form-label fw-bold small text-secondary mb-2">Main Cover Image <span className="text-danger">*</span></label><div className="position-relative rounded-3 bg-light border d-flex align-items-center justify-content-center" style={{ height: '200px', cursor: 'pointer' }} onClick={() => coverImageRef.current.click()}>{currentHall.coverImage ? (<img src={getPreview(currentHall.coverImage)} alt="Cover" className="w-100 h-100 object-fit-cover rounded-3" />) : (<div className="text-center text-muted"><FaCamera size={24} /><p className="small mb-0 mt-2">Upload Cover</p></div>)}</div><input type="file" ref={coverImageRef} accept="image/*" className="d-none" onChange={(e) => handleFileChange(e, 'coverImage')} /></div><div className="col-md-8"><div className="d-flex justify-content-between align-items-center mb-2"><label className="form-label fw-bold small text-secondary mb-0">Gallery Images (min 3) <span className="text-danger">*</span></label><button type="button" className="btn btn-sm btn-outline-danger" onClick={() => galleryImagesRef.current.click()}>+ Add Images</button></div><div className="d-flex gap-2 overflow-auto pb-2" style={{ whiteSpace: 'nowrap' }}>{currentHall.galleryImages.map((img, idx) => (<div key={idx} className="position-relative d-inline-block" style={{ width: '120px', height: '100px' }}><img src={getPreview(img)} alt="Gallery" className="w-100 h-100 object-fit-cover rounded shadow-sm border" /><button type="button" className="btn btn-danger btn-sm p-0 position-absolute top-0 end-0 m-1 rounded-circle" style={{ width: '20px', height: '20px' }} onClick={() => removeImage(idx, 'galleryImages')}><FaTrash size={10} /></button></div>))}</div><input type="file" ref={galleryImagesRef} accept="image/*" className="d-none" onChange={(e) => handleFileChange(e, 'galleryImages')} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Video URL (YouTube/Drive)</label><input type="url" className="form-control" style={inputStyle} name="videoUrl" value={currentHall.videoUrl} onChange={handleFormChange} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Brochure PDF (Optional)</label><input type="file" className="form-control" style={inputStyle} accept=".pdf" onChange={(e) => handleFileChange(e, 'brochureUrl')} /></div></div></div></div>
 
                                     {/* 8. Decoration Module (REFACTORED for Multiple Types) */}
                                     <div className="col-12 col-xl-10">
@@ -956,7 +1000,7 @@ const MahalProfile = () => {
                                             <h4 style={sectionTitleStyle}>12. Terms & Conditions</h4>
                                             <div className="row g-3">
                                                 <div className="col-12">
-                                                    <label className="form-label fw-bold small text-secondary">Terms & Conditions *</label>
+                                                    <label className="form-label fw-bold small text-secondary">Terms & Conditions <span className="text-danger">*</span></label>
                                                     <textarea className="form-control" style={inputStyle} rows="4" name="terms" value={currentHall.terms} onChange={handleFormChange} required placeholder="Enter your terms and conditions here..."></textarea>
                                                 </div>
 

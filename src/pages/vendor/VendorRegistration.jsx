@@ -4,6 +4,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { API_URL } from '../../utils/function';
 import { SUBSCRIPTION_PLANS } from '../../utils/constants';
 import { FaCheck, FaLock, FaCreditCard, FaArrowLeft } from 'react-icons/fa';
+import FOG from 'vanta/dist/vanta.fog.min';
+import * as THREE from 'three';
 import '../../styles/superadmin/SuperAdminLogin.css';
 import '../../styles/vendor/VendorRegistration.css';
 import Terms from '../common/Terms';
@@ -15,6 +17,41 @@ const VendorRegistration = () => {
     const isTestMode = RAZORPAY_KEY_ID.startsWith('rzp_test_');
 
     const navigate = useNavigate();
+
+    // Vanta Effect
+    const [vantaEffect, setVantaEffect] = useState(null);
+    const vantaRef = React.useRef(null);
+
+    useEffect(() => {
+        if (!vantaEffect && vantaRef.current) {
+            try {
+                setVantaEffect(FOG({
+                    el: vantaRef.current,
+                    THREE: THREE,
+                    mouseControls: false,
+                    touchControls: false, // Disabled for performance
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    highlightColor: 0xffffff,
+                    midtoneColor: 0xffffff,
+                    lowlightColor: 0xff8fab,
+                    baseColor: 0xffffff,
+                    blurFactor: 0.4, // Reduced blur
+                    speed: 1.0, // Reduced speed
+                    zoom: 0.8 // Reduced zoom
+                }));
+            } catch (error) {
+                console.warn("Vanta Effect failed to initialize", error);
+            }
+        }
+        return () => {
+            if (vantaEffect) {
+                vantaEffect.destroy();
+                setVantaEffect(null);
+            }
+        };
+    }, [vantaEffect]);
 
     const loadScript = (src) => {
         return new Promise((resolve) => {
@@ -85,6 +122,7 @@ const VendorRegistration = () => {
         ...savedState?.formData
     });
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false); // New state for post-payment processing
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordError, setPasswordError] = useState('');
@@ -170,7 +208,21 @@ const VendorRegistration = () => {
 
     const handleInputChange = (e) => {
         const { name, value, files } = e.target;
-        if (name === 'proofDocument') {
+
+        if (name === 'phone') {
+            // Strict Validation for Phone
+            if (/\D/.test(value)) {
+                showToast('Please enter numbers only.', 'error');
+                return; // Block input
+            }
+            if (value.length > 10) {
+                showToast('Phone number limit is 10 digits.', 'error');
+                return; // Block input
+            }
+            // Optional: Check exactly 10 digits? Usually checked on blur or submit.
+            // For now, allow typing up to 10.
+            setFormData(prev => ({ ...prev, [name]: value }));
+        } else if (name === 'proofDocument') {
             setFormData(prev => ({ ...prev, proofDocument: files[0] }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
@@ -244,6 +296,7 @@ const VendorRegistration = () => {
 
                         if (verifyResult.data.status === 'success') {
                             // 4. Register Vendor on Success
+                            setIsRegistering(true); // Start showing "Sending Mail..." UI
                             await registerVendor(response.razorpay_payment_id, response.razorpay_order_id);
                         } else {
                             showToast('Payment Verification Failed', 'error');
@@ -300,10 +353,12 @@ const VendorRegistration = () => {
                 // showToast('Registration Successful! Redirecting to login...', 'success');
                 // navigate('/superadmin/login');
                 setIsRegistered(true);
+                setIsRegistering(false); // Stop showing "Sending Mail..." UI
             }
         } catch (error) {
             console.error('Registration Error:', error);
             showToast('An error occurred during registration.', 'error');
+            setIsRegistering(false); // Revert on error
         }
     };
 
@@ -373,9 +428,50 @@ const VendorRegistration = () => {
         }
     `;
 
+    // OTP Input Handlers
+    const handleOtpBoxChange = (element, index) => {
+        if (isNaN(element.value)) return false;
+
+        const newOtp = otp.split('');
+        // Ensure newOtp has 6 chars if it's empty
+        while (newOtp.length < 6) newOtp.push('');
+
+        newOtp[index] = element.value;
+        const finalOtp = newOtp.join('').substring(0, 6);
+        setOtp(finalOtp);
+
+        // Focus next input
+        if (element.value && element.nextSibling) {
+            element.nextSibling.focus();
+        }
+    };
+
+    const handleOtpBoxKeyDown = (e, index) => {
+        if (e.key === "Backspace") {
+            if (!otp[index] && e.target.previousSibling) {
+                e.target.previousSibling.focus();
+            }
+        }
+    };
+
+    const handleOtpPaste = (e) => {
+        e.preventDefault();
+        const data = e.clipboardData.getData("text").trim();
+        if (!data || isNaN(data)) return;
+        setOtp(data.slice(0, 6));
+    };
+
     return (
-        <div className="sa-login-container">
+        <div className="vr-page-container" ref={vantaRef}>
             <style>{toastStyles}</style>
+
+            {/* Navbar */}
+            <nav className="vr-navbar">
+                <div className="vr-nav-brand">MEHFIL ONE</div>
+                <button onClick={() => navigate('/')} className="vr-nav-btn">
+                    Home
+                </button>
+            </nav>
 
             {/* Toast Notification */}
             {toast.show && (
@@ -406,351 +502,374 @@ const VendorRegistration = () => {
                 </div>
             )}
 
-            <div className="sa-login-card vr-card-wide">
-                {/* <div className="sa-login-brand">
-                    <i className="bi bi-calendar-check-fill"></i>
-                    <span>MEHFIL ONE</span>
-                </div> */}
+            <div className="vr-content-wrapper">
+                <div className="sa-login-card vr-card-wide">
+                    {/* <div className="sa-login-brand">
+                        <i className="bi bi-calendar-check-fill"></i>
+                        <span>MEHFIL ONE</span>
+                    </div> */}
 
-                <h2 className="sa-login-title">Vendor Registration</h2>
+                    <h2 className="sa-login-title">Vendor Registration</h2>
 
-                {!isOtpSent && !isRegistered && (
-                    <div className="vr-steps">
-                        <div className={`vr-step ${step >= 1 ? 'active' : ''}`}>1</div>
-                        <div className="vr-line"></div>
-                        <div className={`vr-step ${step >= 2 ? 'active' : ''}`}>2</div>
-                        <div className="vr-line"></div>
-                        <div className={`vr-step ${step >= 3 ? 'active' : ''}`}>3</div>
-                        <div className="vr-line"></div>
-                        <div className={`vr-step ${step >= 4 ? 'active' : ''}`}>4</div>
-                    </div>
-                )}
+                    {!isOtpSent && !isRegistered && (
+                        <div className="vr-steps">
+                            <div className={`vr-step ${step >= 1 ? 'active' : ''}`}>1</div>
+                            <div className="vr-line"></div>
+                            <div className={`vr-step ${step >= 2 ? 'active' : ''}`}>2</div>
+                            <div className="vr-line"></div>
+                            <div className={`vr-step ${step >= 3 ? 'active' : ''}`}>3</div>
+                            <div className="vr-line"></div>
+                            <div className={`vr-step ${step >= 4 ? 'active' : ''}`}>4</div>
+                        </div>
+                    )}
 
 
-                <div className="vr-content pt-2">
+                    <div className="vr-content pt-2">
 
-                    <div>
-                        {isRegistered ? (
-                            <div className="text-center py-5">
-                                <div className="mb-4">
-                                    <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '4rem' }}></i>
+                        <div>
+                            {isRegistering ? (
+                                <div className="text-center py-5">
+                                    <div className="spinner-border text-danger mb-4" style={{ width: '3rem', height: '3rem' }} role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                    <h3 className="mb-3 text-dark">Finalizing Registration...</h3>
+                                    <p className="text-muted fs-5">
+                                        Please wait while we verify your payment and send your confirmation email.
+                                    </p>
+                                    <p className="text-danger fw-bold mt-2">Do not close this window.</p>
                                 </div>
-                                <h3 className="mb-3 text-white">Registration Successful!</h3>
-                                <p className="text-white-50 fs-5">
-                                    Your registration was successful. You will be notified after verification.
-                                </p>
-                                <button className="sa-login-btn mt-4" onClick={() => navigate('/')}>
-                                    Return to Home
-                                </button>
-                            </div>
-                        ) : (
-                            <>
-                                {step === 1 && (
-                                    <>
-                                        <div className="vr-form-header">
-                                            <h3>Select a Plan</h3>
-                                        </div>
-                                        <div className="vr-plans-grid">
-                                            {SUBSCRIPTION_PLANS.map(plan => (
-                                                <div key={plan.id} className={`vr-plan-card ${selectedPlan?.id === plan.id ? 'selected' : ''}`}>
-                                                    {plan.recommended && <div className="vr-plan-badge">Most Popular</div>}
-                                                    <h3>{plan.name}</h3>
-                                                    <div className="vr-price">
-                                                        {plan.currency}{plan.price}<span>{plan.period}</span>
+                            ) : isRegistered ? (
+                                <div className="text-center py-5">
+                                    <div className="mb-4">
+                                        <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '4rem' }}></i>
+                                    </div>
+                                    <h3 className="mb-3 text-dark">Registration Successful!</h3>
+                                    <p className="text-muted fs-5">
+                                        Your registration was successful. You will be notified after verification.
+                                    </p>
+                                    <button className="sa-login-btn mt-4" onClick={() => navigate('/')}>
+                                        Return to Home
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    {step === 1 && (
+                                        <>
+                                            <div className="vr-form-header">
+                                                <h3>Select a Plan</h3>
+                                            </div>
+                                            <div className="vr-plans-grid">
+                                                {SUBSCRIPTION_PLANS.map(plan => (
+                                                    <div key={plan.id} className={`vr-plan-card ${selectedPlan?.id === plan.id ? 'selected' : ''}`}>
+                                                        {plan.recommended && <div className="vr-plan-badge">Most Popular</div>}
+                                                        <h3>{plan.name}</h3>
+                                                        <div className="vr-price">
+                                                            {plan.currency}{plan.price}<span>{plan.period}</span>
+                                                        </div>
+                                                        <ul className="vr-features">
+                                                            {plan.features.map((f, i) => (
+                                                                <li key={i}><FaCheck /> {f}</li>
+                                                            ))}
+                                                        </ul>
+                                                        <button
+                                                            className={selectedPlan?.id === plan.id ? "sa-login-btn mt-3" : "vr-btn-select mt-3"}
+                                                            onClick={() => handlePlanSelect(plan)}
+                                                            style={selectedPlan?.id === plan.id ? { marginTop: '0' } : {}}
+                                                        >
+                                                            {selectedPlan?.id === plan.id ? 'Selected' : 'Select Plan'}
+                                                        </button>
                                                     </div>
-                                                    <ul className="vr-features">
-                                                        {plan.features.map((f, i) => (
-                                                            <li key={i}><FaCheck /> {f}</li>
-                                                        ))}
-                                                    </ul>
-                                                    <button
-                                                        className={selectedPlan?.id === plan.id ? "sa-login-btn mt-3" : "vr-btn-select mt-3"}
-                                                        onClick={() => handlePlanSelect(plan)}
-                                                        style={selectedPlan?.id === plan.id ? { marginTop: '0' } : {}}
-                                                    >
-                                                        {selectedPlan?.id === plan.id ? 'Selected' : 'Select Plan'}
-                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {step === 2 && (
+                                        <form onSubmit={handleNext} className="sa-login-form">
+                                            <div className="vr-form-header">
+                                                <button type="button" onClick={handleBack} className="vr-back-btn" title="Back"><FaArrowLeft /></button>
+                                                <h3>Account Details</h3>
+                                            </div>
+
+                                            <div className="row g-3">
+                                                {/* Business Details Section */}
+                                                <div className="col-12">
+                                                    <h5 className="text-muted border-bottom pb-2 mb-3">Business Details</h5>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Business Name</label>
+                                                    <input type="text" name="businessName" required value={formData.businessName} onChange={handleInputChange} className="form-control" placeholder="My Event Company" />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">GST Number</label>
+                                                    <input type="text" name="gstNumber" required value={formData.gstNumber} onChange={handleInputChange} className="form-control" placeholder="22AAAAA0000A1Z5" />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Business Address</label>
+                                                    <textarea name="businessAddress" required value={formData.businessAddress} onChange={handleInputChange} className="form-control" rows="2" placeholder="123, Main Street, City"></textarea>
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Proof Upload (ID/License)</label>
+                                                    <input type="file" name="proofDocument" required onChange={handleInputChange} className="form-control" accept="image/*,application/pdf" />
+                                                    <div className="form-text text-muted">Upload a valid ID proof or Business License (Image or PDF).</div>
+                                                </div>
 
-                                {step === 2 && (
-                                    <form onSubmit={handleNext} className="sa-login-form">
-                                        <div className="vr-form-header">
-                                            <button type="button" onClick={handleBack} className="vr-back-btn" title="Back"><FaArrowLeft /></button>
-                                            <h3>Account Details</h3>
-                                        </div>
-
-                                        <div className="row g-3">
-                                            {/* Business Details Section */}
-                                            <div className="col-12">
-                                                <h5 className="text-white-50 border-bottom border-secondary pb-2 mb-3">Business Details</h5>
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label">Business Name</label>
-                                                <input type="text" name="businessName" required value={formData.businessName} onChange={handleInputChange} className="form-control" placeholder="My Event Company" />
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label">GST Number</label>
-                                                <input type="text" name="gstNumber" required value={formData.gstNumber} onChange={handleInputChange} className="form-control" placeholder="22AAAAA0000A1Z5" />
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label">Business Address</label>
-                                                <textarea name="businessAddress" required value={formData.businessAddress} onChange={handleInputChange} className="form-control" rows="2" placeholder="123, Main Street, City"></textarea>
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label">Proof Upload (ID/License)</label>
-                                                <input type="file" name="proofDocument" required onChange={handleInputChange} className="form-control" accept="image/*,application/pdf" />
-                                                <div className="form-text text-white-50">Upload a valid ID proof or Business License (Image or PDF).</div>
-                                            </div>
-
-                                            {/* Personal Details Section */}
-                                            <div className="col-12 mt-4">
-                                                <h5 className="text-white-50 border-bottom border-secondary pb-2 mb-3">Personal Details</h5>
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label">Full Name</label>
-                                                <input type="text" name="fullName" required value={formData.fullName} onChange={handleInputChange} className="form-control" placeholder="John Doe" />
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label">Phone</label>
-                                                <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} className="form-control" placeholder="+1 234..." />
-                                            </div>
-                                            <div className="col-12">
-                                                <label className="form-label">Email Address</label>
-                                                <div className="input-group">
-                                                    <input
-                                                        type="email"
-                                                        name="email"
-                                                        required
-                                                        value={formData.email}
-                                                        onChange={handleInputChange}
-                                                        className="form-control"
-                                                        placeholder="name@company.com"
-                                                        disabled={isOtpVerified}
-                                                        style={isOtpVerified ? { backgroundColor: '#183921', borderColor: '#22c55e', color: '#fff' } : {}}
-                                                    />
-                                                    {isOtpVerified && (
-                                                        <span className="input-group-text bg-success text-white border-success">
-                                                            <i className="bi bi-check-circle-fill"></i>
-                                                        </span>
+                                                {/* Personal Details Section */}
+                                                <div className="col-12 mt-4">
+                                                    <h5 className="text-muted border-bottom pb-2 mb-3">Personal Details</h5>
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Full Name</label>
+                                                    <input type="text" name="fullName" required value={formData.fullName} onChange={handleInputChange} className="form-control" placeholder="John Doe" />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Phone</label>
+                                                    <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} className="form-control" placeholder="+1 234..." />
+                                                </div>
+                                                <div className="col-12">
+                                                    <label className="form-label">Email Address</label>
+                                                    <div className="input-group">
+                                                        <input
+                                                            type="email"
+                                                            name="email"
+                                                            required
+                                                            value={formData.email}
+                                                            onChange={handleInputChange}
+                                                            className="form-control"
+                                                            placeholder="name@company.com"
+                                                            disabled={isOtpVerified}
+                                                            style={isOtpVerified ? { backgroundColor: '#f0fdf4', borderColor: '#22c55e', color: '#15803d' } : {}}
+                                                        />
+                                                        {isOtpVerified && (
+                                                            <span className="input-group-text bg-success text-white border-success">
+                                                                <i className="bi bi-check-circle-fill"></i>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Password</label>
+                                                    <div className="position-relative">
+                                                        <input
+                                                            type={showPassword ? "text" : "password"}
+                                                            name="password"
+                                                            required
+                                                            value={formData.password}
+                                                            onChange={handleInputChange}
+                                                            className="form-control pe-5"
+                                                            placeholder="••••••••"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            className="btn sa-password-toggle"
+                                                            onClick={() => setShowPassword(!showPassword)}
+                                                            tabIndex="-1"
+                                                        >
+                                                            <i className={`bi ${showPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'}`}></i>
+                                                        </button>
+                                                    </div>
+                                                    {formData.password && (
+                                                        <>
+                                                            <div className="mt-2 d-flex gap-1" style={{ height: '4px' }}>
+                                                                {[1, 2, 3, 4].map(level => (
+                                                                    <div
+                                                                        key={level}
+                                                                        className="flex-grow-1 rounded-pill"
+                                                                        style={{
+                                                                            background: level <= passwordStrength
+                                                                                ? (passwordStrength === 1 ? '#dc2626' :
+                                                                                    passwordStrength === 2 ? '#fbbf24' :
+                                                                                        passwordStrength === 3 ? '#3b82f6' : '#22c55e')
+                                                                                : '#e2e8f0',
+                                                                            transition: 'background-color 0.5s ease'
+                                                                        }}
+                                                                    ></div>
+                                                                ))}
+                                                            </div>
+                                                            <div className="d-flex justify-content-between mt-1" style={{ fontSize: '0.75rem' }}>
+                                                                <span className="text-muted">Use 8+ characters</span>
+                                                                <span style={{
+                                                                    color: passwordStrength === 1 ? '#dc2626' :
+                                                                        passwordStrength === 2 ? '#fbbf24' :
+                                                                            passwordStrength === 3 ? '#3b82f6' : '#22c55e',
+                                                                    fontWeight: 'bold'
+                                                                }}>
+                                                                    {passwordStrength === 1 && "Weak"}
+                                                                    {passwordStrength === 2 && "Fair"}
+                                                                    {passwordStrength === 3 && "Good"}
+                                                                    {passwordStrength === 4 && "Strong"}
+                                                                </span>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Confirm Password</label>
+                                                    <div className="position-relative">
+                                                        <input
+                                                            type={showConfirmPassword ? "text" : "password"}
+                                                            name="confirmPassword"
+                                                            required
+                                                            value={formData.confirmPassword}
+                                                            onChange={handleInputChange}
+                                                            className="form-control pe-5"
+                                                            placeholder="••••••••"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            className="btn sa-password-toggle"
+                                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                            tabIndex="-1"
+                                                        >
+                                                            <i className={`bi ${showConfirmPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'}`}></i>
+                                                        </button>
+                                                    </div>
+                                                    {passwordError && (
+                                                        <div key={shakeTrigger} className="animate-shake d-flex align-items-center gap-2 mt-2" style={{ color: '#dc2626', fontSize: '0.85rem' }}>
+                                                            <i className="bi bi-exclamation-circle"></i>
+                                                            <span>{passwordError}</span>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label">Password</label>
-                                                <div className="position-relative">
-                                                    <input
-                                                        type={showPassword ? "text" : "password"}
-                                                        name="password"
-                                                        required
-                                                        value={formData.password}
-                                                        onChange={handleInputChange}
-                                                        className="form-control pe-5"
-                                                        placeholder="••••••••"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        className="btn sa-password-toggle"
-                                                        onClick={() => setShowPassword(!showPassword)}
-                                                        tabIndex="-1"
-                                                    >
-                                                        <i className={`bi ${showPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'}`}></i>
-                                                    </button>
-                                                </div>
-                                                {formData.password && (
-                                                    <>
-                                                        <div className="mt-2 d-flex gap-1" style={{ height: '4px' }}>
-                                                            {[1, 2, 3, 4].map(level => (
-                                                                <div
-                                                                    key={level}
-                                                                    className="flex-grow-1 rounded-pill"
-                                                                    style={{
-                                                                        background: level <= passwordStrength
-                                                                            ? (passwordStrength === 1 ? '#dc2626' :
-                                                                                passwordStrength === 2 ? '#fbbf24' :
-                                                                                    passwordStrength === 3 ? '#3b82f6' : '#22c55e')
-                                                                            : 'rgba(255,255,255,0.1)',
-                                                                        transition: 'background-color 0.5s ease'
-                                                                    }}
-                                                                ></div>
-                                                            ))}
-                                                        </div>
-                                                        <div className="d-flex justify-content-between mt-1" style={{ fontSize: '0.75rem' }}>
-                                                            <span className="text-white-50">Use 8+ characters</span>
-                                                            <span style={{
-                                                                color: passwordStrength === 1 ? '#dc2626' :
-                                                                    passwordStrength === 2 ? '#fbbf24' :
-                                                                        passwordStrength === 3 ? '#3b82f6' : '#22c55e',
-                                                                fontWeight: 'bold'
-                                                            }}>
-                                                                {passwordStrength === 1 && "Weak"}
-                                                                {passwordStrength === 2 && "Fair"}
-                                                                {passwordStrength === 3 && "Good"}
-                                                                {passwordStrength === 4 && "Strong"}
-                                                            </span>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                            <div className="col-md-6">
-                                                <label className="form-label">Confirm Password</label>
-                                                <div className="position-relative">
-                                                    <input
-                                                        type={showConfirmPassword ? "text" : "password"}
-                                                        name="confirmPassword"
-                                                        required
-                                                        value={formData.confirmPassword}
-                                                        onChange={handleInputChange}
-                                                        className="form-control pe-5"
-                                                        placeholder="••••••••"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        className="btn sa-password-toggle"
-                                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                        tabIndex="-1"
-                                                    >
-                                                        <i className={`bi ${showConfirmPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'}`}></i>
-                                                    </button>
-                                                </div>
-                                                {passwordError && (
-                                                    <div key={shakeTrigger} className="animate-shake d-flex align-items-center gap-2 mt-2" style={{ color: '#d9e711ff', fontSize: '0.85rem' }}>
-                                                        <i className="bi bi-exclamation-circle"></i>
-                                                        <span>{passwordError}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
 
-                                        <button
-                                            type="submit"
-                                            className="sa-login-btn mt-4"
-                                            disabled={otpLoading}
-                                        >
-                                            {otpLoading ? 'Sending OTP...' : 'Next: Verify Email'}
-                                        </button>
-                                    </form>
-                                )}
-
-                                {step === 3 && (
-                                    <div className="sa-login-form">
-                                        <div className="vr-form-header justify-content-center">
-                                            <h3>Verify Email Address</h3>
-                                        </div>
-                                        <p className="text-white-50 text-center mb-4">
-                                            We've sent a 6-digit code to <br /> <span className="text-white">{formData.email}</span>
-                                        </p>
-
-                                        <div className="mb-4">
-                                            <input
-                                                type="text"
-                                                className="form-control text-center fs-4 letter-spacing-2"
-                                                placeholder="000000"
-                                                maxLength={6}
-                                                value={otp}
-                                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                                            />
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            className="sa-login-btn mb-3"
-                                            onClick={handleVerifyOtp}
-                                            disabled={otpLoading || otp.length !== 6}
-                                        >
-                                            {otpLoading ? 'Verifying...' : 'Verify & Continue'}
-                                        </button>
-
-                                        <div className="text-center">
                                             <button
-                                                type="button"
-                                                className="btn btn-link text-white-50 text-decoration-none small"
-                                                onClick={handleSendOtp}
+                                                type="submit"
+                                                className="sa-login-btn mt-4"
                                                 disabled={otpLoading}
                                             >
-                                                Resend OTP
+                                                {otpLoading ? 'Sending OTP...' : 'Next: Verify Email'}
                                             </button>
-                                        </div>
-                                        <div className="text-center mt-2">
-                                            <button type="button" onClick={() => setStep(2)} className="btn btn-link text-white-50 text-decoration-none small">
-                                                Back to Details
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
+                                        </form>
+                                    )}
 
-                                {step === 4 && (
-                                    <form onSubmit={handleNext} className="sa-login-form">
-                                        <div className="vr-form-header">
-                                            <button type="button" onClick={handleBack} className="vr-back-btn" title="Back"><FaArrowLeft /></button>
-                                            <h3>Payment & Confirmation</h3>
-                                        </div>
-
-                                        <div className="text-white-50 mb-4" style={{ textAlign: 'justify', fontSize: '0.9rem', lineHeight: '1.6' }}>
-                                            <div className="p-3 bg-dark bg-opacity-50 rounded border border-secondary border-opacity-25 mb-4">
-                                                <h5 className="text-white mb-3 border-bottom border-secondary pb-2">Order Summary</h5>
-                                                <div className="d-flex justify-content-between mb-2">
-                                                    <span>Selected Plan:</span>
-                                                    <span className="text-white fw-bold">{selectedPlan?.name}</span>
-                                                </div>
-                                                <div className="d-flex justify-content-between mb-2">
-                                                    <span>Business Name:</span>
-                                                    <span className="text-white">{formData.businessName}</span>
-                                                </div>
-                                                <div className="d-flex justify-content-between mb-2">
-                                                    <span>Email:</span>
-                                                    <span className="text-white">{formData.email}</span>
-                                                </div>
-                                                <div className="d-flex justify-content-between mt-3 pt-2 border-top border-secondary border-opacity-50">
-                                                    <span className="fw-bold text-white">Total Payable:</span>
-                                                    <span className="fw-bold text-danger fs-5">₹{selectedPlan?.price}</span>
-                                                </div>
+                                    {step === 3 && (
+                                        <div className="sa-login-form">
+                                            <div className="vr-form-header justify-content-center">
+                                                <h3>Verify Email Address</h3>
                                             </div>
-
-                                            <p className="mb-2">
-                                                Payments are processed securely via <strong>Razorpay</strong>.
+                                            <p className="text-muted text-center mb-4">
+                                                We've sent a 6-digit code to <br /> <span className="text-dark fw-bold">{formData.email}</span>
                                             </p>
 
-                                            <div className="mt-4 p-3 bg-dark bg-opacity-25 rounded border border-secondary border-opacity-25 d-flex align-items-start gap-2 mb-3">
-                                                <input
-                                                    className="form-check-input mt-1 shadow-none"
-                                                    type="checkbox"
-                                                    id="termsCheckStep3"
-                                                    checked={termsAccepted}
-                                                    onChange={(e) => setTermsAccepted(e.target.checked)}
-                                                    style={{ cursor: 'pointer', flexShrink: 0 }}
-                                                />
-                                                <label className="text-white small" htmlFor="termsCheckStep3" style={{ cursor: 'pointer', lineHeight: '1.5' }}>
-                                                    I have read and agree to the <span onClick={() => handleNavigate('/terms')} className="text-success text-decoration-none fw-bold" style={{ cursor: 'pointer' }}>Terms and Conditions</span> and <span onClick={() => handleNavigate('/policy')} className="text-success text-decoration-none fw-bold" style={{ cursor: 'pointer' }}>Communication Policy</span>.
-                                                </label>
+
+
+                                            <div className="mb-4 d-flex justify-content-center gap-2">
+                                                {[...Array(6)].map((_, index) => (
+                                                    <input
+                                                        key={index}
+                                                        type="text"
+                                                        className="form-control text-center p-0"
+                                                        maxLength={1}
+                                                        style={{ width: '45px', height: '45px', fontSize: '1.2rem', fontWeight: 'bold' }}
+                                                        value={otp[index] || ''}
+                                                        onChange={(e) => handleOtpBoxChange(e.target, index)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === "Backspace" && !otp[index] && e.target.previousSibling) {
+                                                                e.target.previousSibling.focus();
+                                                            }
+                                                        }}
+                                                        onFocus={e => e.target.select()}
+                                                        onPaste={index === 0 ? handleOtpPaste : undefined}
+                                                    />
+                                                ))}
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                className="sa-login-btn mb-3"
+                                                onClick={handleVerifyOtp}
+                                                disabled={otpLoading || otp.length !== 6}
+                                            >
+                                                {otpLoading ? 'Verifying...' : 'Verify & Continue'}
+                                            </button>
+
+                                            <div className="text-center">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-link text-muted text-decoration-none small"
+                                                    onClick={handleSendOtp}
+                                                    disabled={otpLoading}
+                                                >
+                                                    Resend OTP
+                                                </button>
+                                            </div>
+                                            <div className="text-center mt-2">
+                                                <button type="button" onClick={() => setStep(2)} className="btn btn-link text-muted text-decoration-none small">
+                                                    Back to Details
+                                                </button>
                                             </div>
                                         </div>
+                                    )}
+
+                                    {step === 4 && (
+                                        <form onSubmit={handleNext} className="sa-login-form">
+                                            <div className="vr-form-header">
+                                                <button type="button" onClick={handleBack} className="vr-back-btn" title="Back"><FaArrowLeft /></button>
+                                                <h3>Payment & Confirmation</h3>
+                                            </div>
+
+                                            <div className="text-muted mb-4" style={{ textAlign: 'justify', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                                                <div className="p-3 bg-light rounded border mb-4">
+                                                    <h5 className="text-dark mb-3 border-bottom pb-2">Order Summary</h5>
+                                                    <div className="d-flex justify-content-between mb-2">
+                                                        <span>Selected Plan:</span>
+                                                        <span className="text-dark fw-bold">{selectedPlan?.name}</span>
+                                                    </div>
+                                                    <div className="d-flex justify-content-between mb-2">
+                                                        <span>Business Name:</span>
+                                                        <span className="text-dark">{formData.businessName}</span>
+                                                    </div>
+                                                    <div className="d-flex justify-content-between mb-2">
+                                                        <span>Email:</span>
+                                                        <span className="text-dark">{formData.email}</span>
+                                                    </div>
+                                                    <div className="d-flex justify-content-between mt-3 pt-2 border-top">
+                                                        <span className="fw-bold text-dark">Total Payable:</span>
+                                                        <span className="fw-bold text-danger fs-5">₹{selectedPlan?.price}</span>
+                                                    </div>
+                                                </div>
+
+                                                <p className="mb-2">
+                                                    Payments are processed securely via <strong>Razorpay</strong>.
+                                                </p>
+
+                                                <div className="mt-4 p-3 bg-light rounded border d-flex align-items-start gap-2 mb-3">
+                                                    <input
+                                                        className="form-check-input mt-1 shadow-none"
+                                                        type="checkbox"
+                                                        id="termsCheckStep3"
+                                                        checked={termsAccepted}
+                                                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                                                        style={{ cursor: 'pointer', flexShrink: 0 }}
+                                                    />
+                                                    <label className="text-muted small" htmlFor="termsCheckStep3" style={{ cursor: 'pointer', lineHeight: '1.5' }}>
+                                                        I have read and agree to the <span onClick={() => handleNavigate('/terms')} className="text-danger text-decoration-none fw-bold" style={{ cursor: 'pointer' }}>Terms and Conditions</span> and <span onClick={() => handleNavigate('/policy')} className="text-danger text-decoration-none fw-bold" style={{ cursor: 'pointer' }}>Communication Policy</span>.
+                                                    </label>
+                                                </div>
+                                            </div>
 
 
 
-                                        <button
-                                            type="submit"
-                                            className="sa-login-btn mt-4"
-                                            disabled={isProcessing || !termsAccepted}
-                                        >
-                                            {isProcessing ? 'Processing Payment...' : (isTestMode ? `Pay ₹${selectedPlan?.price}` : `Pay ₹${selectedPlan?.price} & Register`)}
-                                        </button>
-                                    </form>
-                                )}
-                            </>
-                        )}
+                                            <button
+                                                type="submit"
+                                                className="sa-login-btn mt-4"
+                                                disabled={isProcessing || !termsAccepted}
+                                            >
+                                                {isProcessing ? 'Processing Payment...' : (isTestMode ? `Pay ₹${selectedPlan?.price}` : `Pay ₹${selectedPlan?.price} & Register`)}
+                                            </button>
+                                        </form>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
-                </div>
 
-                <div className="text-center pb-3">
-                    <button type="button" onClick={() => navigate('/superadmin/login')} className="btn btn-link text-white-50 text-decoration-none" style={{ fontSize: '0.9rem' }}>
-                        Already have an account? <span className="text-white fw-bold">Login</span>
-                    </button>
+
                 </div>
             </div>
+
+
         </div>
     );
 };

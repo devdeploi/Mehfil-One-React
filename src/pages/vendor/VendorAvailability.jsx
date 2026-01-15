@@ -1,74 +1,86 @@
 import React, { useState, useEffect } from 'react';
-import { FaChevronLeft, FaChevronRight, FaTimes, FaBuilding } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaTimes, FaBuilding, FaSave, FaPhone, FaUser, FaClock } from 'react-icons/fa';
+import axios from 'axios';
+import { API_URL } from '../../utils/function';
 import '../../styles/superadmin/Dashboard.css';
 
 const VendorAvailability = () => {
 
     const [mahals, setMahals] = useState([]);
     const [selectedMahalId, setSelectedMahalId] = useState(null);
+    const [loading, setLoading] = useState(false);
 
+    // --- 1. Fetch Mahals ---
     useEffect(() => {
-        const savedHalls = localStorage.getItem('mock_vendor_halls');
-        let initialHalls = [];
-        if (savedHalls) {
-            initialHalls = JSON.parse(savedHalls);
-        } else {
-            // Default Fallback
-            initialHalls = [
-                { id: 1, hallName: 'Grand Royal Palace' },
-                { id: 2, hallName: 'Sunset Garden Hall' }
-            ];
-            // Save this so MahalProfile could technically see it if we updated it (but we aren't updating MahalProfile right now)
-            localStorage.setItem('mock_vendor_halls', JSON.stringify(initialHalls));
-        }
-        setMahals(initialHalls);
-        if (initialHalls.length > 0) {
-            setSelectedMahalId(initialHalls[0].id);
-        }
+        const fetchMahals = async () => {
+            try {
+                const storedUser = localStorage.getItem('vendor_user');
+                if (storedUser) {
+                    const user = JSON.parse(storedUser);
+                    // Handle both 'id' (from simple object) and '_id' (from Mongo document)
+                    const userId = user.id || user._id;
+                    // Assuming endpoint supports fetching by vendorId
+                    const response = await axios.get(`${API_URL}/mahals?vendorId=${userId}`);
+                    // Map _id to id for compatibility or update usage
+                    const mappedMahals = response.data.mahals.map(m => ({ ...m, id: m._id }));
+                    setMahals(mappedMahals);
+
+                    if (mappedMahals.length > 0) {
+                        setSelectedMahalId(mappedMahals[0].id);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching mahals", error);
+            }
+        };
+        fetchMahals();
     }, []);
 
 
     // --- 2. Calendar State ---
     const [currentDate, setCurrentDate] = useState(new Date());
 
-    // Bookings State
-    const [bookings, setBookings] = useState(() => {
-        const saved = localStorage.getItem('vendor_bookings_v2');
-        if (saved) return JSON.parse(saved);
+    // Bookings State: Map {'YYYY-MM-DD': [bookings]}
+    const [bookings, setBookings] = useState({});
 
-        // Comprehensive Mock Data for Demo
-        return {
-            // --- MAHAL ID 1: Grand Royal Palace ---
-            // Past
-            "2025-12-01": [{ mahalId: 1, shift: 'Morning', customer: 'John Doe', phone: '9876543210', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Completed' }],
-            "2025-12-05": [{ mahalId: 1, shift: 'Full Day', customer: 'Sarah Smith', phone: '9876543211', paymentMode: 'Offline - Cash', paymentStatus: 'Paid', bookingStatus: 'Completed' }],
-            // Present / Near Future (Jan 2026)
-            "2026-01-10": [{ mahalId: 1, shift: 'Morning', customer: 'Alice Brown', phone: '9876543212', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
-            "2026-01-15": [{ mahalId: 1, shift: 'Evening', customer: 'Bob Wilson', phone: '9876543213', paymentMode: 'Offline - UPI', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }],
-            "2026-01-20": [
-                { mahalId: 1, shift: 'Morning', customer: 'Charlie Davis', phone: '9876543214', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' },
-                { mahalId: 1, shift: 'Evening', customer: 'Dave Miller', phone: '9876543215', paymentMode: 'Offline - Cash', paymentStatus: 'Partial', bookingStatus: 'Confirmed' }
-            ],
-            // Future
-            "2026-02-14": [{ mahalId: 1, shift: 'Full Day', customer: 'Valentine Wedding', phone: '9876543216', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
-            "2026-03-01": [{ mahalId: 1, shift: 'Morning', customer: 'Spring Fest', phone: '9876543217', paymentMode: 'Offline - UPI', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }],
+    // Fetch Bookings when Mahal or Month changes
+    useEffect(() => {
+        if (!selectedMahalId) return;
+        fetchBookings();
+    }, [selectedMahalId, currentDate.getMonth(), currentDate.getFullYear()]);
 
-            // --- MAHAL ID 2: Sunset Garden Hall ---
-            // Past
-            "2025-12-02": [{ mahalId: 2, shift: 'Evening', customer: 'Emily Clark', phone: '8765432109', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Completed' }],
-            "2025-12-12": [{ mahalId: 2, shift: 'Morning', customer: 'Frank White', phone: '8765432108', paymentMode: 'Offline - Cash', paymentStatus: 'Paid', bookingStatus: 'Completed' }],
-            // Present / Near Future (Jan 2026)
-            "2026-01-08": [{ mahalId: 2, shift: 'Full Day', customer: 'Corporate Event', phone: '8765432107', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
-            "2026-01-12": [{ mahalId: 2, shift: 'Morning', customer: 'Grace Hall', phone: '8765432106', paymentMode: 'Offline - UPI', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }],
-            "2026-01-25": [{ mahalId: 2, shift: 'Evening', customer: 'Henry Ford', phone: '8765432105', paymentMode: 'Offline - Cash', paymentStatus: 'Partial', bookingStatus: 'Confirmed' }],
-            // Future
-            "2026-02-20": [{ mahalId: 2, shift: 'Full Day', customer: 'Silver Jubilee', phone: '8765432104', paymentMode: 'Online', paymentStatus: 'Paid', bookingStatus: 'Confirmed' }],
-            "2026-03-10": [
-                { mahalId: 2, shift: 'Morning', customer: 'Morning Prayer', phone: '8765432103', paymentMode: 'Offline - UPI', paymentStatus: 'Paid', bookingStatus: 'Confirmed' },
-                { mahalId: 2, shift: 'Evening', customer: 'Evening Reception', phone: '8765432102', paymentMode: 'Online', paymentStatus: 'Pending', bookingStatus: 'Confirmed' }
-            ]
-        };
-    });
+    const fetchBookings = async () => {
+        try {
+            setLoading(true);
+            // Fetch for the whole month (or just 'all' for simplicity as per controller)
+            // Using 'all=true' to get all bookings for the mahal to fill the calendar easily
+            // In a real large app, we would fetch by range.
+            const response = await axios.get(`${API_URL}/bookings`, {
+                params: {
+                    mahalId: selectedMahalId,
+                    all: 'true'
+                }
+            });
+
+            // Transform [ { date: 'ISO...', ... } ] -> { 'YYYY-MM-DD': [...] }
+            const bookingsMap = {};
+            response.data.bookings.forEach(booking => {
+                const d = new Date(booking.date);
+                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+                if (!bookingsMap[dateKey]) {
+                    bookingsMap[dateKey] = [];
+                }
+                bookingsMap[dateKey].push(booking);
+            });
+            setBookings(bookingsMap);
+
+        } catch (error) {
+            console.error("Error fetching bookings", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const [showModal, setShowModal] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
@@ -105,11 +117,11 @@ const VendorAvailability = () => {
     const [editingUpdates, setEditingUpdates] = useState({});
 
     // --- Helper to Filter Bookings by Mahal ---
-    const getBookingsForDateAndMahal = (dateStr) => {
-        const dayBookings = bookings[dateStr] || [];
-        if (!selectedMahalId) return [];
-        // Filter by ID. If legacy booking has no ID, assume match if it's the first mahal (optional fallback)
-        return dayBookings.filter(b => b.mahalId === selectedMahalId || (b.mahalId === undefined && selectedMahalId === mahals[0]?.id));
+    // Now that bookings are fetched specifically for the selected Mahal from API, 
+    // the 'bookings' state ONLY contains bookings for the selected mahal.
+    // So we just need to get by Date.
+    const getBookingsForDate = (dateStr) => {
+        return bookings[dateStr] || [];
     };
 
     const handleDateClick = (dayStr) => {
@@ -119,8 +131,8 @@ const VendorAvailability = () => {
         }
         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(dayStr).padStart(2, '0')}`;
 
-        // Filter bookings for this Date AND Selected Mahal
-        const relevantBookings = getBookingsForDateAndMahal(dateStr);
+        // Get bookings for this Date
+        const relevantBookings = getBookingsForDate(dateStr);
 
         const hasMorning = relevantBookings.some(b => b.shift === 'Morning');
         const hasEvening = relevantBookings.some(b => b.shift === 'Evening');
@@ -138,43 +150,31 @@ const VendorAvailability = () => {
         setShowModal(true);
     };
 
-    const handleLocalUpdate = (index, field, value) => {
-        setEditingUpdates(prev => ({ ...prev, [index]: { ...prev[index], [field]: value } }));
+    const handleLocalUpdate = (bookingId, field, value) => {
+        setEditingUpdates(prev => ({ ...prev, [bookingId]: { ...prev[bookingId], [field]: value } }));
     };
 
-    const handleSaveChanges = (bookingIndex) => {
-        // Note: bookingIndex here refers to the index in the *filtered* list used in the modal?
-        // Actually, to update the main state correctly, we need to know the index in the main `bookings[dateStr]` array.
-        // Simpler approach: find the specific booking object in the main array and update it.
-        // But since we don't have unique IDs for bookings, we'll rely on the filter.
+    const handleSaveChanges = async (bookingId) => {
+        const updates = editingUpdates[bookingId];
+        if (!updates) return;
 
-        const dateStr = selectedDate;
-        const allDateBookings = bookings[dateStr] || [];
+        try {
+            await axios.put(`${API_URL}/bookings/${bookingId}`, updates);
+            alert("Booking updated successfully!");
 
-        // Retrieve the specific booking being edited from the Filtered view
-        const filteredList = getBookingsForDateAndMahal(dateStr);
-        const bookingToUpdate = filteredList[bookingIndex]; // This is the old object
+            // Optimistic Update or Refetch
+            fetchBookings();
 
-        const updates = editingUpdates[bookingIndex];
-        if (!updates || !bookingToUpdate) return;
-
-        // Find index in master list
-        const masterIndex = allDateBookings.indexOf(bookingToUpdate);
-        if (masterIndex === -1) return;
-
-        const updatedBooking = { ...allDateBookings[masterIndex], ...updates };
-        const newAllDateBookings = [...allDateBookings];
-        newAllDateBookings[masterIndex] = updatedBooking;
-
-        const updatedBookings = { ...bookings, [dateStr]: newAllDateBookings };
-        setBookings(updatedBookings);
-        localStorage.setItem('vendor_bookings_v2', JSON.stringify(updatedBookings));
-
-        setEditingUpdates(prev => {
-            const newState = { ...prev };
-            delete newState[bookingIndex];
-            return newState;
-        });
+            setEditingUpdates(prev => {
+                const newState = { ...prev };
+                delete newState[bookingId];
+                return newState;
+            });
+            setShowModal(false);
+        } catch (error) {
+            console.error("Update failed", error);
+            alert("Failed to update booking.");
+        }
     };
 
     const handleMonthSelect = (monthIndex) => {
@@ -187,37 +187,32 @@ const VendorAvailability = () => {
         setViewMode('month');
     };
 
-    const handleSaveBooking = (e) => {
+    const handleSaveBooking = async (e) => {
         e.preventDefault();
         if (!selectedMahalId) return;
 
-        const dateStr = selectedDate;
-        const existingAll = bookings[dateStr] || [];
-        const existingForMahal = getBookingsForDateAndMahal(dateStr);
+        try {
+            const payload = {
+                mahalId: selectedMahalId,
+                date: selectedDate, // YYYY-MM-DD string is fine, backend converts
+                shift: formData.shift,
+                customerName: formData.customerName, // Backend expects customerName, frontend form used customerName
+                customerPhone: formData.customerPhone,
+                paymentMode: formData.paymentMode,
+                paymentStatus: formData.paymentStatus,
+                bookingStatus: formData.bookingStatus
+            };
 
-        const isFullDay = existingForMahal.some(b => b.shift === 'Full Day');
-        const hasMorning = existingForMahal.some(b => b.shift === 'Morning');
-        const hasEvening = existingForMahal.some(b => b.shift === 'Evening');
+            await axios.post(`${API_URL}/bookings`, payload);
+            alert("Booking Confirmed!");
+            setShowModal(false);
+            fetchBookings(); // Refresh
 
-        if (isFullDay) return alert("This date is already fully booked!");
-        if (formData.shift === 'Full Day' && existingForMahal.length > 0) return alert("Cannot book Full Day with existing bookings.");
-        if (formData.shift === 'Morning' && hasMorning) return alert("Morning shift is already booked.");
-        if (formData.shift === 'Evening' && hasEvening) return alert("Evening shift is already booked.");
-
-        const newBooking = {
-            mahalId: selectedMahalId, // CRITICAL: Link to Mahal
-            shift: formData.shift,
-            customer: formData.customerName,
-            phone: formData.customerPhone,
-            paymentMode: formData.paymentMode,
-            paymentStatus: formData.paymentStatus,
-            bookingStatus: formData.bookingStatus
-        };
-
-        const updatedBookings = { ...bookings, [dateStr]: [...existingAll, newBooking] };
-        setBookings(updatedBookings);
-        localStorage.setItem('vendor_bookings_v2', JSON.stringify(updatedBookings));
-        setShowModal(false);
+        } catch (error) {
+            console.error("Booking failed", error);
+            const msg = error.response?.data?.msg || "Booking failed.";
+            alert(msg);
+        }
     };
 
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
@@ -233,8 +228,7 @@ const VendorAvailability = () => {
 
         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-        // USE FILTERED BOOKINGS
-        const dayBookings = getBookingsForDateAndMahal(dateStr);
+        const dayBookings = getBookingsForDate(dateStr);
 
         // Past Dates Logic
         if (isPast) {
@@ -245,10 +239,13 @@ const VendorAvailability = () => {
         }
 
         // Future/Today Logic
-        if (dayBookings.some(b => b.shift === 'Full Day')) return { status: 'Full', color: 'bg-white', headerColor: 'bg-danger', headerText: 'text-white', isPast };
+        // Filter out cancelled bookings if any (though backend query filters them usually, good to be safe)
+        const activeBookings = dayBookings.filter(b => b.bookingStatus !== 'Cancelled');
 
-        const hasMorning = dayBookings.some(b => b.shift === 'Morning');
-        const hasEvening = dayBookings.some(b => b.shift === 'Evening');
+        if (activeBookings.some(b => b.shift === 'Full Day')) return { status: 'Full', color: 'bg-white', headerColor: 'bg-danger', headerText: 'text-white', isPast };
+
+        const hasMorning = activeBookings.some(b => b.shift === 'Morning');
+        const hasEvening = activeBookings.some(b => b.shift === 'Evening');
 
         if (hasMorning && hasEvening) return { status: 'Full', color: 'bg-white', headerStyle: { backgroundColor: '#800080' }, headerText: 'text-white', isPast };
 
@@ -279,10 +276,10 @@ const VendorAvailability = () => {
                             className="form-select border-start-0 fw-bold shadow-sm"
                             style={{ maxWidth: '250px', cursor: 'pointer' }}
                             value={selectedMahalId || ''}
-                            onChange={(e) => setSelectedMahalId(Number(e.target.value))}
+                            onChange={(e) => setSelectedMahalId(e.target.value)} // Value is string usually from select
                         >
                             {mahals.map(m => (
-                                <option key={m.id} value={m.id}>{m.hallName}</option>
+                                <option key={m.id} value={m.id}>{m.mahalName || m.hallName}</option>
                             ))}
                             {mahals.length === 0 && <option value="">No Mahals Found</option>}
                         </select>
@@ -344,52 +341,58 @@ const VendorAvailability = () => {
             <div className="d-grid text-center mb-3" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="small text-secondary fw-bold text-uppercase">{d}</div>)}
             </div>
-            <div className="d-grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
-                {blankDays.map((_, i) => <div key={`blank-${i}`} />)}
-                {days.map(day => {
-                    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    // USE FILTERED BOOKINGS HERE
-                    const dayBookings = getBookingsForDateAndMahal(dateStr);
-                    const { status, color, style, isDisabled, isPast, headerColor, headerText, headerStyle } = checkAvailability(day);
+            {loading ? (
+                <div className="text-center py-5 text-muted">Loading Bookings...</div>
+            ) : (
+                <div className="d-grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
+                    {blankDays.map((_, i) => <div key={`blank-${i}`} />)}
+                    {days.map(day => {
+                        const { status, color, style, isDisabled, isPast, headerColor, headerText, headerStyle } = checkAvailability(day);
+                        const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        const dayBookings = getBookingsForDate(dateStr);
 
-                    return (
-                        <div
-                            key={day}
-                            className={`rounded-3 text-start position-relative shadow-sm hover-scale border-0 ${color}`}
-                            style={{ minHeight: '110px', cursor: isDisabled ? 'not-allowed' : 'pointer', overflow: 'hidden', ...style }}
-                            onClick={() => !isDisabled && handleDateClick(day)}
-                        >
-                            <div className={`d-flex justify-content-between align-items-center px-3 py-2 ${headerColor} ${headerText}`} style={{ ...headerStyle }}>
-                                <span className="fw-bold">{day}</span>
-                                {status !== 'Available' && status !== 'Disabled' && (
-                                    <div className="d-flex gap-1">
-                                        {dayBookings.some(b => b.shift === 'Morning') && <i className="bi bi-brightness-high-fill text-dark small"></i>}
-                                        {dayBookings.some(b => b.shift === 'Evening') && <i className="bi bi-moon-stars-fill text-white small"></i>}
-                                        {dayBookings.some(b => b.shift === 'Full Day') && <i className="bi bi-calendar-event-fill text-white small"></i>}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="d-flex flex-column gap-1 p-2">
-                                {dayBookings.map((bk, idx) => (
-                                    <div key={idx} className="d-flex align-items-center px-1">
-                                        <div className="text-truncate fw-bold w-100" style={{ fontSize: '0.7rem', color: '#444' }}>
-                                            {bk.shift === 'Morning' && <i className="bi bi-brightness-high-fill text-warning me-1"></i>}
-                                            {bk.shift === 'Evening' && <i className="bi bi-moon-stars-fill text-info me-1"></i>}
-                                            {bk.shift === 'Full Day' && <i className="bi bi-calendar-event-fill text-danger me-1"></i>}
-                                            {bk.customer}
+                        return (
+                            <div
+                                key={day}
+                                className={`rounded-3 text-start position-relative shadow-sm hover-scale border-0 ${color}`}
+                                style={{ minHeight: '110px', cursor: isDisabled ? 'not-allowed' : 'pointer', overflow: 'hidden', ...style }}
+                                onClick={() => !isDisabled && handleDateClick(day)}
+                            >
+                                <div className={`d-flex justify-content-between align-items-center px-3 py-2 ${headerColor} ${headerText}`} style={{ ...headerStyle }}>
+                                    <span className="fw-bold">{day}</span>
+                                    {status !== 'Available' && status !== 'Disabled' && (
+                                        <div className="d-flex gap-1">
+                                            {dayBookings.some(b => b.shift === 'Morning') && <i className="bi bi-brightness-high-fill text-dark small"></i>}
+                                            {dayBookings.some(b => b.shift === 'Evening') && <i className="bi bi-moon-stars-fill text-white small"></i>}
+                                            {dayBookings.some(b => b.shift === 'Full Day') && <i className="bi bi-calendar-event-fill text-white small"></i>}
                                         </div>
-                                    </div>
-                                ))}
+                                    )}
+                                </div>
+                                <div className="d-flex flex-column gap-1 p-2">
+                                    {dayBookings.map((bk, idx) => (
+                                        <div key={idx} className="d-flex align-items-center justify-content-between px-1 mb-1">
+                                            <div className="text-truncate fw-bold text-dark" style={{ fontSize: '0.7rem', maxWidth: '65%' }}>
+                                                {bk.shift === 'Morning' && <i className="bi bi-brightness-high-fill text-warning me-1"></i>}
+                                                {bk.shift === 'Evening' && <i className="bi bi-moon-stars-fill text-info me-1"></i>}
+                                                {bk.shift === 'Full Day' && <i className="bi bi-calendar-event-fill text-danger me-1"></i>}
+                                                <span title={bk.customerName || bk.customer}>{bk.customerName || bk.customer}</span>
+                                            </div>
+                                            <span className={`badge ${bk.bookingStatus === 'Confirmed' ? 'bg-success' : bk.bookingStatus === 'Cancelled' ? 'bg-danger' : 'bg-warning text-dark'} rounded-pill`} style={{ fontSize: '0.55rem', padding: '2px 5px' }}>
+                                                {bk.bookingStatus}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
+                        );
+                    })}
+                </div>
+            )}
         </>
     );
 
     // Modal Helpers
-    const filteredModalBookings = getBookingsForDateAndMahal(selectedDate);
+    const filteredModalBookings = getBookingsForDate(selectedDate);
     const hasFullDay = filteredModalBookings.some(b => b.shift === 'Full Day');
     const hasMorning = filteredModalBookings.some(b => b.shift === 'Morning');
     const hasEvening = filteredModalBookings.some(b => b.shift === 'Evening');
@@ -417,28 +420,87 @@ const VendorAvailability = () => {
                         <div className="modal-body p-4" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
                             {filteredModalBookings.length > 0 && (
                                 <div className="mb-4">
-                                    <h6 className="sa-section-title border-bottom pb-2 mb-3">Existing Bookings</h6>
                                     {filteredModalBookings.map((booking, idx) => {
-                                        // Since we are iterating filtering logic, idx here matches idx used in render -> but update needs care.
-                                        // We use handleSaveChanges(idx) where idx is the index IN THE FILTERED LIST.
-                                        const updates = editingUpdates[idx] || {};
+                                        const bookingId = booking._id; // Real ID
+                                        const updates = editingUpdates[bookingId] || {};
                                         const payStatus = updates.paymentStatus || booking.paymentStatus;
                                         const bookStatus = updates.bookingStatus || booking.bookingStatus;
+
+                                        // Status Colors
+                                        const getStatusColor = (status) => {
+                                            switch (status) {
+                                                case 'Paid': return 'text-success bg-success-subtle';
+                                                case 'Confirmed': return 'text-success bg-success-subtle';
+                                                case 'Pending': return 'text-warning bg-warning-subtle';
+                                                case 'Partial': return 'text-primary bg-primary-subtle';
+                                                case 'Cancelled': return 'text-danger bg-danger-subtle';
+                                                default: return 'text-secondary bg-light';
+                                            }
+                                        };
+
                                         return (
-                                            <div key={idx} className="p-3 bg-light rounded-3 border mb-3">
-                                                <div className="d-flex justify-content-between mb-2">
-                                                    <div><span className="badge bg-primary me-2">{booking.shift}</span><h6 className="d-inline">{booking.customer}</h6></div>
-                                                    {(updates.paymentStatus || updates.bookingStatus) && <button className="btn btn-xs btn-dark" onClick={() => handleSaveChanges(idx)}>Save</button>}
+                                            <div key={bookingId} className="p-3 bg-white rounded-4 border shadow-sm mb-3 position-relative overflow-hidden hover-shadow transition-all">
+                                                {/* Left Status Strip */}
+                                                <div className={`position-absolute top-0 start-0 h-100`}
+                                                    style={{ width: '4px', backgroundColor: booking.shift === 'Morning' ? '#ffc107' : booking.shift === 'Evening' ? '#0dcaf0' : '#dc3545' }}>
                                                 </div>
-                                                <div className="row g-2">
+
+                                                <div className="d-flex justify-content-between align-items-start mb-3 ps-2">
+                                                    <div>
+                                                        <div className="d-flex align-items-center gap-2 mb-2">
+                                                            <span className={`badge rounded-pill ${booking.shift === 'Morning' ? 'bg-warning text-dark' : booking.shift === 'Evening' ? 'bg-info text-dark' : 'bg-danger text-white'}`}>
+                                                                <FaClock className="me-1 mb-1" />{booking.shift}
+                                                            </span>
+                                                            <span className="badge bg-light text-secondary border fw-normal">
+                                                                {booking.paymentMode}
+                                                            </span>
+                                                        </div>
+                                                        <h6 className="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                                                            <FaUser className="text-secondary small" />
+                                                            {booking.customerName || booking.customer}
+                                                        </h6>
+                                                        <small className="text-muted d-flex align-items-center gap-2">
+                                                            <FaPhone className="text-secondary small" />
+                                                            {booking.customerPhone || 'No Phone Provided'}
+                                                        </small>
+                                                    </div>
+
+                                                    {/* Save Button (Condition: Show if changed) */}
+                                                    {(updates.paymentStatus || updates.bookingStatus) && (
+                                                        <button
+                                                            className="btn btn-sm btn-dark rounded-pill px-3 shadow-sm d-flex align-items-center gap-2 animate__animated animate__fadeIn"
+                                                            onClick={() => handleSaveChanges(bookingId)}
+                                                        >
+                                                            <FaSave /> Save
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                <div className="row g-2 ps-2">
                                                     <div className="col-6">
-                                                        <select className="form-select form-select-sm" value={payStatus} onChange={(e) => handleLocalUpdate(idx, 'paymentStatus', e.target.value)}>
-                                                            <option value="Pending">Pending</option><option value="Paid">Paid</option>
+                                                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Payment Status</label>
+                                                        <select
+                                                            className={`form-select form-select-sm fw-bold border-0 ${getStatusColor(payStatus)}`}
+                                                            value={payStatus}
+                                                            onChange={(e) => handleLocalUpdate(bookingId, 'paymentStatus', e.target.value)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            <option value="Pending">Pending</option>
+                                                            <option value="Paid">Paid</option>
+                                                            <option value="Partial">Partial</option>
                                                         </select>
                                                     </div>
                                                     <div className="col-6">
-                                                        <select className="form-select form-select-sm" value={bookStatus} onChange={(e) => handleLocalUpdate(idx, 'bookingStatus', e.target.value)}>
-                                                            <option value="Confirmed">Confirmed</option><option value="Cancelled">Cancelled</option>
+                                                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Booking Status</label>
+                                                        <select
+                                                            className={`form-select form-select-sm fw-bold border-0 ${getStatusColor(bookStatus)}`}
+                                                            value={bookStatus}
+                                                            onChange={(e) => handleLocalUpdate(bookingId, 'bookingStatus', e.target.value)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            <option value="Pending">Pending</option>
+                                                            <option value="Confirmed">Confirmed</option>
+                                                            <option value="Cancelled">Cancelled</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -450,7 +512,7 @@ const VendorAvailability = () => {
 
                             {!isDayFull && !isPastSelected && (
                                 <form onSubmit={handleSaveBooking}>
-                                    <h6 className="sa-section-title border-bottom pb-2 mb-3">New Booking ({mahals.find(m => m.id === selectedMahalId)?.hallName})</h6>
+                                    <h6 className="sa-section-title border-bottom pb-2 mb-3">New Booking ({mahals.find(m => m.id === selectedMahalId)?.hallName || mahals.find(m => m.id === selectedMahalId)?.mahalName})</h6>
                                     <div className="mb-3"><input className="form-control" placeholder="Name" required value={formData.customerName} onChange={e => setFormData({ ...formData, customerName: e.target.value })} /></div>
                                     <div className="mb-3"><input className="form-control" placeholder="Phone" required value={formData.customerPhone} onChange={e => setFormData({ ...formData, customerPhone: e.target.value })} /></div>
                                     <div className="mb-3">

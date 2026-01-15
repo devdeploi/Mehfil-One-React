@@ -2,10 +2,48 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../utils/function';
+import FOG from 'vanta/dist/vanta.fog.min';
+import * as THREE from 'three';
 import '../../styles/superadmin/SuperAdminLogin.css';
 
 const SuperAdminLogin = () => {
     const navigate = useNavigate();
+
+    // Vanta Effect
+    const [vantaEffect, setVantaEffect] = useState(null);
+    const vantaRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (!vantaEffect && vantaRef.current) {
+            try {
+                setVantaEffect(FOG({
+                    el: vantaRef.current,
+                    THREE: THREE,
+                    mouseControls: false,
+                    touchControls: false, // Disabled for performance
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    highlightColor: 0xffffff,
+                    midtoneColor: 0xffffff,
+                    lowlightColor: 0xff8fab,
+                    baseColor: 0xffffff,
+                    blurFactor: 0.4, // Reduced blur
+                    speed: 1.0, // Reduced speed
+                    zoom: 0.8 // Reduced zoom
+                }));
+            } catch (error) {
+                console.warn("Vanta Effect failed to initialize", error);
+            }
+        }
+        return () => {
+            if (vantaEffect) {
+                vantaEffect.destroy();
+                setVantaEffect(null);
+            }
+        };
+    }, [vantaEffect]);
+
     const [view, setView] = useState('login'); // login, forgot, otp, reset
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -112,7 +150,7 @@ const SuperAdminLogin = () => {
     };
 
     return (
-        <div className="sa-login-container">
+        <div className="sa-login-container" ref={vantaRef}>
             <div className={`sa-login-card ${view === 'reset' ? 'sa-register-mode' : ''}`}>
                 <div className="sa-login-brand">
                     <i className="bi bi-calendar-check-fill"></i>
@@ -162,7 +200,7 @@ const SuperAdminLogin = () => {
                                 </div>
                             </div>
                             <div className="text-end mb-3">
-                                <button type="button" onClick={() => setView('forgot')} className="btn btn-link text-decoration-none text-light opacity-75" style={{ fontSize: '0.85rem' }}>
+                                <button type="button" onClick={() => setView('forgot')} className="btn btn-link text-decoration-none" style={{ fontSize: '0.85rem', color: '#64748b' }}>
                                     Forgot Password?
                                 </button>
                             </div>
@@ -180,11 +218,11 @@ const SuperAdminLogin = () => {
                                 </div>
                             )}
 
-                            <div className="text-center mt-4">
-                                <button type="button" onClick={() => navigate('/vendor/register')} className="btn btn-link text-decoration-none text-light opacity-75" style={{ fontSize: '0.9rem' }}>
-                                    Don't have an account? <span className="text-warning fw-bold">Register as Vendor</span>
+                            {/* <div className="text-center mt-4">
+                                <button type="button" onClick={() => navigate('/vendor/register')} className="btn btn-link text-decoration-none" style={{ fontSize: '0.9rem', color: '#64748b' }}>
+                                    Don't have an account? <span className="text-danger fw-bold">Register as Vendor</span>
                                 </button>
-                            </div>
+                            </div> */}
                         </form>
                     </>
                 )}
@@ -208,7 +246,7 @@ const SuperAdminLogin = () => {
                             </div>
                             <button type="submit" className="btn btn-primary sa-login-btn">Send OTP</button>
                             <div className="text-center mt-3">
-                                <button type="button" onClick={() => setView('login')} className="btn btn-link text-white-50 text-decoration-none">Back to Login</button>
+                                <button type="button" onClick={() => setView('login')} className="btn btn-link text-muted text-decoration-none">Back to Login</button>
                             </div>
                         </form>
                     </>
@@ -232,7 +270,7 @@ const SuperAdminLogin = () => {
                                     placeholder="----"
                                     maxLength={4}
                                 />
-                                <div className="form-text text-white-50 text-center mt-2">Check your email for the code</div>
+                                <div className="form-text text-muted text-center mt-2">Check your email for the code</div>
                             </div>
 
                             {otpError && (
@@ -244,7 +282,7 @@ const SuperAdminLogin = () => {
 
                             <button type="submit" className="btn btn-primary sa-login-btn">Verify</button>
                             <div className="text-center mt-3">
-                                <button type="button" onClick={() => setView('forgot')} className="btn btn-link text-white-50 text-decoration-none">Resend Code</button>
+                                <button type="button" onClick={() => setView('forgot')} className="btn btn-link text-muted text-decoration-none">Resend Code</button>
                             </div>
                         </form>
                     </>
@@ -276,13 +314,13 @@ const SuperAdminLogin = () => {
                                         <div className="mt-2 d-flex gap-1" style={{ height: '4px' }}>
                                             {[1, 2, 3, 4].map(level => (
                                                 <div key={level} className="flex-grow-1 rounded-pill" style={{
-                                                    background: level <= passwordStrength ? (passwordStrength === 1 ? '#dc2626' : passwordStrength === 2 ? '#fbbf24' : passwordStrength === 3 ? '#3b82f6' : '#22c55e') : 'rgba(255,255,255,0.1)',
+                                                    background: level <= passwordStrength ? (passwordStrength === 1 ? '#dc2626' : passwordStrength === 2 ? '#fbbf24' : passwordStrength === 3 ? '#3b82f6' : '#22c55e') : '#e2e8f0',
                                                     transition: 'background-color 0.5s ease'
                                                 }}></div>
                                             ))}
                                         </div>
                                         <div className="d-flex justify-content-between mt-1" style={{ fontSize: '0.75rem' }}>
-                                            <span className="text-white-50">Use 8+ characters</span>
+                                            <span className="text-muted">Use 8+ characters</span>
                                             <span style={{ color: passwordStrength === 1 ? '#dc2626' : passwordStrength === 2 ? '#fbbf24' : passwordStrength === 3 ? '#3b82f6' : '#22c55e', fontWeight: 'bold' }}>
                                                 {passwordStrength === 1 && "Weak"} {passwordStrength === 2 && "Fair"} {passwordStrength === 3 && "Good"} {passwordStrength === 4 && "Strong"}
                                             </span>

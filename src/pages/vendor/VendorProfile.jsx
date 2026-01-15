@@ -24,9 +24,11 @@ const VendorProfile = () => {
             const storedUser = localStorage.getItem('vendor_user');
             if (storedUser) {
                 const user = JSON.parse(storedUser);
-                if (user.id) {
+                const userId = user.id || user._id;
+
+                if (userId) {
                     try {
-                        const response = await axios.get(`${API_URL}/vendors/${user.id}`);
+                        const response = await axios.get(`${API_URL}/vendors/${userId}`);
                         const vendorData = response.data;
                         const BASE_URL = API_URL.replace('/api', '');
                         const imageUrl = vendorData.profileImage ? `${BASE_URL}/${vendorData.profileImage}` : null;
@@ -84,6 +86,7 @@ const VendorProfile = () => {
         const storedUser = localStorage.getItem('vendor_user');
         if (!storedUser) return;
         const user = JSON.parse(storedUser);
+        const userId = user.id || user._id;
 
         const formData = new FormData();
         formData.append('fullName', profile.fullName);
@@ -96,7 +99,7 @@ const VendorProfile = () => {
         }
 
         try {
-            const response = await axios.put(`${API_URL}/vendors/${user.id}`, formData, {
+            const response = await axios.put(`${API_URL}/vendors/${userId}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             console.log("Updated Vendor Profile:", response.data);
