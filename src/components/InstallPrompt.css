@@ -1,0 +1,252 @@
+/* Ultra-Modern In-App Install Prompt - Match LandingPage Theme */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
+.pwa-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(30, 41, 59, 0.6); /* Match --lp-text-dark as overlay */
+  animation: pwaFadeIn 0.4s ease-out forwards;
+  padding: 20px;
+}
+
+.pwa-modal-overlay.closing {
+  animation: pwaFadeOut 0.4s ease-in forwards;
+}
+
+.pwa-modal-container {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background: #ffffff; /* --lp-bg-white */
+  color: #1e293b; /* --lp-text-dark */
+  border-radius: 24px;
+  padding: 40px 30px 30px;
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.15);
+  font-family: 'Outfit', sans-serif; /* LandingPage font */
+  text-align: center;
+  border: 1px solid #f1f5f9; /* --lp-border */
+  animation: pwaBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transform-origin: center;
+}
+
+.pwa-modal-container.closing {
+  animation: pwaZoomOut 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.pwa-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #fff1f2; /* --lp-red-100 */
+  border: none;
+  color: #C8102E; /* --lp-red-600 */
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pwa-close-btn:hover {
+  background: #C8102E; /* --lp-red-600 */
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+/* Stunning Animation Wrapper */
+.pwa-animation-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.pwa-phone-mockup {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #fff1f2, #ffffff); /* red-100 to white */
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #C8102E; /* --lp-red-600 */
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.8), 0 10px 25px -5px rgba(200, 16, 46, 0.15);
+  border: 1px solid #ff8fab; /* --lp-red-300 */
+  animation: pwaFloat 4s ease-in-out infinite;
+}
+
+.phone-icon {
+  z-index: 2;
+}
+
+.pwa-download-arrow {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #C8102E; /* --lp-red-600 */
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(200, 16, 46, 0.3);
+  z-index: 3;
+  animation: pwaBounceArrow 2s infinite;
+}
+
+.pwa-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  border: 2px solid #ff8fab; /* --lp-red-300 */
+  z-index: 1;
+  animation: pwaRipple 2s linear infinite;
+}
+
+.pwa-pulse-ring.delay {
+  animation-delay: 1s;
+}
+
+/* Typography */
+.pwa-modal-body {
+  margin-bottom: 30px;
+}
+
+.pwa-modal-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e293b; /* --lp-text-dark */
+  margin: 0 0 12px 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.pwa-modal-subtitle {
+  font-size: 0.95rem;
+  color: #64748b; /* --lp-text-muted */
+  margin: 0;
+  line-height: 1.5;
+}
+
+.pwa-modal-subtitle strong {
+  color: #C8102E; /* --lp-red-600 */
+}
+
+/* Buttons */
+.pwa-modal-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pwa-btn-primary {
+  position: relative;
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #C8102E, #EC1C24); /* --lp-red-600 to --lp-red-500 */
+  color: white;
+  border: none;
+  border-radius: 50px; /* pill shape matches LandingPage lp-btn-hero-primary */
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 20px rgba(200, 16, 46, 0.25);
+  font-family: 'Outfit', sans-serif;
+}
+
+.pwa-btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 25px rgba(200, 16, 46, 0.35);
+}
+
+.pwa-btn-primary:active {
+  transform: translateY(1px);
+}
+
+.pwa-btn-text {
+  position: relative;
+  z-index: 2;
+}
+
+.pwa-btn-shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: skewX(-20deg);
+  z-index: 1;
+  animation: pwaShimmer 3s infinite;
+}
+
+.pwa-btn-secondary {
+  background: transparent;
+  border: none;
+  color: #64748b; /* --lp-text-muted */
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-family: 'Outfit', sans-serif;
+}
+
+.pwa-btn-secondary:hover {
+  color: #1e293b; /* --lp-text-dark */
+}
+
+/* Keyframes */
+@keyframes pwaFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pwaFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes pwaBounceIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pwaZoomOut {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.9); opacity: 0; }
+}
+
+@keyframes pwaFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pwaBounceArrow {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+  60% { transform: translateY(-3px); }
+}
+
+@keyframes pwaRipple {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes pwaShimmer {
+  0% { left: -100%; }
+  20% { left: 200%; }
+  100% { left: 200%; }
+}

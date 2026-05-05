@@ -76,8 +76,21 @@ const LandingPage = () => {
                 </div>
 
                 <div className="lp-nav-actions">
-                    <button onClick={() => navigate('/vendor/register')} className="lp-btn-register">
-                        Register
+                    <button 
+                        onClick={() => navigate('/user/login')} 
+                        className="lp-btn-login"
+                    >
+                        User Login
+                    </button>
+                    <button 
+                        onClick={() => navigate('/user/register')} 
+                        className="lp-btn-register"
+                        style={{ marginRight: '10px' }}
+                    >
+                        Register as User
+                    </button>
+                    <button onClick={() => navigate('/vendor/register')} className="lp-btn-register" style={{ background: 'var(--lp-red-600)', color: 'white' }}>
+                        Vendor Portal
                     </button>
                 </div>
             </nav>

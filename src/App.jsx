@@ -10,6 +10,7 @@ import PaymentTracking from './pages/superadmin/PaymentTracking';
 import VendorRegistration from './pages/vendor/VendorRegistration';
 import Terms from './pages/common/Terms';
 import Policy from './pages/common/Policy';
+import UserAuthPage from './pages/user/UserAuthPage';
 import './App.css';
 
 import VendorLayout from './pages/vendor/VendorLayout';
@@ -17,16 +18,20 @@ import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorProfile from './pages/vendor/VendorProfile';
 import VendorAvailability from './pages/vendor/VendorAvailability';
 import MahalProfile from './pages/vendor/MahalProfile';
+import InstallPrompt from './components/InstallPrompt';
 
 
 
 function App() {
   return (
     <BrowserRouter>
+      <InstallPrompt />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/superadmin/login" element={<SuperAdminLogin />} />
         <Route path="/vendor/register" element={<VendorRegistration />} />
+        <Route path="/user/login" element={<UserAuthPage defaultView="login" />} />
+        <Route path="/user/register" element={<UserAuthPage defaultView="register" />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/policy" element={<Policy />} />
 

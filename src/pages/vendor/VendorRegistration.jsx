@@ -4,12 +4,24 @@ import { useNavigate, Link } from 'react-router-dom';
 import { API_URL } from '../../utils/function';
 import { SUBSCRIPTION_PLANS } from '../../utils/constants';
 import { FaCheck, FaLock, FaCreditCard, FaArrowLeft } from 'react-icons/fa';
-import FOG from 'vanta/dist/vanta.fog.min';
-import * as THREE from 'three';
 import '../../styles/superadmin/SuperAdminLogin.css';
 import '../../styles/vendor/VendorRegistration.css';
 import Terms from '../common/Terms';
 import Policy from '../common/Policy';
+
+const toastStyles = `
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    .custom-toast-glass {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-left: 5px solid;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+`;
 
 const VendorRegistration = () => {
 
@@ -17,41 +29,6 @@ const VendorRegistration = () => {
     const isTestMode = RAZORPAY_KEY_ID.startsWith('rzp_test_');
 
     const navigate = useNavigate();
-
-    // Vanta Effect
-    const [vantaEffect, setVantaEffect] = useState(null);
-    const vantaRef = React.useRef(null);
-
-    useEffect(() => {
-        if (!vantaEffect && vantaRef.current) {
-            try {
-                setVantaEffect(FOG({
-                    el: vantaRef.current,
-                    THREE: THREE,
-                    mouseControls: false,
-                    touchControls: false, // Disabled for performance
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    highlightColor: 0xffffff,
-                    midtoneColor: 0xffffff,
-                    lowlightColor: 0xff8fab,
-                    baseColor: 0xffffff,
-                    blurFactor: 0.4, // Reduced blur
-                    speed: 1.0, // Reduced speed
-                    zoom: 0.8 // Reduced zoom
-                }));
-            } catch (error) {
-                console.warn("Vanta Effect failed to initialize", error);
-            }
-        }
-        return () => {
-            if (vantaEffect) {
-                vantaEffect.destroy();
-                setVantaEffect(null);
-            }
-        };
-    }, [vantaEffect]);
 
     const loadScript = (src) => {
         return new Promise((resolve) => {
@@ -100,26 +77,27 @@ const VendorRegistration = () => {
         }
     };
 
-    // Load initial state immediately
-    const savedState = getSavedData();
-
-    const [step, setStep] = useState(savedState?.step || 1);
-    const [selectedPlan, setSelectedPlan] = useState(savedState?.selectedPlan || null);
-    const [formData, setFormData] = useState({
-        fullName: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: '',
-        cardNumber: '',
-        expiry: '',
-        cvc: '',
-        cardName: '',
-        businessName: '',
-        gstNumber: '',
-        businessAddress: '',
-        proofDocument: null,
-        ...savedState?.formData
+    // Load initial state lazily
+    const [step, setStep] = useState(() => getSavedData()?.step || 1);
+    const [selectedPlan, setSelectedPlan] = useState(() => getSavedData()?.selectedPlan || null);
+    const [formData, setFormData] = useState(() => {
+        const saved = getSavedData();
+        return {
+            fullName: '',
+            email: '',
+            phone: '',
+            password: '',
+            confirmPassword: '',
+            cardNumber: '',
+            expiry: '',
+            cvc: '',
+            cardName: '',
+            businessName: '',
+            gstNumber: '',
+            businessAddress: '',
+            proofDocument: null,
+            ...saved?.formData
+        };
     });
     const [isProcessing, setIsProcessing] = useState(false);
     const [isRegistering, setIsRegistering] = useState(false); // New state for post-payment processing
@@ -132,12 +110,12 @@ const VendorRegistration = () => {
 
     const [otp, setOtp] = useState('');
     const [isOtpSent, setIsOtpSent] = useState(false);
-    const [isOtpVerified, setIsOtpVerified] = useState(savedState?.isOtpVerified || false);
+    const [isOtpVerified, setIsOtpVerified] = useState(() => getSavedData()?.isOtpVerified || false);
     const [otpLoading, setOtpLoading] = useState(false);
 
     // Registration Success State
     const [isRegistered, setIsRegistered] = useState(false);
-    const [termsAccepted, setTermsAccepted] = useState(savedState?.termsAccepted || false);
+    const [termsAccepted, setTermsAccepted] = useState(() => getSavedData()?.termsAccepted || false);
 
     // Toast State
     const [toast, setToast] = useState({ show: false, message: '', type: '' });
@@ -414,20 +392,6 @@ const VendorRegistration = () => {
     };
 
     // Animation styles for Toast
-    const toastStyles = `
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        .custom-toast-glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-left: 5px solid;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-    `;
-
     // OTP Input Handlers
     const handleOtpBoxChange = (element, index) => {
         if (isNaN(element.value)) return false;
@@ -462,7 +426,7 @@ const VendorRegistration = () => {
     };
 
     return (
-        <div className="vr-page-container" ref={vantaRef}>
+        <div className="vr-page-container">
             <style>{toastStyles}</style>
 
             {/* Navbar */}
