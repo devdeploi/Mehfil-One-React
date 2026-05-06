@@ -132,7 +132,6 @@ const VendorProfile = () => {
     // Standard styling for inputs
     const inputStyle = {
         padding: '10px 15px',
-        borderRadius: '10px',
         backgroundColor: '#f8fafc',
         border: '1px solid #e2e8f0'
     };
@@ -209,12 +208,19 @@ const VendorProfile = () => {
                                 <div className="col-12">
                                     <label className="form-label fw-bold text-secondary text-uppercase small">Full Name</label>
                                     <div className="input-group">
-                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', border: '1px solid #e2e8f0' }}><FaUser className="text-secondary" /></span>
+                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', borderTopRightRadius: '0', borderBottomRightRadius: '0', border: '1px solid #e2e8f0' }}><FaUser className="text-secondary" /></span>
                                         <input
                                             type="text"
                                             name="fullName"
                                             className="form-control"
-                                            style={isEditing ? { ...inputStyle, borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 } : { borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                                            style={{ 
+                                                ...inputStyle, 
+                                                borderLeft: 'none', 
+                                                borderTopLeftRadius: '0', 
+                                                borderBottomLeftRadius: '0',
+                                                borderTopRightRadius: '10px',
+                                                borderBottomRightRadius: '10px'
+                                            }}
                                             value={profile.fullName}
                                             onChange={handleChange}
                                             readOnly={!isEditing}
@@ -226,12 +232,19 @@ const VendorProfile = () => {
                                 <div className="col-md-6">
                                     <label className="form-label fw-bold text-secondary text-uppercase small">Phone</label>
                                     <div className="input-group">
-                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', border: '1px solid #e2e8f0' }}><FaPhone className="text-secondary" /></span>
+                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', borderTopRightRadius: '0', borderBottomRightRadius: '0', border: '1px solid #e2e8f0' }}><FaPhone className="text-secondary" /></span>
                                         <input
                                             type="text"
                                             name="phone"
                                             className="form-control"
-                                            style={isEditing ? { ...inputStyle, borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 } : { borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                                            style={{ 
+                                                ...inputStyle, 
+                                                borderLeft: 'none', 
+                                                borderTopLeftRadius: '0', 
+                                                borderBottomLeftRadius: '0',
+                                                borderTopRightRadius: '10px',
+                                                borderBottomRightRadius: '10px'
+                                            }}
                                             value={profile.phone}
                                             onChange={handleChange}
                                             readOnly={!isEditing}
@@ -241,12 +254,19 @@ const VendorProfile = () => {
                                 <div className="col-md-6">
                                     <label className="form-label fw-bold text-secondary text-uppercase small">Email</label>
                                     <div className="input-group">
-                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', border: '1px solid #e2e8f0' }}><FaEnvelope className="text-secondary" /></span>
+                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', borderTopRightRadius: '0', borderBottomRightRadius: '0', border: '1px solid #e2e8f0' }}><FaEnvelope className="text-secondary" /></span>
                                         <input
                                             type="email"
                                             name="email"
                                             className="form-control text-muted"
-                                            style={isEditing ? { ...inputStyle, borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 } : { borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                                            style={{ 
+                                                ...inputStyle, 
+                                                borderLeft: 'none', 
+                                                borderTopLeftRadius: '0', 
+                                                borderBottomLeftRadius: '0',
+                                                borderTopRightRadius: '10px',
+                                                borderBottomRightRadius: '10px'
+                                            }}
                                             value={profile.email}
                                             readOnly={true}
                                             disabled
@@ -262,12 +282,19 @@ const VendorProfile = () => {
                                 <div className="col-md-6">
                                     <label className="form-label fw-bold text-secondary text-uppercase small">Business Name</label>
                                     <div className="input-group">
-                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', border: '1px solid #e2e8f0' }}><FaBuilding className="text-secondary" /></span>
+                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', borderTopRightRadius: '0', borderBottomRightRadius: '0', border: '1px solid #e2e8f0' }}><FaBuilding className="text-secondary" /></span>
                                         <input
                                             type="text"
                                             name="businessName"
                                             className="form-control"
-                                            style={isEditing ? { ...inputStyle, borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 } : { borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                                            style={{ 
+                                                ...inputStyle, 
+                                                borderLeft: 'none', 
+                                                borderTopLeftRadius: '0', 
+                                                borderBottomLeftRadius: '0',
+                                                borderTopRightRadius: '10px',
+                                                borderBottomRightRadius: '10px'
+                                            }}
                                             value={profile.businessName}
                                             onChange={handleChange}
                                             readOnly={!isEditing}
@@ -278,12 +305,19 @@ const VendorProfile = () => {
                                 <div className="col-md-6">
                                     <label className="form-label fw-bold text-secondary text-uppercase small">GST Number</label>
                                     <div className="input-group">
-                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', border: '1px solid #e2e8f0' }}><FaIdCard className="text-secondary" /></span>
+                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', borderTopRightRadius: '0', borderBottomRightRadius: '0', border: '1px solid #e2e8f0' }}><FaIdCard className="text-secondary" /></span>
                                         <input
                                             type="text"
                                             name="gstNumber"
                                             className="form-control"
-                                            style={isEditing ? { ...inputStyle, borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 } : { borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                                            style={{ 
+                                                ...inputStyle, 
+                                                borderLeft: 'none', 
+                                                borderTopLeftRadius: '0', 
+                                                borderBottomLeftRadius: '0',
+                                                borderTopRightRadius: '10px',
+                                                borderBottomRightRadius: '10px'
+                                            }}
                                             value={profile.gstNumber}
                                             onChange={handleChange}
                                             readOnly={!isEditing}
@@ -294,11 +328,19 @@ const VendorProfile = () => {
                                 <div className="col-12">
                                     <label className="form-label fw-bold text-secondary text-uppercase small">Business Address</label>
                                     <div className="input-group">
-                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', border: '1px solid #e2e8f0' }}><FaMapMarkerAlt className="text-secondary" /></span>
+                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', borderTopRightRadius: '0', borderBottomRightRadius: '0', border: '1px solid #e2e8f0' }}><FaMapMarkerAlt className="text-secondary" /></span>
                                         <textarea
                                             name="businessAddress"
                                             className="form-control"
-                                            style={isEditing ? { ...inputStyle, borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, minHeight: '80px' } : { borderLeft: 'none', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, minHeight: '80px' }}
+                                            style={{ 
+                                                ...inputStyle, 
+                                                borderLeft: 'none', 
+                                                borderTopLeftRadius: '0', 
+                                                borderBottomLeftRadius: '0',
+                                                borderTopRightRadius: '10px',
+                                                borderBottomRightRadius: '10px',
+                                                minHeight: '80px'
+                                            }}
                                             value={profile.businessAddress}
                                             onChange={handleChange}
                                             readOnly={!isEditing}

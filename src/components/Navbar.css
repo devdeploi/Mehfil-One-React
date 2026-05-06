@@ -1,0 +1,223 @@
+/* Navbar.css - Premium High-End UI */
+
+.lp-navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 6%;
+    background: transparent;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+}
+
+.lp-navbar.scrolled {
+    padding: 0.8rem 6%;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.lp-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.brand-icon-wrapper {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #C8102E, #9B0C23);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.3rem;
+    box-shadow: 0 8px 16px rgba(200, 16, 46, 0.25);
+}
+
+.lp-nav-links {
+    display: flex;
+    gap: 2.8rem;
+    align-items: center;
+}
+
+.lp-nav-link {
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    padding: 0.5rem 0;
+}
+
+.lp-nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #C8102E;
+    transition: width 0.3s ease;
+}
+
+.lp-nav-link:hover {
+    color: #C8102E;
+}
+
+.lp-nav-link:hover::after {
+    width: 100%;
+}
+
+.lp-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.lp-btn-login {
+    background: transparent;
+    color: #1e293b;
+    padding: 0.7rem 1.6rem;
+    border-radius: 14px;
+    font-weight: 700;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lp-btn-login:hover {
+    background: #f8fafc;
+    border-color: #C8102E;
+    color: #C8102E;
+}
+
+.premium-nav-btn {
+    background: #fef2f2;
+    border-color: #fee2e2;
+    color: #C8102E;
+}
+
+.lp-btn-register-premium {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: white;
+    padding: 0.75rem 1.8rem;
+    border-radius: 14px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.lp-btn-register-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    background: #000;
+}
+
+/* Mobile Toggle */
+.mobile-toggle {
+    display: none;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 0.6rem;
+    border-radius: 12px;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.mobile-toggle:hover {
+    color: #C8102E;
+    border-color: #C8102E;
+}
+
+/* Mobile Menu */
+.mobile-menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 300px;
+    height: 100vh;
+    background: white;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+    z-index: 1999;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 6rem 2rem 2rem;
+}
+
+.mobile-menu.active {
+    right: 0;
+}
+
+.mobile-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.mobile-nav-item:hover {
+    background: #f8fafc;
+    color: #C8102E;
+}
+
+.mobile-nav-item.highlight {
+    background: #fef2f2;
+    color: #C8102E;
+    margin-top: 1rem;
+}
+
+.mobile-nav-item.portal {
+    background: #1e293b;
+    color: white;
+    margin-top: 0.5rem;
+}
+
+.mobile-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 1.5rem 0;
+}
+
+@media (max-width: 1024px) {
+    .desktop-only {
+        display: none;
+    }
+    .mobile-toggle {
+        display: flex;
+    }
+    .lp-navbar {
+        padding: 1.2rem 5%;
+    }
+}
+
+/* Dark Navbar override for certain pages if needed */
+.lp-navbar.dark-theme .lp-nav-link,
+.lp-navbar.dark-theme .lp-brand {
+    color: white;
+}

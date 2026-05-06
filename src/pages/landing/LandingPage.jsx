@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 import { FaCheckCircle, FaCalendarAlt, FaUserTie, FaChartLine, FaGavel, FaShieldAlt, FaHeadset, FaBell, FaPaintBrush, FaStar, FaGem, FaArrowRight } from 'react-icons/fa';
+import Navbar from '../../components/Navbar';
 import { SUBSCRIPTION_PLANS } from '../../utils/constants';
 import FOG from 'vanta/dist/vanta.fog.min';
 import * as THREE from 'three';
@@ -12,7 +13,6 @@ const LandingPage = () => {
     // Vanta Effect State
     const [vantaEffect, setVantaEffect] = useState(null);
     const vantaRef = useRef(null);
-    const [isScrolled, setIsScrolled] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard');
 
     // Section Refs for Scrolling
@@ -45,55 +45,16 @@ const LandingPage = () => {
         };
     }, [vantaEffect]);
 
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
     const scrollToSection = (ref) => {
         ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     return (
         <div className="landing-container">
-            {/* Navbar */}
-            <nav className={`lp-navbar ${isScrolled ? 'scrolled' : ''}`}>
-                <div className="lp-brand">
-                    <div className="brand-icon-wrapper">
-                        <i className="bi bi-calendar-check-fill"></i>
-                    </div>
-                    <span>MEHFIL ONE</span>
-                </div>
-
-                <div className="lp-nav-links">
-                    <span onClick={() => scrollToSection(homeRef)} className="lp-nav-link">Home</span>
-                    <span onClick={() => scrollToSection(aboutRef)} className="lp-nav-link">About</span>
-                    <span onClick={() => scrollToSection(flowRef)} className="lp-nav-link">User Flow</span>
-                    <span onClick={() => scrollToSection(plansRef)} className="lp-nav-link">Plans</span>
-                </div>
-
-                <div className="lp-nav-actions">
-                    <button 
-                        onClick={() => navigate('/user/login')} 
-                        className="lp-btn-login"
-                    >
-                        User Login
-                    </button>
-                    <button 
-                        onClick={() => navigate('/user/register')} 
-                        className="lp-btn-register"
-                        style={{ marginRight: '10px' }}
-                    >
-                        Register as User
-                    </button>
-                    <button onClick={() => navigate('/vendor/register')} className="lp-btn-register" style={{ background: 'var(--lp-red-600)', color: 'white' }}>
-                        Vendor Portal
-                    </button>
-                </div>
-            </nav>
+            <Navbar 
+                scrollToSection={scrollToSection} 
+                refs={{ home: homeRef, about: aboutRef, flow: flowRef, plans: plansRef }} 
+            />
 
             {/* Hero Section */}
             <section className="lp-hero" ref={homeRef}>

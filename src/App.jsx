@@ -11,6 +11,8 @@ import VendorRegistration from './pages/vendor/VendorRegistration';
 import Terms from './pages/common/Terms';
 import Policy from './pages/common/Policy';
 import UserAuthPage from './pages/user/UserAuthPage';
+import UserProfilePage from './pages/user/UserProfilePage';
+import UserOtpVerificationPage from './pages/user/UserOtpVerificationPage';
 import './App.css';
 
 import VendorLayout from './pages/vendor/VendorLayout';
@@ -32,6 +34,8 @@ function App() {
         <Route path="/vendor/register" element={<VendorRegistration />} />
         <Route path="/user/login" element={<UserAuthPage defaultView="login" />} />
         <Route path="/user/register" element={<UserAuthPage defaultView="register" />} />
+        <Route path="/user/verify-otp" element={<UserOtpVerificationPage />} />
+        <Route path="/user/profile" element={<UserProfilePage />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/policy" element={<Policy />} />
 

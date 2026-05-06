@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FiMail, FiLock, FiUser, FiPhone, FiAlertCircle, FiArrowLeft, FiMapPin, FiFileText, FiEye, FiEyeOff } from 'react-icons/fi';
+import { API_URL } from '../../utils/function';
 import './UserAuthPage.css';
 
 const UserAuthPage = ({ defaultView = 'login' }) => {
@@ -15,8 +16,9 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
         confirmPassword: '',
         address: '',
         city: '',
-        proofDocument: null
+        otp: ''
     });
+    const [otpStep, setOtpStep] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -30,6 +32,8 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
         setSuccessMsg('');
         setShowPassword(false);
         setShowConfirmPassword(false);
+        setOtpStep(false);
+        setFormData(prev => ({ ...prev, otp: '' }));
     }, [defaultView]);
 
     const calculateStrength = (password) => {
@@ -60,42 +64,32 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
         setSuccessMsg('');
 
         if (view === 'register') {
+            // First step: Send OTP
             if (formData.password !== formData.confirmPassword) {
                 return setError('Passwords do not match');
             }
-            if (!formData.proofDocument) {
-                return setError('Identity proof document is required');
-            }
-
             try {
                 setLoading(true);
-                const data = new FormData();
-                data.append('fullName', formData.fullName);
-                data.append('email', formData.email);
-                data.append('phone', formData.phone);
-                data.append('password', formData.password);
-                data.append('address', formData.address);
-                data.append('city', formData.city);
-                data.append('proofDocument', formData.proofDocument);
-
-                const res = await axios.post('http://localhost:5000/api/auth/register-user', data, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
+                const baseUrl = API_URL.replace('/api', '');
+                await axios.post(`${baseUrl}/api/auth/send-otp`, {
+                    email: formData.email,
+                    phone: formData.phone
                 });
                 
-                setSuccessMsg('Registration successful! Redirecting to login...');
-                setTimeout(() => {
-                    navigate('/user/login');
-                    window.location.reload();
-                }, 2000);
+                // Navigate to the verification page with form data
+                navigate('/user/verify-otp', { state: { formData } });
             } catch (err) {
-                setError(err.response?.data?.msg || 'Registration failed');
+                console.error('Registration OTP Error:', err);
+                setError(err.response?.data?.msg || 'Failed to send OTP. Please check your connection.');
             } finally {
                 setLoading(false);
             }
         } else {
+            // Login flow remains same
             try {
                 setLoading(true);
-                const res = await axios.post('http://localhost:5000/api/auth/login-user', {
+                const baseUrl = API_URL.replace('/api', '');
+                const res = await axios.post(`${baseUrl}/api/auth/login-user`, {
                     email: formData.email,
                     password: formData.password
                 });
@@ -125,7 +119,7 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
             </nav>
 
             <div className="vr-content-wrapper">
-                <div className="sa-login-card vr-card-wide" style={{ maxWidth: '850px' }}>
+                <div className="sa-login-card vr-card-wide" style={{ maxWidth: view === 'login' ? '480px' : '850px' }}>
                     <h2 className="sa-login-title">{view === 'login' ? 'User Login' : 'User Registration'}</h2>
                     
                     <p className="text-center text-muted mb-4" style={{marginTop: '-1.5rem'}}>
@@ -244,62 +238,75 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
                                     </div>
                                 </div>
 
-                                <div className="row">
-                                    <div className="col-md-12 mb-4">
-                                        <label className="form-label">ID Proof (PDF/Image)</label>
-                                        <div className="form-control p-2 bg-light d-flex align-items-center" style={{ height: '50px' }}>
-                                            <FiFileText className="text-muted me-2 ms-1" />
+                                {otpStep && (
+                                    <div className="row">
+                                        <div className="col-md-12 mb-4">
+                                            <div className="p-4 rounded-4 border-2 border-danger border-dashed bg-light text-center">
+                                                <label className="form-label d-block mb-3">Enter 6-Digit OTP sent to your Email</label>
+                                                <div className="position-relative d-inline-block w-100" style={{ maxWidth: '300px' }}>
+                                                    <FiLock className="input-icon-left" />
+                                                    <input 
+                                                        type="text" 
+                                                        name="otp" 
+                                                        className="form-control ps-5 text-center fw-bold" 
+                                                        style={{ letterSpacing: '0.5rem', fontSize: '1.2rem' }}
+                                                        placeholder="000000" 
+                                                        maxLength="6"
+                                                        value={formData.otp} 
+                                                        onChange={handleChange} 
+                                                        required 
+                                                    />
+                                                </div>
+                                                <p className="mt-3 small text-muted">
+                                                    Didn't receive OTP? <span className="text-danger fw-bold" style={{cursor:'pointer'}} onClick={() => setOtpStep(false)}>Click here to retry</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <div className="row justify-content-center">
+                                    <div className="col-md-12 mb-3">
+                                        <label className="form-label">Email Address</label>
+                                        <div className="position-relative">
+                                            <FiMail className="input-icon-left" />
+                                            <input type="email" name="email" className="form-control ps-5" placeholder="email@example.com" value={formData.email} onChange={handleChange} required />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="row justify-content-center">
+                                    <div className="col-md-12 mb-3">
+                                        <label className="form-label">Password</label>
+                                        <div className="position-relative">
+                                            <FiLock className="input-icon-left" />
                                             <input 
-                                                type="file" 
-                                                name="proofDocument" 
-                                                className="border-0 bg-transparent w-100"
+                                                type={showPassword ? 'text' : 'password'} 
+                                                name="password" 
+                                                className="form-control ps-5 pe-5" 
+                                                placeholder="••••••••" 
+                                                value={formData.password} 
                                                 onChange={handleChange} 
                                                 required 
-                                                accept=".pdf,image/*"
-                                                style={{ fontSize: '0.85rem' }}
                                             />
+                                            <button 
+                                                type="button"
+                                                className="password-toggle-icon"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                            >
+                                                {showPassword ? <FiEyeOff /> : <FiEye />}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </>
-                        ) : (
-                            <div className="row justify-content-center">
-                                <div className="col-md-6 mb-3">
-                                    <label className="form-label">Email Address</label>
-                                    <div className="position-relative">
-                                        <FiMail className="input-icon-left" />
-                                        <input type="email" name="email" className="form-control ps-5" placeholder="email@example.com" value={formData.email} onChange={handleChange} required />
-                                    </div>
-                                </div>
-                                <div className="col-md-6 mb-3">
-                                    <label className="form-label">Password</label>
-                                    <div className="position-relative">
-                                        <FiLock className="input-icon-left" />
-                                        <input 
-                                            type={showPassword ? 'text' : 'password'} 
-                                            name="password" 
-                                            className="form-control ps-5 pe-5" 
-                                            placeholder="••••••••" 
-                                            value={formData.password} 
-                                            onChange={handleChange} 
-                                            required 
-                                        />
-                                        <button 
-                                            type="button"
-                                            className="password-toggle-icon"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                        >
-                                            {showPassword ? <FiEyeOff /> : <FiEye />}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
                         )}
 
                         <div className="row justify-content-center mt-2">
-                            <div className={view === 'login' ? 'col-md-6' : 'col-md-4'}>
+                            <div className={view === 'login' ? 'col-md-12' : 'col-md-4'}>
                                 <button type="submit" className="sa-login-btn w-100" disabled={loading}>
-                                    {loading ? 'Processing...' : view === 'login' ? 'Login' : 'Create Account'}
+                                    {loading ? 'Processing...' : view === 'login' ? 'Login' : otpStep ? 'Verify & Create Account' : 'Create Account'}
                                 </button>
                             </div>
                         </div>
