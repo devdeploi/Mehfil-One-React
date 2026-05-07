@@ -27,7 +27,13 @@ const InstallPrompt = () => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowPrompt(true);
+      
+      // Only show if it hasn't been shown in this "session" or marked as shown
+      const hasBeenShown = sessionStorage.getItem('pwa_prompt_shown');
+      if (!hasBeenShown) {
+        setShowPrompt(true);
+        sessionStorage.setItem('pwa_prompt_shown', 'true');
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -50,6 +56,7 @@ const InstallPrompt = () => {
 
   const handleDismiss = () => {
     setIsClosing(true);
+    sessionStorage.setItem('pwa_prompt_shown', 'true'); // Ensure it's marked as shown when dismissed
     setTimeout(() => {
       setShowPrompt(false);
       setIsClosing(false);

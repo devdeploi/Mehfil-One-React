@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/landing/LandingPage';
+import VenueDetailsPage from './pages/landing/VenueDetailsPage';
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin';
 import SuperAdminLayout from './pages/superadmin/SuperAdminLayout';
 import Dashboard from './pages/superadmin/Dashboard';
@@ -30,6 +31,7 @@ function App() {
       <InstallPrompt />
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/venue/:id" element={<VenueDetailsPage />} />
         <Route path="/superadmin/login" element={<SuperAdminLogin />} />
         <Route path="/vendor/register" element={<VendorRegistration />} />
         <Route path="/user/login" element={<UserAuthPage defaultView="login" />} />

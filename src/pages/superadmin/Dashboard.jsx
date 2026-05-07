@@ -1,35 +1,63 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { FaStore, FaUsers, FaBoxOpen, FaLayerGroup } from 'react-icons/fa';
+import { API_URL } from '../../utils/function';
 import '../../styles/superadmin/Dashboard.css';
 
 const Dashboard = () => {
-    // Placeholder data
+    const [statsData, setStatsData] = useState({
+        totalVendors: 0,
+        activeVendors: 0,
+        totalUsers: 0,
+        recentVendors: []
+    });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/superadmin/stats`);
+                if (response.status === 200) {
+                    setStatsData(response.data);
+                }
+            } catch (error) {
+                console.error('Error fetching dashboard stats:', error);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
     const stats = [
         {
             title: "Total Vendors",
-            value: 120,
+            value: statsData.totalVendors,
             icon: <FaStore />,
             colorClass: "icon-red"
         },
         {
             title: "Active Vendors",
-            value: 110,
+            value: statsData.activeVendors,
             icon: <FaBoxOpen />,
             colorClass: "icon-gold"
         },
         {
             title: "Total Users",
-            value: 5430,
+            value: statsData.totalUsers,
             icon: <FaUsers />,
             colorClass: "icon-black"
         },
         {
             title: "Active Plans",
-            value: 45,
+            value: 45, // Assuming this is still placeholder or should be fetched
             icon: <FaLayerGroup />,
             colorClass: "icon-red"
         }
     ];
+
+    const formatDate = (dateString) => {
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString(undefined, options);
+    };
 
     return (
         <div className="container-fluid">
@@ -45,7 +73,6 @@ const Dashboard = () => {
                             <div className="sa-icon-wrapper">
                                 {stat.icon}
                             </div>
-                            {/* Watermark Icon for Background Detail */}
                             <div className="sa-watermark-icon">
                                 {stat.icon}
                             </div>
@@ -54,9 +81,7 @@ const Dashboard = () => {
                 ))}
             </div>
 
-            {/* Recent Activity & System Status Section */}
             <div className="row g-4 mt-4">
-                {/* Recent Registrations Table */}
                 <div className="col-lg-8">
                     <div className="sa-card-wrapper">
                         <div className="d-flex justify-content-between align-items-center mb-4">
@@ -75,21 +100,15 @@ const Dashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {[
-                                        { name: "Tech Solutions Ltd", plan: "Gold", status: "Active", date: "Dec 29, 2024" },
-                                        { name: "Global Mart", plan: "Silver", status: "Pending", date: "Dec 28, 2024" },
-                                        { name: "Super Foods", plan: "Platinum", status: "Active", date: "Dec 28, 2024" },
-                                        { name: "Alpha Traders", plan: "Gold", status: "Review", date: "Dec 27, 2024" },
-                                        { name: "Urban Styles", plan: "Silver", status: "Active", date: "Dec 26, 2024" },
-                                    ].map((vendor, i) => (
+                                    {statsData.recentVendors.map((vendor, i) => (
                                         <tr key={i}>
-                                            <td className="fw-bold text-dark">{vendor.name}</td>
+                                            <td className="fw-bold text-dark">{vendor.fullName}</td>
                                             <td><span className={`badge sa-badge-${vendor.plan.toLowerCase()}`}>{vendor.plan}</span></td>
                                             <td>
                                                 <span className={`sa-status-dot ${vendor.status.toLowerCase()}`}></span>
                                                 {vendor.status}
                                             </td>
-                                            <td className="text-muted">{vendor.date}</td>
+                                            <td className="text-muted">{formatDate(vendor.createdAt)}</td>
                                             <td>
                                                 <button className="btn btn-sm sa-btn-icon">
                                                     <i className="bi bi-three-dots-vertical"></i>
@@ -97,6 +116,11 @@ const Dashboard = () => {
                                             </td>
                                         </tr>
                                     ))}
+                                    {statsData.recentVendors.length === 0 && (
+                                        <tr>
+                                            <td colSpan="5" className="text-center py-4 text-muted">No recent registrations found</td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
