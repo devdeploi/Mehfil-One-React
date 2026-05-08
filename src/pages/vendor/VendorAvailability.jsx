@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaChevronLeft, FaChevronRight, FaTimes, FaBuilding, FaSave, FaPhone, FaUser, FaClock } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaTimes, FaBuilding, FaSave, FaPhone, FaUser, FaClock, FaCalendarAlt, FaSun, FaMoon, FaCalendarDay, FaWallet, FaCreditCard, FaMobileAlt, FaCheckCircle, FaHourglassHalf, FaBan, FaUsers, FaRupeeSign, FaMapMarkerAlt, FaSnowflake, FaBolt, FaParking, FaVideo, FaMicrophone, FaCouch, FaShieldAlt, FaTint, FaConciergeBell, FaChair, FaMinus, FaPlus, FaTags } from 'react-icons/fa';
 import axios from 'axios';
 import { API_URL } from '../../utils/function';
 import '../../styles/superadmin/Dashboard.css';
@@ -90,7 +90,8 @@ const VendorAvailability = () => {
         shift: 'Morning',
         paymentMode: 'Offline - Cash',
         paymentStatus: 'Pending',
-        bookingStatus: 'Confirmed'
+        bookingStatus: 'Confirmed',
+        price: ''
     });
 
     const [viewMode, setViewMode] = useState('calendar'); // 'calendar', 'month', 'year'
@@ -139,13 +140,23 @@ const VendorAvailability = () => {
 
         setSelectedDate(dateStr);
         setEditingUpdates({});
+        const initialShift = hasMorning ? 'Evening' : (hasEvening ? 'Morning' : 'Morning');
+        const currentMahal = mahals.find(m => m.id === selectedMahalId);
+        let defaultPrice = '';
+        if (currentMahal) {
+            if (initialShift === 'Morning') defaultPrice = currentMahal.morningPrice || '';
+            else if (initialShift === 'Evening') defaultPrice = currentMahal.eveningPrice || '';
+            else if (initialShift === 'Full Day') defaultPrice = currentMahal.fullDayPrice || '';
+        }
+
         setFormData({
             customerName: '',
             customerPhone: '',
-            shift: hasMorning ? 'Evening' : (hasEvening ? 'Morning' : 'Morning'),
+            shift: initialShift,
             paymentMode: 'Offline - Cash',
             paymentStatus: 'Pending',
-            bookingStatus: 'Confirmed'
+            bookingStatus: 'Confirmed',
+            price: defaultPrice
         });
         setShowModal(true);
     };
@@ -200,7 +211,8 @@ const VendorAvailability = () => {
                 customerPhone: formData.customerPhone,
                 paymentMode: formData.paymentMode,
                 paymentStatus: formData.paymentStatus,
-                bookingStatus: formData.bookingStatus
+                bookingStatus: formData.bookingStatus,
+                price: formData.price
             };
 
             await axios.post(`${API_URL}/bookings`, payload);
@@ -398,6 +410,7 @@ const VendorAvailability = () => {
     const hasEvening = filteredModalBookings.some(b => b.shift === 'Evening');
     const isDayFull = hasFullDay || (hasMorning && hasEvening);
     const isPastSelected = selectedDate ? new Date(selectedDate) < new Date().setHours(0, 0, 0, 0) : false;
+    const currentMahal = mahals.find(m => m.id === selectedMahalId);
 
     return (
         <div className="card border-0 shadow-sm p-4 h-100">
@@ -408,16 +421,169 @@ const VendorAvailability = () => {
             {viewMode === 'year' && renderYearGrid()}
 
             {showModal && (
-                <div className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', zIndex: 1050 }}>
-                    <div className="bg-white rounded-4 shadow-lg" style={{ width: '400px', maxWidth: '90%' }}>
-                        <div className="d-flex justify-content-between align-items-center p-4 border-bottom">
-                            <div>
-                                <h3 className="modal-title fs-5 fw-bold mb-1">{filteredModalBookings.length > 0 ? 'Manage Bookings' : 'Add Booking'}</h3>
-                                <div className="text-muted small">{new Date(selectedDate).toDateString()}</div>
+                <div className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style={{ backgroundColor: 'rgba(10,10,20,0.72)', backdropFilter: 'blur(8px)', zIndex: 1050 }}>
+                    <div className="rounded-4 shadow-lg" style={{ width: '960px', maxWidth: '97vw', background: '#f4f6fb', border: '1px solid rgba(200,200,220,0.5)', display: 'flex', flexDirection: 'column', maxHeight: '93vh', overflow: 'hidden' }}>
+                        {/* ── Premium Modal Header ── */}
+                        <div className="d-flex justify-content-between align-items-center px-4 pt-4 pb-3" style={{ borderBottom: '1px solid rgba(200,210,230,0.6)' }}>
+                            <div className="d-flex align-items-center gap-3">
+                                <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: 46, height: 46, background: 'linear-gradient(135deg,#e63946,#c1121f)', boxShadow: '0 4px 14px rgba(220,53,69,0.35)' }}>
+                                    <FaCalendarAlt style={{ color: '#fff', fontSize: 18 }} />
+                                </div>
+                                <div>
+                                    <h3 className="mb-0 fw-bold" style={{ fontSize: '1.1rem', color: '#1a1a2e', letterSpacing: '-0.3px' }}>{filteredModalBookings.length > 0 ? 'Manage Bookings' : 'New Booking'}</h3>
+                                    <div style={{ fontSize: '0.78rem', color: '#6c757d', fontWeight: 500 }}>
+                                        <FaCalendarDay style={{ marginRight: 5, color: '#e63946' }} />
+                                        {new Date(selectedDate).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </div>
+                                </div>
                             </div>
-                            <button className="btn btn-sm btn-light rounded-circle" onClick={() => setShowModal(false)}><FaTimes /></button>
+                            <button onClick={() => setShowModal(false)} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'rgba(220,53,69,0.08)', color: '#e63946', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background='rgba(220,53,69,0.18)'} onMouseLeave={e => e.currentTarget.style.background='rgba(220,53,69,0.08)'}><FaTimes /></button>
                         </div>
-                        <div className="modal-body p-4" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+                        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+
+                            {/* ═══ LEFT PANEL: Venue Details ═══ */}
+                            {(() => {
+                                const mahal = currentMahal;
+                                if (!mahal) return null;
+                                const facilityList = [
+                                    { key: 'ac', label: 'AC', icon: <FaSnowflake /> },
+                                    { key: 'generator', label: 'Generator', icon: <FaBolt /> },
+                                    { key: 'parking', label: 'Parking', icon: <FaParking /> },
+                                    { key: 'cctv', label: 'CCTV', icon: <FaShieldAlt /> },
+                                    { key: 'soundSystem', label: 'Sound System', icon: <FaMicrophone /> },
+                                    { key: 'stage', label: 'Stage', icon: <FaConciergeBell /> },
+                                    { key: 'lift', label: 'Lift', icon: <FaCouch /> },
+                                    { key: 'drinkingWater', label: 'Water', icon: <FaTint /> },
+                                ].filter(f => mahal.facilities?.[f.key]);
+
+                                return (
+                                    <div style={{ width: 330, minWidth: 330, background: 'linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%)', overflowY: 'auto', overflowX: 'hidden', padding: '28px 22px', display: 'flex', flexDirection: 'column', gap: 20, position: 'relative' }}>
+                                        {/* Decorative blobs */}
+                                        <div style={{ position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: '50%', background: 'rgba(230,57,70,0.12)', pointerEvents: 'none' }} />
+                                        <div style={{ position: 'absolute', bottom: 40, left: -30, width: 100, height: 100, borderRadius: '50%', background: 'rgba(99,102,241,0.1)', pointerEvents: 'none' }} />
+
+                                        {/* Venue badge + name */}
+                                        <div>
+                                            <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '1.5px', color: '#e63946', textTransform: 'uppercase', background: 'rgba(230,57,70,0.12)', borderRadius: 20, padding: '3px 10px', display: 'inline-block', marginBottom: 10 }}>{mahal.mahalType || 'Venue'}</span>
+                                            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 6 }}>{mahal.mahalName}</div>
+                                            {(mahal.city || mahal.district) && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', color: '#94a3b8' }}>
+                                                    <FaMapMarkerAlt style={{ color: '#e63946', fontSize: 10 }} />
+                                                    {[mahal.street, mahal.city, mahal.district].filter(Boolean).join(', ')}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Selected date chip */}
+                                        <div style={{ background: 'rgba(230,57,70,0.12)', border: '1px solid rgba(230,57,70,0.25)', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                            <FaCalendarAlt style={{ color: '#e63946', fontSize: 13 }} />
+                                            <div>
+                                                <div style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Booking Date</div>
+                                                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff' }}>{new Date(selectedDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Eligible Discount Offer */}
+                                        {(mahal.discountMin > 0 || mahal.discountMax > 0) && (
+                                            <div style={{ background: 'linear-gradient(90deg, rgba(230,57,70,0.15) 0%, rgba(99,102,241,0.15) 100%)', border: '1px dashed rgba(230,57,70,0.4)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+                                                <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 4, background: 'linear-gradient(to bottom, #e63946, #6366f1)' }}></div>
+                                                <FaTags style={{ color: '#fca5a5', fontSize: 18 }} />
+                                                <div>
+                                                    <div style={{ fontSize: '0.62rem', color: '#fca5a5', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 800, marginBottom: 2 }}>Eligible Discount</div>
+                                                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+                                                        {mahal.discountMin || 0}% <span style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '0 3px', fontWeight: 600 }}>to</span> {mahal.discountMax || 0}%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Capacity + Price stats */}
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                            {[
+                                                { icon: <FaUsers style={{ color: '#60a5fa', fontSize: 14 }} />, label: 'Seating', val: mahal.seatingCapacity || '—' },
+                                                { icon: <FaChair style={{ color: '#a78bfa', fontSize: 14 }} />, label: 'Dining', val: mahal.diningCapacity || '—' },
+                                                { icon: <FaParking style={{ color: '#34d399', fontSize: 13 }} />, label: 'Parking', val: mahal.parkingCapacity || '—' },
+                                                { icon: <FaRupeeSign style={{ color: '#fbbf24', fontSize: 13 }} />, label: 'Full Day', val: mahal.fullDayPrice ? `₹${mahal.fullDayPrice.toLocaleString('en-IN')}` : '—' },
+                                            ].map(({ icon, label, val }) => (
+                                                <div key={label} style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                                                    <div style={{ marginBottom: 4 }}>{icon}</div>
+                                                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>{val}</div>
+                                                    <div style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Shift timings */}
+                                        {(mahal.morningTimeFrom || mahal.eveningTimeFrom) && (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                                <div style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '1px', color: '#475569', textTransform: 'uppercase' }}>Shift Timings</div>
+                                                {mahal.morningTimeFrom && (
+                                                    <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, padding: '9px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                        <FaSun style={{ color: '#f59e0b', fontSize: 13, flexShrink: 0 }} />
+                                                        <div style={{ flex: 1 }}>
+                                                            <div style={{ fontSize: '0.6rem', color: '#94a3b8', textTransform: 'uppercase' }}>Morning</div>
+                                                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#fbbf24' }}>{mahal.morningTimeFrom} – {mahal.morningTimeTo || '...'}</div>
+                                                        </div>
+                                                        {mahal.morningPrice && <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fbbf24' }}>₹{mahal.morningPrice.toLocaleString('en-IN')}</span>}
+                                                    </div>
+                                                )}
+                                                {mahal.eveningTimeFrom && (
+                                                    <div style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '9px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                        <FaMoon style={{ color: '#60a5fa', fontSize: 12, flexShrink: 0 }} />
+                                                        <div style={{ flex: 1 }}>
+                                                            <div style={{ fontSize: '0.6rem', color: '#94a3b8', textTransform: 'uppercase' }}>Evening</div>
+                                                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#60a5fa' }}>{mahal.eveningTimeFrom} – {mahal.eveningTimeTo || '...'}</div>
+                                                        </div>
+                                                        {mahal.eveningPrice && <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#60a5fa' }}>₹{mahal.eveningPrice.toLocaleString('en-IN')}</span>}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Contact */}
+                                        {mahal.mobile && (
+                                            <a href={`tel:${mahal.mobile}`} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 10, padding: '9px 14px', textDecoration: 'none' }}>
+                                                <FaPhone style={{ color: '#4ade80', fontSize: 13 }} />
+                                                <div>
+                                                    <div style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase' }}>Contact</div>
+                                                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff' }}>{mahal.mobile}</div>
+                                                </div>
+                                            </a>
+                                        )}
+
+                                        {/* Facilities */}
+                                        {facilityList.length > 0 && (
+                                            <div>
+                                                <div style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '1px', color: '#475569', textTransform: 'uppercase', marginBottom: 8 }}>Amenities</div>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                                    {facilityList.map(f => (
+                                                        <span key={f.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '4px 11px', fontSize: '0.7rem', color: '#cbd5e1', fontWeight: 500 }}>
+                                                            <span style={{ color: '#4ade80', fontSize: 10 }}>{f.icon}</span>{f.label}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Owner */}
+                                        {mahal.ownerName && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 'auto', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                                                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#e63946,#c1121f)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <FaUser style={{ color: '#fff', fontSize: 13 }} />
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase' }}>Owner</div>
+                                                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff' }}>{mahal.ownerName}</div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+
+                            {/* ═══ RIGHT PANEL: Bookings + Form ═══ */}
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', background: '#fff', borderRadius: '0 16px 16px 0' }}>
+
                             {filteredModalBookings.length > 0 && (
                                 <div className="mb-4">
                                     {filteredModalBookings.map((booking, idx) => {
@@ -512,42 +678,363 @@ const VendorAvailability = () => {
 
                             {!isDayFull && !isPastSelected && (
                                 <form onSubmit={handleSaveBooking}>
-                                    <h6 className="sa-section-title border-bottom pb-2 mb-3">New Booking ({mahals.find(m => m.id === selectedMahalId)?.hallName || mahals.find(m => m.id === selectedMahalId)?.mahalName})</h6>
-                                    <div className="mb-3"><input className="form-control" placeholder="Name" required value={formData.customerName} onChange={e => setFormData({ ...formData, customerName: e.target.value })} /></div>
-                                    <div className="mb-3"><input className="form-control" placeholder="Phone" required value={formData.customerPhone} onChange={e => setFormData({ ...formData, customerPhone: e.target.value })} /></div>
-                                    <div className="mb-3">
-                                        <select className="form-select" value={formData.shift} onChange={e => setFormData({ ...formData, shift: e.target.value })}>
-                                            <option value="Morning">Morning</option><option value="Evening">Evening</option><option value="Full Day">Full Day</option>
-                                        </select>
+                                    {/* ── Section Label ── */}
+                                    <div className="d-flex align-items-center gap-2 mb-3">
+                                        <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right,rgba(220,53,69,0.4),transparent)' }} />
+                                        <span style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '1.5px', color: '#e63946', textTransform: 'uppercase' }}>New Booking</span>
+                                        <div style={{ flex: 1, height: 1, background: 'linear-gradient(to left,rgba(220,53,69,0.4),transparent)' }} />
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Payment Mode</label>
-                                        <select className="form-select" value={formData.paymentMode} onChange={e => setFormData({ ...formData, paymentMode: e.target.value })}>
-                                            <option value="Offline - Cash">Offline - Cash</option>
-                                            <option value="Offline - UPI">Offline - UPI</option>
-                                            <option value="Online">Online</option>
-                                        </select>
-                                    </div>
-                                    <div className="row g-2 mb-3">
-                                        <div className="col-6">
-                                            <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Payment Status</label>
-                                            <select className="form-select" value={formData.paymentStatus} onChange={e => setFormData({ ...formData, paymentStatus: e.target.value })}>
-                                                <option value="Pending">Pending</option>
-                                                <option value="Paid">Paid</option>
-                                                <option value="Partial">Partial</option>
-                                            </select>
+
+                                    {/* ── Customer Details Row ── */}
+                                    <div className="row g-3 mb-3">
+                                        <div className="col-md-6">
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Customer Name</label>
+                                            <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor='#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor='#e9ecef'}>
+                                                <span style={{ padding: '0 12px', color: '#e63946' }}><FaUser style={{ fontSize: 13 }} /></span>
+                                                <input
+                                                    style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
+                                                    placeholder="Full name"
+                                                    required
+                                                    value={formData.customerName}
+                                                    onChange={e => setFormData({ ...formData, customerName: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="col-6">
-                                            <label className="form-label small fw-bold text-secondary text-uppercase" style={{ fontSize: '0.75rem' }}>Booking Status</label>
-                                            <select className="form-select" value={formData.bookingStatus} onChange={e => setFormData({ ...formData, bookingStatus: e.target.value })}>
-                                                <option value="Confirmed">Confirmed</option>
-                                                <option value="Pending">Pending</option>
-                                            </select>
+                                        <div className="col-md-6">
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Phone Number</label>
+                                            <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor='#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor='#e9ecef'}>
+                                                <span style={{ padding: '0 12px', color: '#e63946' }}><FaPhone style={{ fontSize: 13 }} /></span>
+                                                <input
+                                                    style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
+                                                    placeholder="Mobile number"
+                                                    required
+                                                    value={formData.customerPhone}
+                                                    onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                    <button type="submit" className="btn btn-danger w-100">Confirm Booking</button>
+
+                                    {/* ── Shift Selector ── */}
+                                    <div className="mb-3">
+                                        <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Booking Shift</label>
+                                        <div style={{ display: 'flex', gap: 0, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
+                                            {[
+                                                { val: 'Morning', icon: <FaSun style={{ fontSize: 13 }} />, color: '#f59e0b', disabled: hasMorning, defaultPrice: currentMahal?.morningPrice },
+                                                { val: 'Evening', icon: <FaMoon style={{ fontSize: 12 }} />, color: '#3b82f6', disabled: hasEvening, defaultPrice: currentMahal?.eveningPrice },
+                                                { val: 'Full Day', icon: <FaCalendarDay style={{ fontSize: 12 }} />, color: '#e63946', disabled: hasMorning || hasEvening, defaultPrice: currentMahal?.fullDayPrice }
+                                            ].map(({ val, icon, color, disabled, defaultPrice }, idx, arr) => {
+                                                const isActive = formData.shift === val;
+                                                return (
+                                                    <button
+                                                        key={val}
+                                                        type="button"
+                                                        disabled={disabled}
+                                                        onClick={() => {
+                                                            if (!disabled) {
+                                                                setFormData({ ...formData, shift: val, price: defaultPrice || '', appliedDiscount: '' });
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            flex: 1,
+                                                            padding: '9px 10px',
+                                                            borderRadius: 9,
+                                                            border: 'none',
+                                                            background: isActive ? '#fff' : 'transparent',
+                                                            color: isActive ? color : '#94a3b8',
+                                                            fontWeight: isActive ? 700 : 500,
+                                                            fontSize: '0.82rem',
+                                                            cursor: disabled ? 'not-allowed' : 'pointer',
+                                                            opacity: disabled ? 0.38 : 1,
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                                                            transition: 'all 0.18s',
+                                                            boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+                                                            whiteSpace: 'nowrap'
+                                                        }}
+                                                    >
+                                                        {icon}
+                                                        <span>{val}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* ── Pricing Row ── */}
+                                    <div className="row g-3 mb-3">
+                                        <div className="col-md-5">
+                                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 0 }}>Discount %</label>
+                                                {currentMahal && (currentMahal.discountMax > 0 || currentMahal.discountMin > 0) && (
+                                                    <span style={{ fontSize: '0.6rem', color: '#e63946', fontWeight: 700, background: '#fff3f4', padding: '1px 6px', borderRadius: 4 }}>Range: {currentMahal.discountMin || 0}% - {currentMahal.discountMax || 0}%</span>
+                                                )}
+                                            </div>
+                                            <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', padding: '4px' }} onFocusCapture={e => e.currentTarget.style.borderColor='#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor='#e9ecef'}>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current = Number(formData.appliedDiscount) || 0;
+                                                        const minAllowed = currentMahal?.discountMin || 0;
+                                                        let val = current - 1;
+                                                        
+                                                        // Jump straight to 0 (no discount) if we hit or go below the minimum
+                                                        if (current <= minAllowed) val = 0;
+                                                        
+                                                        const maxAllowed = currentMahal?.discountMax || 100;
+                                                        const finalDiscount = val <= 0 ? '' : Math.min(val, maxAllowed);
+                                                        
+                                                        let defaultPrice = 0;
+                                                        if (formData.shift === 'Morning') defaultPrice = currentMahal?.morningPrice || 0;
+                                                        else if (formData.shift === 'Evening') defaultPrice = currentMahal?.eveningPrice || 0;
+                                                        else if (formData.shift === 'Full Day') defaultPrice = currentMahal?.fullDayPrice || 0;
+                                                        
+                                                        let newPrice = defaultPrice;
+                                                        if (finalDiscount !== '' && newPrice > 0) newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
+                                                        setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
+                                                    }}
+                                                    style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', border: 'none', borderRadius: 8, color: '#64748b', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
+                                                    onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                                                    onMouseOut={e => e.currentTarget.style.background = '#f8fafc'}
+                                                >
+                                                    <FaMinus style={{ fontSize: '0.75rem' }} />
+                                                </button>
+                                                
+                                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <input
+                                                        type="number"
+                                                        style={{ width: '40px', border: 'none', outline: 'none', textAlign: 'center', fontSize: '1.05rem', color: '#1a1a2e', background: 'transparent', fontWeight: 800, padding: 0 }}
+                                                        placeholder="0"
+                                                        className="hide-spinners"
+                                                        value={formData.appliedDiscount || ''}
+                                                        onChange={e => {
+                                                            const val = Number(e.target.value);
+                                                            const maxAllowed = currentMahal?.discountMax || 100;
+                                                            const clamped = Math.min(val, maxAllowed);
+                                                            const finalDiscount = e.target.value === '' ? '' : Math.max(0, clamped);
+                                                            let defaultPrice = 0;
+                                                            if (formData.shift === 'Morning') defaultPrice = currentMahal?.morningPrice || 0;
+                                                            else if (formData.shift === 'Evening') defaultPrice = currentMahal?.eveningPrice || 0;
+                                                            else if (formData.shift === 'Full Day') defaultPrice = currentMahal?.fullDayPrice || 0;
+                                                            let newPrice = defaultPrice;
+                                                            if (finalDiscount !== '' && newPrice > 0) {
+                                                                newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
+                                                            }
+                                                            setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
+                                                        }}
+                                                        onBlur={() => {
+                                                            let current = Number(formData.appliedDiscount);
+                                                            if (!current || current === 0) return;
+                                                            const minAllowed = currentMahal?.discountMin || 0;
+                                                            if (current > 0 && current < minAllowed) {
+                                                                let defaultPrice = 0;
+                                                                if (formData.shift === 'Morning') defaultPrice = currentMahal?.morningPrice || 0;
+                                                                else if (formData.shift === 'Evening') defaultPrice = currentMahal?.eveningPrice || 0;
+                                                                else if (formData.shift === 'Full Day') defaultPrice = currentMahal?.fullDayPrice || 0;
+                                                                let newPrice = defaultPrice;
+                                                                if (newPrice > 0) newPrice = Math.round(newPrice - (newPrice * minAllowed / 100));
+                                                                setFormData({ ...formData, appliedDiscount: minAllowed, price: newPrice || '' });
+                                                            }
+                                                        }}
+                                                    />
+                                                    <span style={{ color: '#e63946', fontWeight: 800, fontSize: '0.9rem' }}>%</span>
+                                                </div>
+
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current = Number(formData.appliedDiscount) || 0;
+                                                        const minAllowed = currentMahal?.discountMin || 0;
+                                                        let val = current + 1;
+                                                        
+                                                        // If starting from 0, jump immediately to the minimum allowed discount!
+                                                        if (current === 0 && minAllowed > 0) val = minAllowed;
+                                                        // If somehow below min Allowed, jump to minAllowed
+                                                        else if (current > 0 && current < minAllowed) val = minAllowed;
+                                                        
+                                                        const maxAllowed = currentMahal?.discountMax || 100;
+                                                        const finalDiscount = Math.min(val, maxAllowed);
+                                                        
+                                                        let defaultPrice = 0;
+                                                        if (formData.shift === 'Morning') defaultPrice = currentMahal?.morningPrice || 0;
+                                                        else if (formData.shift === 'Evening') defaultPrice = currentMahal?.eveningPrice || 0;
+                                                        else if (formData.shift === 'Full Day') defaultPrice = currentMahal?.fullDayPrice || 0;
+                                                        
+                                                        let newPrice = defaultPrice;
+                                                        if (finalDiscount > 0 && newPrice > 0) newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
+                                                        setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
+                                                    }}
+                                                    style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff3f4', border: 'none', borderRadius: 8, color: '#e63946', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
+                                                    onMouseOver={e => e.currentTarget.style.background = '#ffe4e6'}
+                                                    onMouseOut={e => e.currentTarget.style.background = '#fff3f4'}
+                                                >
+                                                    <FaPlus style={{ fontSize: '0.75rem' }} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-7">
+                                            {(() => {
+                                                let basePrice = 0;
+                                                if (formData.shift === 'Morning') basePrice = currentMahal?.morningPrice || 0;
+                                                else if (formData.shift === 'Evening') basePrice = currentMahal?.eveningPrice || 0;
+                                                else if (formData.shift === 'Full Day') basePrice = currentMahal?.fullDayPrice || 0;
+                                                
+                                                let appliedDiscountPercent = Number(formData.appliedDiscount) || 0;
+                                                let discountAmount = Math.round(basePrice * (appliedDiscountPercent / 100));
+                                                let finalPrice = formData.price || basePrice;
+
+                                                return (
+                                                    <div style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)', borderRadius: 12, padding: '12px 16px', color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                                        <div className="d-flex justify-content-between align-items-center mb-1">
+                                                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Base Price</span>
+                                                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{basePrice.toLocaleString('en-IN')}</span>
+                                                        </div>
+                                                        <div className="d-flex justify-content-between align-items-center mb-2 pb-2" style={{ borderBottom: '1px dashed rgba(255,255,255,0.1)' }}>
+                                                            <span style={{ fontSize: '0.75rem', color: '#fca5a5' }}>Discount ({appliedDiscountPercent}%)</span>
+                                                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fca5a5' }}>- ₹{discountAmount.toLocaleString('en-IN')}</span>
+                                                        </div>
+                                                        <div className="d-flex justify-content-between align-items-end mt-auto">
+                                                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Agreed Price</span>
+                                                            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>₹{finalPrice.toLocaleString('en-IN')}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                    {/* ── Payment Mode ── */}
+                                    <div className="mb-3">
+                                        <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Payment Mode</label>
+                                        <div style={{ display: 'flex', gap: 0, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
+                                            {[
+                                                { val: 'Offline - Cash', label: 'Cash', icon: <FaWallet style={{ fontSize: 12 }} />, color: '#059669' },
+                                                { val: 'Offline - UPI', label: 'UPI', icon: <FaMobileAlt style={{ fontSize: 13 }} />, color: '#7c3aed' },
+                                                { val: 'Online', label: 'Online', icon: <FaCreditCard style={{ fontSize: 12 }} />, color: '#0369a1' }
+                                            ].map(({ val, label, icon, color }) => {
+                                                const isActive = formData.paymentMode === val;
+                                                return (
+                                                    <button
+                                                        key={val}
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, paymentMode: val })}
+                                                        style={{
+                                                            flex: 1,
+                                                            padding: '9px 10px',
+                                                            borderRadius: 9,
+                                                            border: 'none',
+                                                            background: isActive ? '#fff' : 'transparent',
+                                                            color: isActive ? color : '#94a3b8',
+                                                            fontWeight: isActive ? 700 : 500,
+                                                            fontSize: '0.82rem',
+                                                            cursor: 'pointer',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                                                            transition: 'all 0.18s',
+                                                            boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+                                                            whiteSpace: 'nowrap'
+                                                        }}
+                                                    >
+                                                        {icon}
+                                                        <span>{label}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* ── Status Row ── */}
+                                    <div className="row g-3 mb-4">
+                                        <div className="col-md-6">
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Payment Status</label>
+                                            <div style={{ display: 'flex', gap: 0, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
+                                                {[
+                                                    { val: 'Pending', icon: <FaHourglassHalf style={{ fontSize: 11 }} />, color: '#d97706' },
+                                                    { val: 'Paid', icon: <FaCheckCircle style={{ fontSize: 11 }} />, color: '#059669' },
+                                                    { val: 'Partial', icon: <FaWallet style={{ fontSize: 11 }} />, color: '#2563eb' }
+                                                ].map(({ val, icon, color }) => {
+                                                    const isActive = formData.paymentStatus === val;
+                                                    return (
+                                                        <button
+                                                            key={val}
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, paymentStatus: val })}
+                                                            style={{
+                                                                flex: 1,
+                                                                padding: '8px 6px',
+                                                                borderRadius: 9,
+                                                                border: 'none',
+                                                                background: isActive ? '#fff' : 'transparent',
+                                                                color: isActive ? color : '#94a3b8',
+                                                                fontWeight: isActive ? 700 : 500,
+                                                                fontSize: '0.74rem',
+                                                                cursor: 'pointer',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                                                                transition: 'all 0.18s',
+                                                                boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+                                                                whiteSpace: 'nowrap'
+                                                            }}
+                                                        >
+                                                            {icon}<span>{val}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Booking Status</label>
+                                            <div style={{ display: 'flex', gap: 0, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
+                                                {[
+                                                    { val: 'Confirmed', icon: <FaCheckCircle style={{ fontSize: 11 }} />, color: '#059669' },
+                                                    { val: 'Pending', icon: <FaHourglassHalf style={{ fontSize: 11 }} />, color: '#d97706' },
+                                                    { val: 'Cancelled', icon: <FaBan style={{ fontSize: 11 }} />, color: '#dc2626' }
+                                                ].map(({ val, icon, color }) => {
+                                                    const isActive = formData.bookingStatus === val;
+                                                    return (
+                                                        <button
+                                                            key={val}
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, bookingStatus: val })}
+                                                            style={{
+                                                                flex: 1,
+                                                                padding: '8px 6px',
+                                                                borderRadius: 9,
+                                                                border: 'none',
+                                                                background: isActive ? '#fff' : 'transparent',
+                                                                color: isActive ? color : '#94a3b8',
+                                                                fontWeight: isActive ? 700 : 500,
+                                                                fontSize: '0.74rem',
+                                                                cursor: 'pointer',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                                                                transition: 'all 0.18s',
+                                                                boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+                                                                whiteSpace: 'nowrap'
+                                                            }}
+                                                        >
+                                                            {icon}<span>{val}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* ── Submit Button ── */}
+                                    <button
+                                        type="submit"
+                                        style={{
+                                            width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+                                            background: 'linear-gradient(135deg,#e63946 0%,#c1121f 100%)',
+                                            color: '#fff', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.5px',
+                                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                                            boxShadow: '0 6px 20px rgba(220,53,69,0.4)', transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+                                        onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}
+                                    >
+                                        <FaCheckCircle style={{ fontSize: 16 }} />
+                                        Confirm Booking
+                                    </button>
                                 </form>
                             )}
+                            </div>
                         </div>
                     </div>
                 </div>

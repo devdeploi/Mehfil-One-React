@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import MahalView from './MahalView';
 import axios from 'axios';
 import { API_URL } from '../../utils/function';
-import { FaBuilding, FaMapMarkerAlt, FaUsers, FaSave, FaImage, FaTrash, FaPlusCircle, FaEdit, FaArrowLeft, FaRupeeSign, FaFilePdf, FaCamera, FaClock, FaCheckCircle, FaExclamationCircle, FaEye, FaEllipsisV } from 'react-icons/fa';
+import { FaBuilding, FaMapMarkerAlt, FaUsers, FaSave, FaImage, FaTrash, FaPlusCircle, FaEdit, FaArrowLeft, FaRupeeSign, FaFilePdf, FaCamera, FaClock, FaCheckCircle, FaExclamationCircle, FaEye, FaEllipsisV, FaTags } from 'react-icons/fa';
 import '../../styles/superadmin/Dashboard.css';
 
 
@@ -107,6 +107,8 @@ const MahalProfile = () => {
         extraHourPrice: '',
         advanceAmount: '',
         refundPolicy: '',
+        discountMin: '',
+        discountMax: '',
 
         // 5. Availability / Booking
         availableDays: 'All Days', // Default
@@ -592,10 +594,15 @@ const MahalProfile = () => {
     };
 
     const inputStyle = {
-        padding: '10px 15px',
-        borderRadius: '10px',
-        backgroundColor: '#f8fafc',
-        border: '1px solid #e2e8f0'
+        padding: '12px 16px',
+        borderRadius: '12px',
+        backgroundColor: '#fff',
+        border: '1.5px solid #e2e8f0',
+        fontSize: '0.95rem',
+        fontWeight: '500',
+        color: '#1e293b',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+        transition: 'all 0.2s ease-in-out',
     };
 
     const sectionTitleStyle = {
@@ -810,6 +817,97 @@ const MahalProfile = () => {
                                                 <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Full Day Price <span className="text-danger">*</span></label><input type="number" className="form-control" style={inputStyle} name="fullDayPrice" value={currentHall.fullDayPrice} onChange={handleFormChange} required /></div>
                                                 <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Extra Hour Charges</label><input type="number" className="form-control" style={inputStyle} name="extraHourPrice" value={currentHall.extraHourPrice} onChange={handleFormChange} /></div>
                                                 <div className="col-md-6"><label className="form-label fw-bold small text-secondary">Advance Amount</label><input type="number" className="form-control" style={inputStyle} name="advanceAmount" value={currentHall.advanceAmount} onChange={handleFormChange} /></div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-bold small text-secondary d-flex align-items-center gap-2">
+                                                        Discount Range
+                                                        <span style={{ fontSize: '0.6rem', fontWeight: 700, background: '#fff3f4', color: '#e63946', border: '1px solid rgba(230,57,70,0.25)', borderRadius: 6, padding: '1px 7px', letterSpacing: '0.5px' }}>0 – 100%</span>
+                                                    </label>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                                                        {/* MIN tile */}
+                                                        <div style={{ border: '1.5px solid #e9ecef', borderRadius: 14, padding: '14px 16px', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'border-color 0.2s' }}
+                                                            onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'}
+                                                            onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}
+                                                        >
+                                                            <div style={{ fontSize: '0.58rem', fontWeight: 700, color: '#e63946', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 6 }}>Min %</div>
+                                                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2 }}>
+                                                                <input
+                                                                    type="number"
+                                                                    name="discountMin"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    value={currentHall.discountMin || ''}
+                                                                    onChange={e => {
+                                                                        const v = Math.min(100, Math.max(0, Number(e.target.value)));
+                                                                        setCurrentHall(prev => ({ ...prev, discountMin: e.target.value === '' ? '' : v }));
+                                                                    }}
+                                                                    placeholder="0"
+                                                                    style={{ border: 'none', outline: 'none', background: 'transparent', width: '100%', fontSize: '2rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1, padding: 0 }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        {/* MAX tile */}
+                                                        <div style={{ border: '1.5px solid #e9ecef', borderRadius: 14, padding: '14px 16px', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'border-color 0.2s' }}
+                                                            onFocusCapture={e => e.currentTarget.style.borderColor = '#6366f1'}
+                                                            onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}
+                                                        >
+                                                            <div style={{ fontSize: '0.58rem', fontWeight: 700, color: '#6366f1', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 6 }}>Max %</div>
+                                                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2 }}>
+                                                                <input
+                                                                    type="number"
+                                                                    name="discountMax"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    value={currentHall.discountMax || ''}
+                                                                    onChange={e => {
+                                                                        const v = Math.min(100, Math.max(0, Number(e.target.value)));
+                                                                        setCurrentHall(prev => ({ ...prev, discountMax: e.target.value === '' ? '' : v }));
+                                                                    }}
+                                                                    placeholder="100"
+                                                                    style={{ border: 'none', outline: 'none', background: 'transparent', width: '100%', fontSize: '2rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1, padding: 0 }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {/* Unique Discount Indicator */}
+                                                    {(currentHall.discountMin !== '' || currentHall.discountMax !== '') && (
+                                                        <div style={{ marginTop: 14 }}>
+                                                            <div style={{
+                                                                background: 'linear-gradient(135deg, rgba(230,57,70,0.06) 0%, rgba(99,102,241,0.06) 100%)',
+                                                                border: '1.5px dashed rgba(230,57,70,0.3)',
+                                                                borderRadius: '12px',
+                                                                padding: '10px 14px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'space-between',
+                                                                position: 'relative',
+                                                                overflow: 'hidden'
+                                                            }}>
+                                                                {/* Decorative ambient blobs */}
+                                                                <div style={{ position: 'absolute', right: -15, top: -15, width: 60, height: 60, background: 'rgba(99,102,241,0.08)', borderRadius: '50%' }}></div>
+                                                                <div style={{ position: 'absolute', left: '30%', bottom: -20, width: 50, height: 50, background: 'rgba(230,57,70,0.08)', borderRadius: '50%' }}></div>
+
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, zIndex: 1 }}>
+                                                                    <div style={{ background: '#fff', borderRadius: '8px', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(230,57,70,0.15)' }}>
+                                                                        <FaTags style={{ color: '#e63946', fontSize: '1rem' }} />
+                                                                    </div>
+                                                                    <div>
+                                                                        <div style={{ fontSize: '0.62rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 2 }}>Active Offer</div>
+                                                                        <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1 }}>
+                                                                            <span style={{ color: '#e63946' }}>{currentHall.discountMin || 0}%</span> <span style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 2px' }}>to</span> <span style={{ color: '#6366f1' }}>{currentHall.discountMax || 0}%</span> Off
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div style={{ zIndex: 1, textAlign: 'right', borderLeft: '1.5px dashed rgba(230,57,70,0.2)', paddingLeft: 14 }}>
+                                                                    <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '0.5px' }}>APPLIES TO</div>
+                                                                    <div style={{ fontSize: '0.75rem', fontWeight: 800, background: 'linear-gradient(90deg, #e63946, #6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginTop: 2 }}>
+                                                                        All Bookings
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <div className="col-12"><label className="form-label fw-bold small text-secondary">Refund Policy</label><textarea className="form-control" style={inputStyle} rows="2" name="refundPolicy" value={currentHall.refundPolicy} onChange={handleFormChange}></textarea></div>
                                             </div>
                                         </div>

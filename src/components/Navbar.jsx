@@ -87,14 +87,14 @@ const Navbar = ({ scrollToSection, refs }) => {
         brandText: {
             fontSize: window.innerWidth < 375 ? '0.95rem' : (window.innerWidth < 768 ? '1.1rem' : '1.25rem'),
             fontWeight: 800,
-            color: '#111',
+            color: isScrolled ? '#111' : (isHomePage ? '#111' : 'white'),
             letterSpacing: '0.05em',
             textTransform: 'uppercase',
         },
         navLink: {
             fontSize: '0.9rem',
             fontWeight: 600,
-            color: '#333',
+            color: isScrolled ? '#333' : (isHomePage ? '#333' : 'rgba(255,255,255,0.9)'),
             textDecoration: 'none',
             padding: '8px 0',
             position: 'relative',
@@ -214,7 +214,7 @@ const Navbar = ({ scrollToSection, refs }) => {
                         style={{ width: '40px', height: '40px', transition: 'all 0.3s' }}
                         onClick={() => setMobileMenuOpen(true)}
                     >
-                        <FiMenu size={24} color="#111" />
+                        <FiMenu size={24} color={isScrolled ? "#111" : (isHomePage ? "#111" : "white")} />
                     </button>
                 </div>
             </nav>

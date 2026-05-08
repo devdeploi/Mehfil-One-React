@@ -325,8 +325,8 @@ const VenueDetailModal = ({ venue, initialTab, onClose }) => {
 
             <style>{`
                 .cursor-pointer { cursor: pointer; }
-                .animate-fade-in { animation: fadeIn 0.4s ease-out; }
-                .animate-fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
+                .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+                .animate-fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; }

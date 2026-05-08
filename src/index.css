@@ -26,3 +26,14 @@ body {
   display: block;
   place-items: unset;
 }
+
+/* Utility to hide native spinners for custom stepper inputs */
+.hide-spinners::-webkit-inner-spin-button,
+.hide-spinners::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.hide-spinners {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

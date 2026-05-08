@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../../utils/function';
 import { FiArrowLeft, FiCheckCircle, FiStar, FiCalendar, FiMapPin, FiUsers, FiInfo, FiMessageCircle, FiSend, FiClock } from 'react-icons/fi';
-import { FaRupeeSign, FaChevronRight } from 'react-icons/fa';
+import { FaRupeeSign, FaChevronRight, FaTags } from 'react-icons/fa';
 import Navbar from '../../components/Navbar';
 import Footer from './components/Footer';
 
@@ -150,31 +150,56 @@ const VenueDetailsPage = () => {
                 <img src={`${API_URL.replace('/api', '')}/${venue.coverImage}`} alt="" className="w-100 h-100 object-fit-cover" />
                 <div className="position-absolute top-0 left-0 w-100 h-100" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.85))' }}></div>
                 
-                <div className="position-absolute bottom-0 start-0 w-100 p-3 p-md-5">
+                <div className="position-absolute top-0 start-0 w-100 p-3 p-md-5" style={{ zIndex: 10 }}>
                     <div className="container">
                         <button 
                             onClick={() => navigate(-1)}
-                            className="btn btn-link text-white text-decoration-none d-flex align-items-center gap-2 mb-3 mb-md-4 p-0 animate-fade-in"
-                            style={{ fontWeight: 600, fontSize: '0.9rem' }}
+                            className="btn btn-link text-white text-decoration-none d-flex align-items-center gap-2 mb-0 p-0 animate-fade-in"
+                            style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '80px' }}
                         >
                             <FiArrowLeft /> Back to Discovery
                         </button>
+                    </div>
+                </div>
+                
+                <div className="position-absolute bottom-0 start-0 w-100 p-3 p-md-5">
+                    <div className="container">
                         <div className="row align-items-end g-4">
                             <div className="col-lg-8">
                                 <h1 className="venue-title fw-bold text-white mb-2 animate-fade-in-up" style={{ letterSpacing: '-0.03em' }}>{venue.mahalName}</h1>
+                                
+                                {/* Eligible Discount Highlight Chip */}
+                                {(venue.discountMin > 0 || venue.discountMax > 0) && (
+                                    <div className="d-inline-flex align-items-center mb-3 animate-fade-in-up delay-100" style={{ background: 'linear-gradient(90deg, rgba(230,57,70,0.9) 0%, rgba(99,102,241,0.9) 100%)', borderRadius: '100px', padding: '6px 16px', gap: '8px', border: '1px solid rgba(255,255,255,0.4)', backdropFilter: 'blur(10px)', boxShadow: '0 4px 15px rgba(230,57,70,0.5)' }}>
+                                        <FaTags className="text-white" style={{ fontSize: '0.9rem' }} />
+                                        <span className="text-white fw-bold" style={{ fontSize: '0.75rem', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                                            Special Offer: {venue.discountMin}% to {venue.discountMax}% Off
+                                        </span>
+                                    </div>
+                                )}
                                 <div className="d-flex flex-wrap align-items-center gap-3 gap-md-4 text-white-50 animate-fade-in-up delay-100">
                                     <div className="d-flex align-items-center gap-2 small"><FiMapPin className="text-danger" /> {venue.city}, {venue.district}</div>
                                     <div className="d-flex align-items-center gap-2 small"><FiUsers className="text-danger" /> {venue.seatingCapacity}+ Guests</div>
                                     <div className="d-flex align-items-center gap-2 small">
                                         <div className="d-flex gap-1 text-warning">
-                                            {[1,2,3,4,5].map(s => <FiStar key={s} size={12} fill={s <= 4 ? "currentColor" : "none"} />)}
+                                            {(() => {
+                                                const avg = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
+                                                return [1,2,3,4,5].map(s => (
+                                                    <FiStar key={s} size={12} fill={s <= Math.round(avg) ? "currentColor" : "none"} />
+                                                ));
+                                            })()}
                                         </div>
-                                        <span className="text-white fw-bold">4.8</span>
+                                        <span className="text-white fw-bold">
+                                            {reviews.length > 0 
+                                                ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
+                                                : "0.0"}
+                                        </span>
+                                        <span className="text-white-50">({reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'})</span>
                                     </div>
                                 </div>
                             </div>
                             <div className="col-lg-4 text-lg-end d-none d-lg-block">
-                                <div className="glass-card d-inline-block p-4 rounded-4 animate-fade-in-up delay-200" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                <div className="glass-card d-inline-block p-4 rounded-4" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.2)' }}>
                                     <div className="text-white-50 small fw-bold text-uppercase mb-1">Starting From</div>
                                     <div className="h2 fw-bold text-white mb-0 d-flex align-items-center justify-content-lg-end gap-2">
                                         <FaRupeeSign /> {venue.fullDayPrice?.toLocaleString()}
@@ -223,18 +248,85 @@ const VenueDetailsPage = () => {
                                     <h4 className="fw-bold mb-4">About the Venue</h4>
                                     <p className="text-muted lh-lg mb-5" style={{ textAlign: 'justify', fontSize: '1rem' }}>{venue.description}</p>
                                     
+                                    <div className="row g-4 mb-5">
+                                        <div className="col-md-4">
+                                            <div className="p-4 border rounded-4 bg-light text-center">
+                                                <div className="small text-muted fw-bold text-uppercase mb-2" style={{ fontSize: '0.65rem', letterSpacing: '0.1em' }}>Seating</div>
+                                                <div className="h4 fw-bold mb-0 text-dark">{venue.seatingCapacity}</div>
+                                                <div className="small text-muted">Guests</div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <div className="p-4 border rounded-4 bg-light text-center">
+                                                <div className="small text-muted fw-bold text-uppercase mb-2" style={{ fontSize: '0.65rem', letterSpacing: '0.1em' }}>Dining</div>
+                                                <div className="h4 fw-bold mb-0 text-dark">{venue.diningCapacity}</div>
+                                                <div className="small text-muted">Capacity</div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <div className="p-4 border rounded-4 bg-light text-center">
+                                                <div className="small text-muted fw-bold text-uppercase mb-2" style={{ fontSize: '0.65rem', letterSpacing: '0.1em' }}>Parking</div>
+                                                <div className="h4 fw-bold mb-0 text-dark">{venue.parkingCapacity}</div>
+                                                <div className="small text-muted">Vehicles</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <h5 className="fw-bold mb-4 mt-5 pt-3">Elite Amenities</h5>
-                                    <div className="row g-3">
+                                    <div className="row g-3 mb-5">
                                         {Object.entries(venue.facilities || {}).map(([key, val]) => (
                                             val && (
                                                 <div key={key} className="col-md-4 col-6">
-                                                    <div className="p-3 p-md-4 rounded-4 border bg-light h-100 d-flex flex-column align-items-center text-center gap-2">
+                                                    <div className="p-3 p-md-4 rounded-4 border bg-light h-100 d-flex flex-column align-items-center text-center gap-2 transition-all hover-scale-sm">
                                                         <div className="p-2 bg-white rounded-circle text-danger shadow-sm"><FiCheckCircle size={20} /></div>
                                                         <div className="fw-bold text-uppercase" style={{ fontSize: '0.6rem', letterSpacing: '0.1em' }}>{key}</div>
                                                     </div>
                                                 </div>
                                             )
                                         ))}
+                                    </div>
+
+                                    <div className="row g-4 mb-5">
+                                        <div className="col-md-6">
+                                            <h5 className="fw-bold mb-4 mt-4">Operational Timings</h5>
+                                            <div className="p-4 border rounded-4 bg-light">
+                                                <div className="d-flex align-items-center gap-4 mb-4">
+                                                    <div className="p-3 bg-white rounded-4 shadow-sm text-danger"><FiClock size={24} /></div>
+                                                    <div>
+                                                        <div className="small text-muted fw-bold text-uppercase" style={{ fontSize: '0.6rem' }}>Morning Shift</div>
+                                                        <div className="fw-bold h5 mb-0">{venue.morningTimeFrom} - {venue.morningTimeTo}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="d-flex align-items-center gap-4">
+                                                    <div className="p-3 bg-white rounded-4 shadow-sm text-danger"><FiClock size={24} /></div>
+                                                    <div>
+                                                        <div className="small text-muted fw-bold text-uppercase" style={{ fontSize: '0.6rem' }}>Evening Shift</div>
+                                                        <div className="fw-bold h5 mb-0">{venue.eveningTimeFrom} - {venue.eveningTimeTo}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <h5 className="fw-bold mb-4 mt-4">Location Details</h5>
+                                            <div className="p-4 border rounded-4 bg-light h-100">
+                                                <div className="d-flex align-items-start gap-3 mb-4">
+                                                    <div className="p-2 bg-white rounded-circle text-danger shadow-sm mt-1"><FiMapPin /></div>
+                                                    <div>
+                                                        <div className="small text-muted fw-bold text-uppercase" style={{ fontSize: '0.6rem' }}>Full Address</div>
+                                                        <div className="fw-bold">{venue.doorNo}, {venue.street}</div>
+                                                        <div className="text-muted small">{venue.city}, {venue.district} - {venue.pincode}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="d-flex align-items-start gap-3">
+                                                    <div className="p-2 bg-white rounded-circle text-danger shadow-sm mt-1"><FiInfo /></div>
+                                                    <div>
+                                                        <div className="small text-muted fw-bold text-uppercase" style={{ fontSize: '0.6rem' }}>Accessibility</div>
+                                                        <div className="fw-bold small">Prime Location in {venue.district}</div>
+                                                        <div className="text-muted small">Easily accessible by public transport</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <h5 className="fw-bold mb-4 mt-5 pt-3">Gallery Showcase</h5>
@@ -497,8 +589,8 @@ const VenueDetailsPage = () => {
                 }
                 .hide-scrollbar::-webkit-scrollbar { display: none; }
                 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-                .animate-fade-in { animation: fadeIn 0.6s ease-out; }
-                .animate-fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.19, 1, 0.22, 1); }
+                .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+                .animate-fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards; opacity: 0; }
                 .delay-100 { animation-delay: 0.1s; }
                 .delay-200 { animation-delay: 0.2s; }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
