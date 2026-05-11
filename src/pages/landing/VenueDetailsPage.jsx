@@ -218,7 +218,7 @@ const VenueDetailsPage = () => {
                         <div className="small text-white-50 text-uppercase fw-bold" style={{ fontSize: '0.6rem' }}>Starting Price</div>
                         <div className="h5 fw-bold mb-0"><FaRupeeSign size={14} /> {venue.fullDayPrice?.toLocaleString()}</div>
                     </div>
-                    <button className="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm">Book Now</button>
+
                 </div>
             </div>
 
@@ -558,9 +558,7 @@ const VenueDetailsPage = () => {
                                         <span className="text-muted h6 mb-0">Full Day</span>
                                         <span className="fw-bold text-danger h5 mb-0"><FaRupeeSign /> {venue.fullDayPrice?.toLocaleString()}</span>
                                     </div>
-                                    <button className="btn btn-danger w-100 py-3 rounded-pill fw-bold shadow-lg transition-all transform hover-scale-md">
-                                        Book This Venue
-                                    </button>
+
                                 </div>
                             </div>
                             
