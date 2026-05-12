@@ -66,7 +66,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
 
     // Populate user data
     useEffect(() => {
-        const storedUser = localStorage.getItem('vendor_user');
+        const storedUser = localStorage.getItem('user') || localStorage.getItem('vendor_user');
         if (storedUser) {
             const user = JSON.parse(storedUser);
             setFormData(prev => ({

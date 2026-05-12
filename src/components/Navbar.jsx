@@ -11,7 +11,7 @@ const Navbar = ({ scrollToSection, refs }) => {
 
     useEffect(() => {
         const checkUser = () => {
-            const storedUser = localStorage.getItem('user');
+            const storedUser = localStorage.getItem('user') || localStorage.getItem('vendor_user');
             if (storedUser) {
                 setUser(JSON.parse(storedUser));
             } else {
@@ -204,7 +204,7 @@ const Navbar = ({ scrollToSection, refs }) => {
                                 }}
                             >
                                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', marginRight: '4px' }}></div>
-                                {user.name.split(' ')[0]}
+                                { (user.name || user.fullName || 'User').split(' ')[0] }
                             </button>
                         ) : (
                             <button
