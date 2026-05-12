@@ -9,8 +9,8 @@ const Pricing = ({ plansRef }) => {
     return (
         <section className="lp-section" ref={plansRef}>
             <div className="lp-section-header">
-                <h2 className="lp-section-title">Exclusive Membership</h2>
-                <p className="lp-section-subtitle">Choose the tier that complements your ambition.</p>
+                <h2 className="lp-section-title">Vendor Membership</h2>
+                <p className="lp-section-subtitle">Select the membership plan that best fits your business.</p>
             </div>
             <div className="lp-plans-grid">
                 {SUBSCRIPTION_PLANS.map((plan) => (

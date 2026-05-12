@@ -95,6 +95,7 @@ const VendorRegistration = () => {
             businessName: '',
             gstNumber: '',
             businessAddress: '',
+            upiId: '',
             proofDocument: null,
             ...saved?.formData
         };
@@ -105,6 +106,7 @@ const VendorRegistration = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordError, setPasswordError] = useState('');
     const [passwordStrength, setPasswordStrength] = useState(0);
+    const [upiError, setUpiError] = useState('');
     const [shakeTrigger, setShakeTrigger] = useState(0);
 
 
@@ -207,6 +209,7 @@ const VendorRegistration = () => {
         }
 
         if (name === 'password' || name === 'confirmPassword') setPasswordError('');
+        if (name === 'upiId') setUpiError('');
         if (name === 'password') {
             setPasswordStrength(value ? calculateStrength(value) : 0);
         }
@@ -220,6 +223,15 @@ const VendorRegistration = () => {
                 setShakeTrigger(prev => prev + 1);
                 return;
             }
+
+            // UPI Validation
+            const upiRegex = /^[a-zA-Z0-9.-]+@[a-zA-Z0-9.-]+$/;
+            if (!upiRegex.test(formData.upiId)) {
+                setUpiError('Please enter a valid UPI ID (e.g. user@bank)');
+                setShakeTrigger(prev => prev + 1);
+                return;
+            }
+
             // Trigger OTP Sending
             handleSendOtp();
             return;
@@ -315,6 +327,7 @@ const VendorRegistration = () => {
             formDataPayload.append('businessName', formData.businessName);
             formDataPayload.append('gstNumber', formData.gstNumber);
             formDataPayload.append('businessAddress', formData.businessAddress);
+            formDataPayload.append('upiId', formData.upiId);
             formDataPayload.append('paymentId', paymentId);
             formDataPayload.append('orderId', orderId);
             if (formData.proofDocument) {
@@ -590,7 +603,7 @@ const VendorRegistration = () => {
                                                     <label className="form-label">Phone</label>
                                                     <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} className="form-control" placeholder="+1 234..." />
                                                 </div>
-                                                <div className="col-12">
+                                                <div className="col-md-6">
                                                     <label className="form-label">Email Address</label>
                                                     <div className="input-group">
                                                         <input
@@ -608,6 +621,36 @@ const VendorRegistration = () => {
                                                             <span className="input-group-text bg-success text-white border-success">
                                                                 <i className="bi bi-check-circle-fill"></i>
                                                             </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">UPI ID</label>
+                                                    <div className="position-relative">
+                                                        <input
+                                                            type="text"
+                                                            name="upiId"
+                                                            required
+                                                            value={formData.upiId}
+                                                            onChange={handleInputChange}
+                                                            className={`form-control ${formData.upiId && !/^[a-zA-Z0-9.-]+@[a-zA-Z0-9.-]+$/.test(formData.upiId) ? 'is-invalid' : (formData.upiId && /^[a-zA-Z0-9.-]+@[a-zA-Z0-9.-]+$/.test(formData.upiId) ? 'is-valid' : '')}`}
+                                                            placeholder="user@bank"
+                                                            style={{ paddingRight: '40px' }}
+                                                        />
+                                                        {formData.upiId && (
+                                                            <div className="position-absolute end-0 top-50 translate-middle-y me-3 animate-fade-in" style={{ zIndex: 5 }}>
+                                                                {/^[a-zA-Z0-9.-]+@[a-zA-Z0-9.-]+$/.test(formData.upiId) ? (
+                                                                    <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '1.1rem' }}></i>
+                                                                ) : (
+                                                                    <i className="bi bi-x-circle-fill text-danger" style={{ fontSize: '1.1rem' }}></i>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {upiError && (
+                                                            <div className="invalid-feedback animate-shake d-flex align-items-center gap-1 mt-1">
+                                                                <i className="bi bi-exclamation-circle"></i>
+                                                                {upiError}
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>

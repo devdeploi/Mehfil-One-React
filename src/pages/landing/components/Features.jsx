@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaUserTie, FaPaintBrush, FaCalendarAlt, FaBell, FaGem, FaShieldAlt, FaChartLine, FaHeadset } from 'react-icons/fa';
+import { FaUserTie, FaPaintBrush, FaCalendarAlt, FaBell, FaGem, FaShieldAlt, FaChartLine, FaHeadset, FaMobileAlt } from 'react-icons/fa';
 
 const Features = ({ aboutRef }) => {
     const features = [
@@ -42,6 +42,11 @@ const Features = ({ aboutRef }) => {
             icon: <FaHeadset />,
             title: "Concierge Support",
             description: "Our dedicated support team is available 24/7 to assist you with priority service."
+        },
+        {
+            icon: <FaMobileAlt />,
+            title: "Mobile Management",
+            description: "Manage your bookings and inquiries on the go with our fully responsive mobile platform."
         }
     ];
 

@@ -115,6 +115,11 @@ const VendorLayout = () => {
                         <i className="bi bi-calendar-check"></i>
                         <span className="sa-dock-label">Dates</span>
                     </NavLink>
+
+                    <NavLink to="/vendor/bookings" className="sa-dock-item">
+                        <i className="bi bi-list-ul"></i>
+                        <span className="sa-dock-label">Bookings</span>
+                    </NavLink>
                 </div>
             </nav>
         </div>

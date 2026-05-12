@@ -38,12 +38,8 @@ const Venues = ({ venuesRef }) => {
             }
         };
 
-        if (user) {
-            fetchAllVenues();
-        } else {
-            setLoading(false);
-        }
-    }, [user]);
+        fetchAllVenues();
+    }, []);
 
     const handleOpenDetail = (venue, tab = 'details') => {
         navigate(`/venue/${venue._id}`, { state: { initialTab: tab } });
@@ -56,98 +52,11 @@ const Venues = ({ venuesRef }) => {
                     <span className="badge rounded-pill px-4 py-2 mb-3 shadow-sm" style={{ background: 'rgba(200, 16, 46, 0.1)', color: '#C8102E', letterSpacing: '0.1em', fontWeight: 800, fontSize: '0.7rem' }}>
                         CURATED SELECTION
                     </span>
-                    <h2 className="display-4 fw-bold mb-3" style={{ letterSpacing: '-0.02em', color: '#111' }}>Featured Venues</h2>
+                    <h2 className="display-4 fw-bold mb-3" style={{ letterSpacing: '-0.02em', color: '#111' }}>Our Best Wedding Halls</h2>
                     <p className="lead text-muted mx-auto" style={{ maxWidth: '600px' }}>Discover the most exquisite spaces for your once-in-a-lifetime celebrations.</p>
                 </div>
 
-                {!user ? (
-                    <div className="lock-open-section position-relative" style={{ minHeight: '520px', borderRadius: '28px', overflow: 'hidden' }}>
-
-                        {/* Blurred mock venue cards as background */}
-                        <div style={{
-                            position: 'absolute', inset: 0,
-                            display: 'flex', gap: '20px', padding: '24px',
-                            filter: 'blur(5px) saturate(0.8)',
-                            opacity: 0.45,
-                            pointerEvents: 'none',
-                            userSelect: 'none',
-                            transform: 'scale(1.05)',
-                        }}>
-                            {[
-                                { bg: 'linear-gradient(135deg,#1a1a2e,#C8102E)', title: 'Royal Mahal', loc: 'Chennai, Tamil Nadu', price: '₹85,000' },
-                                { bg: 'linear-gradient(135deg,#16213e,#e63946)', title: 'Grand Celebrations', loc: 'Coimbatore, Tamil Nadu', price: '₹1,20,000' },
-                                { bg: 'linear-gradient(135deg,#0f3460,#C8102E)', title: 'Elite Banquet', loc: 'Madurai, Tamil Nadu', price: '₹95,000' },
-                            ].map((v, i) => (
-                                <div key={i} style={{ flex: '1', minWidth: '220px', background: 'white', borderRadius: '20px', overflow: 'hidden' }}>
-                                    <div style={{ height: '200px', background: v.bg, position: 'relative' }}>
-                                        <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'white', borderRadius: '20px', padding: '4px 10px', fontSize: '0.7rem', fontWeight: 700, color: '#111', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            ★ 4.{8 - i}
-                                        </div>
-                                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px', background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', color: 'white', fontSize: '0.75rem', fontWeight: 600 }}>
-                                            📍 {v.loc}
-                                        </div>
-                                    </div>
-                                    <div style={{ padding: '16px' }}>
-                                        <div style={{ fontWeight: 700, fontSize: '1rem', color: '#111', marginBottom: '6px' }}>{v.title}</div>
-                                        <div style={{ fontSize: '0.75rem', color: '#999', marginBottom: '12px' }}>500+ Guests · AC Hall</div>
-                                        <div style={{ height: '1px', background: '#f0f0f0', marginBottom: '12px' }} />
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <div style={{ fontSize: '0.6rem', fontWeight: 700, color: '#aaa', textTransform: 'uppercase' }}>Starting From</div>
-                                            <div style={{ fontWeight: 800, fontSize: '1rem', color: '#C8102E' }}>{v.price}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Dark overlay */}
-                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(2px)', zIndex: 1 }} />
-
-                        {/* Animated orbs */}
-                        <div className="lock-orb lock-orb-1" />
-                        <div className="lock-orb lock-orb-2" />
-                        <div className="lock-orb lock-orb-3" />
-
-                        {/* Open layout content */}
-                        <div className="text-center position-relative py-5 px-3" style={{ zIndex: 2 }}>
-                            <div className="lock-eyebrow mb-4">MEMBERS ONLY</div>
-
-                            <h2 className="fw-bold mb-4" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: '#111', lineHeight: 1.15 }}>
-                                Discover Elite Mahals<br />
-                                <span style={{ color: '#C8102E' }}>Made for Your Celebration</span>
-                            </h2>
-
-                            <p className="mx-auto mb-5" style={{ maxWidth: '460px', color: '#555', lineHeight: 1.8, fontSize: '0.95rem' }}>
-                                Sign in to browse our handpicked collection of premium wedding halls, view real-time availability, and unlock exclusive pricing.
-                            </p>
-
-                            {/* Stats */}
-                            <div className="d-flex flex-wrap justify-content-center gap-5 mb-5">
-                                {[
-                                    { num: '50+', label: 'Premium Venues' },
-                                    { num: '100%', label: 'Verified Listings' },
-                                    { num: 'Free', label: 'To Register' },
-                                ].map(s => (
-                                    <div key={s.label} className="text-center">
-                                        <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#111', letterSpacing: '-0.02em' }}>{s.num}</div>
-                                        <div style={{ fontSize: '0.68rem', fontWeight: 600, color: '#999', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px' }}>{s.label}</div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* CTAs */}
-                            <div className="d-flex flex-wrap justify-content-center gap-3">
-                                <button className="lock-btn-primary" onClick={() => navigate('/user/register')}>
-                                    <span>Get Started — It's Free</span>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                                </button>
-                                <button className="lock-btn-secondary" onClick={() => navigate('/user/login')}>
-                                    Sign In to Account
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ) : loading ? (
+                {loading ? (
                     <div className="d-flex justify-content-center py-5">
                         <div className="spinner-border text-danger" role="status">
                             <span className="visually-hidden">Loading...</span>
@@ -207,10 +116,20 @@ const Venues = ({ venuesRef }) => {
                                             <div className="mt-4">
                                                 <button 
                                                     onClick={() => handleOpenDetail(venue, 'details')}
-                                                    className="btn btn-dark w-100 rounded-4 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm transition-all transform hover-scale-md"
-                                                    style={{ fontSize: '0.9rem', letterSpacing: '0.02em' }}
+                                                    className="btn-premium-action w-100 rounded-4 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm transition-all transform hover-scale-md"
+                                                    style={{ 
+                                                        fontSize: '0.9rem', 
+                                                        letterSpacing: '0.02em',
+                                                        background: 'linear-gradient(90deg, #0f0f0f 0%, #440a0e 40%, #dc3545 100%)',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        position: 'relative',
+                                                        overflow: 'hidden'
+                                                    }}
                                                 >
-                                                    Explore Venue & Availability <FaChevronRight size={12} />
+                                                    <span style={{ position: 'relative', zIndex: 2 }}>Explore Mahal & Availability</span>
+                                                    <FaChevronRight size={12} style={{ position: 'relative', zIndex: 2 }} />
+                                                    <div className="btn-sweep"></div>
                                                 </button>
                                             </div>
                                         </div>
@@ -219,19 +138,17 @@ const Venues = ({ venuesRef }) => {
                             ))
                         ) : (
                             <div className="col-12 text-center py-5">
-                                <h3 className="text-muted">No venues available at the moment.</h3>
+                                <h3 className="text-muted">No Mahal's available at the moment.</h3>
                             </div>
                         )}
                     </div>
                 )}
                 
-                {user && (
-                    <div className="text-center mt-5 pt-4">
-                        <button className="btn btn-outline-dark rounded-pill px-5 py-3 fw-bold transition-all">
-                            Discover All Venues
-                        </button>
-                    </div>
-                )}
+                <div className="text-center mt-5 pt-4">
+                    <button className="btn btn-outline-dark rounded-pill px-5 py-3 fw-bold transition-all">
+                        Discover All Mahal's
+                    </button>
+                </div>
             </div>
 
             <style>{`

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import MahalView from './MahalView';
 import axios from 'axios';
 import { API_URL } from '../../utils/function';
-import { FaBuilding, FaMapMarkerAlt, FaUsers, FaSave, FaImage, FaTrash, FaPlusCircle, FaEdit, FaArrowLeft, FaRupeeSign, FaFilePdf, FaCamera, FaClock, FaCheckCircle, FaExclamationCircle, FaEye, FaEllipsisV, FaTags } from 'react-icons/fa';
+import { FaBuilding, FaMapMarkerAlt, FaUsers, FaSave, FaImage, FaTrash, FaPlusCircle, FaEdit, FaArrowLeft, FaRupeeSign, FaFilePdf, FaCamera, FaClock, FaCheckCircle, FaExclamationCircle, FaEye, FaEllipsisV, FaTags, FaSnowflake, FaMusic, FaParking, FaChevronCircleUp, FaTint, FaBroom, FaLayerGroup, FaVideo, FaBed, FaUtensils, FaStore, FaPaintBrush } from 'react-icons/fa';
 import '../../styles/superadmin/Dashboard.css';
 
 
@@ -119,16 +119,26 @@ const MahalProfile = () => {
 
         // 6. Facilities / Amenities
         ac: false,
+        acPrice: '',
         generator: false,
+        generatorPrice: '',
         powerSupply: '',
         parking: false,
+        parkingPrice: '',
         lift: false,
-        restRooms: '',
+        liftPrice: '',
         drinkingWater: false,
+        drinkingWaterPrice: '',
         cleaning: false,
+        cleaningPrice: '',
         soundSystem: false,
+        soundSystemPrice: '',
         stage: false,
+        stagePrice: '',
         cctv: false,
+        cctvPrice: '',
+        rooms: false,
+        roomsPrice: '',
 
         // 7. Images / Media (Mixing Valid URLs and File objects for upload)
         coverImage: null,
@@ -216,14 +226,25 @@ const MahalProfile = () => {
         // Flatten facilities for frontend toggles if they come as object
         if (hall.facilities) {
             completeHall.ac = hall.facilities.ac;
+            completeHall.acPrice = hall.facilities.acPrice || '';
             completeHall.generator = hall.facilities.generator;
+            completeHall.generatorPrice = hall.facilities.generatorPrice || '';
             completeHall.parking = hall.facilities.parking;
+            completeHall.parkingPrice = hall.facilities.parkingPrice || '';
             completeHall.lift = hall.facilities.lift;
+            completeHall.liftPrice = hall.facilities.liftPrice || '';
             completeHall.drinkingWater = hall.facilities.drinkingWater;
+            completeHall.drinkingWaterPrice = hall.facilities.drinkingWaterPrice || '';
             completeHall.cleaning = hall.facilities.cleaning;
+            completeHall.cleaningPrice = hall.facilities.cleaningPrice || '';
             completeHall.soundSystem = hall.facilities.soundSystem;
+            completeHall.soundSystemPrice = hall.facilities.soundSystemPrice || '';
             completeHall.stage = hall.facilities.stage;
+            completeHall.stagePrice = hall.facilities.stagePrice || '';
             completeHall.cctv = hall.facilities.cctv;
+            completeHall.cctvPrice = hall.facilities.cctvPrice || '';
+            completeHall.rooms = hall.facilities.rooms;
+            completeHall.roomsPrice = hall.facilities.roomsPrice || '';
         }
 
         return completeHall;
@@ -477,14 +498,25 @@ const MahalProfile = () => {
         // Facilities Boolean Map
         const facilities = {
             ac: currentHall.ac,
+            acPrice: currentHall.acPrice || 0,
             generator: currentHall.generator,
+            generatorPrice: currentHall.generatorPrice || 0,
             parking: currentHall.parking,
+            parkingPrice: currentHall.parkingPrice || 0,
             lift: currentHall.lift,
+            liftPrice: currentHall.liftPrice || 0,
             drinkingWater: currentHall.drinkingWater,
+            drinkingWaterPrice: currentHall.drinkingWaterPrice || 0,
             cleaning: currentHall.cleaning,
+            cleaningPrice: currentHall.cleaningPrice || 0,
             soundSystem: currentHall.soundSystem,
+            soundSystemPrice: currentHall.soundSystemPrice || 0,
             stage: currentHall.stage,
-            cctv: currentHall.cctv
+            stagePrice: currentHall.stagePrice || 0,
+            cctv: currentHall.cctv,
+            rooms: currentHall.rooms,
+            roomsPrice: currentHall.roomsPrice || 0,
+            cctvPrice: currentHall.cctvPrice || 0
         };
         formData.append('facilities', JSON.stringify(facilities));
 
@@ -962,8 +994,200 @@ const MahalProfile = () => {
                                         </div>
                                     </div>
 
-                                    {/* 6. Facilities (Condensed) */}
-                                    <div className="col-12 col-xl-10"><div className="card border-0 shadow-sm rounded-4 p-4"><h4 style={sectionTitleStyle}>6. Facilities / Amenities</h4><div className="row g-3"><div className="col-12 d-flex flex-wrap gap-4 mb-3">{['ac', 'generator', 'parking', 'lift', 'drinkingWater', 'cleaning', 'soundSystem', 'stage', 'cctv'].map(key => (<div className="form-check form-switch" key={key}><input className="form-check-input" type="checkbox" role="switch" id={key} name={key} checked={currentHall[key]} onChange={handleFormChange} /><label className="form-check-label fw-bold small text-capitalize" htmlFor={key}>{key.replace(/([A-Z])/g, ' $1').trim()} Available</label></div>))}</div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Power Supply Details</label><input type="text" className="form-control" style={inputStyle} name="powerSupply" value={currentHall.powerSupply} onChange={handleFormChange} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Rest Rooms Count</label><input type="number" className="form-control" style={inputStyle} name="restRooms" value={currentHall.restRooms} onChange={handleFormChange} /></div></div></div></div>
+                                    {/* 6. Facilities (Refactored for Precise Pricing) */}
+                                    <div className="col-12 col-xl-10">
+                                        <div className="card border-0 shadow-sm rounded-4 p-4">
+                                            <h4 style={sectionTitleStyle}>6. Facilities / Amenities</h4>
+                                            <div className="row g-4">
+                                                {/* Specialized AC Selection */}
+                                                <div className="col-12">
+                                                    <div className="p-3 rounded-4 border bg-light d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <div className="bg-white p-3 rounded-circle shadow-sm">
+                                                                <FaSnowflake className={currentHall.ac ? 'text-primary' : 'text-muted'} size={20} />
+                                                            </div>
+                                                            <div>
+                                                                <h6 className="fw-bold mb-1">Air Conditioning (AC)</h6>
+                                                                <p className="small text-muted mb-0">Specify if your venue provides cooling facilities</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <div className="form-check form-switch mb-0">
+                                                                <input 
+                                                                    className="form-check-input" 
+                                                                    type="checkbox" 
+                                                                    role="switch" 
+                                                                    id="ac" 
+                                                                    name="ac" 
+                                                                    checked={currentHall.ac} 
+                                                                    onChange={handleFormChange} 
+                                                                />
+                                                                <label className="form-check-label fw-bold small" htmlFor="ac">
+                                                                    {currentHall.ac ? 'AC Available' : 'Non-AC Only'}
+                                                                </label>
+                                                            </div>
+                                                            {currentHall.ac && (
+                                                                <div className="input-group" style={{ width: '180px' }}>
+                                                                    <span className="input-group-text bg-white border-end-0 small fw-bold">₹</span>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        className="form-control border-start-0 ps-0" 
+                                                                        style={inputStyle} 
+                                                                        placeholder="Extra Price" 
+                                                                        name="acPrice" 
+                                                                        value={currentHall.acPrice} 
+                                                                        onChange={handleFormChange} 
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Specialized Generator Selection */}
+                                                <div className="col-12">
+                                                    <div className="p-3 rounded-4 border bg-light d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <div className="bg-white p-3 rounded-circle shadow-sm">
+                                                                <FaExclamationCircle className={currentHall.generator ? 'text-warning' : 'text-muted'} size={20} />
+                                                            </div>
+                                                            <div>
+                                                                <h6 className="fw-bold mb-1">Power Backup (Generator)</h6>
+                                                                <p className="small text-muted mb-0">Does your venue have a dedicated power backup?</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <div className="form-check form-switch mb-0">
+                                                                <input 
+                                                                    className="form-check-input" 
+                                                                    type="checkbox" 
+                                                                    role="switch" 
+                                                                    id="generator" 
+                                                                    name="generator" 
+                                                                    checked={currentHall.generator} 
+                                                                    onChange={handleFormChange} 
+                                                                />
+                                                                <label className="form-check-label fw-bold small" htmlFor="generator">
+                                                                    {currentHall.generator ? 'Generator Available' : 'No Backup'}
+                                                                </label>
+                                                            </div>
+                                                            {currentHall.generator && (
+                                                                <div className="input-group" style={{ width: '180px' }}>
+                                                                    <span className="input-group-text bg-white border-end-0 small fw-bold">₹</span>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        className="form-control border-start-0 ps-0" 
+                                                                        style={inputStyle} 
+                                                                        placeholder="Fuel/Service Fee" 
+                                                                        name="generatorPrice" 
+                                                                        value={currentHall.generatorPrice} 
+                                                                        onChange={handleFormChange} 
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Specialized Sound System Selection */}
+                                                <div className="col-12">
+                                                    <div className="p-3 rounded-4 border bg-light d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <div className="bg-white p-3 rounded-circle shadow-sm">
+                                                                <FaMusic className={currentHall.soundSystem ? 'text-danger' : 'text-muted'} size={20} />
+                                                            </div>
+                                                            <div>
+                                                                <h6 className="fw-bold mb-1">Audio / Sound System</h6>
+                                                                <p className="small text-muted mb-0">Professional audio equipment for your events</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="d-flex align-items-center gap-3">
+                                                            <div className="form-check form-switch mb-0">
+                                                                <input 
+                                                                    className="form-check-input" 
+                                                                    type="checkbox" 
+                                                                    role="switch" 
+                                                                    id="soundSystem" 
+                                                                    name="soundSystem" 
+                                                                    checked={currentHall.soundSystem} 
+                                                                    onChange={handleFormChange} 
+                                                                />
+                                                                <label className="form-check-label fw-bold small" htmlFor="soundSystem">
+                                                                    {currentHall.soundSystem ? 'System Available' : 'No Audio'}
+                                                                </label>
+                                                            </div>
+                                                            {currentHall.soundSystem && (
+                                                                <div className="input-group" style={{ width: '180px' }}>
+                                                                    <span className="input-group-text bg-white border-end-0 small fw-bold">₹</span>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        className="form-control border-start-0 ps-0" 
+                                                                        style={inputStyle} 
+                                                                        placeholder="Rental Fee" 
+                                                                        name="soundSystemPrice" 
+                                                                        value={currentHall.soundSystemPrice} 
+                                                                        onChange={handleFormChange} 
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Iterative Facilities Selection (Pattern: Toggle + Price) */}
+                                                <div className="col-12">
+                                                    <div className="row g-3">
+                                                        {[
+                                                            { key: 'parking', label: 'Parking Space', icon: <FaParking />, desc: 'Dedicated parking for guests' },
+                                                            { key: 'lift', label: 'Lift / Elevator', icon: <FaChevronCircleUp />, desc: 'Ease of access for multi-story' },
+                                                            { key: 'drinkingWater', label: 'Drinking Water', icon: <FaTint />, desc: 'Purified water supply' },
+                                                            { key: 'cleaning', label: 'Cleaning Service', icon: <FaBroom />, desc: 'Pre & Post event maintenance' },
+                                                            { key: 'stage', label: 'Event Stage', icon: <FaLayerGroup />, desc: 'Fixed or portable stage' },
+                                                            { key: 'cctv', label: 'CCTV Security', icon: <FaVideo />, desc: '24/7 Surveillance' },
+                                                            { key: 'rooms', label: 'Guest Rooms', icon: <FaBed />, desc: 'Overnight stay for guests' }
+                                                        ].map(facility => (
+                                                            <div className="col-md-6" key={facility.key}>
+                                                                <div className="p-3 rounded-4 border bg-light d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3">
+                                                                    <div className="d-flex align-items-center gap-3">
+                                                                        <div className="bg-white p-2 rounded-3 shadow-sm text-secondary">
+                                                                            {React.cloneElement(facility.icon, { size: 18, className: currentHall[facility.key] ? 'text-primary' : 'text-muted' })}
+                                                                        </div>
+                                                                        <div>
+                                                                            <h6 className="fw-bold mb-0 small">{facility.label}</h6>
+                                                                            <p className="text-muted mb-0" style={{ fontSize: '0.65rem' }}>{facility.desc}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="d-flex align-items-center gap-2">
+                                                                        <div className="form-check form-switch mb-0">
+                                                                            <input className="form-check-input" type="checkbox" role="switch" id={facility.key} name={facility.key} checked={currentHall[facility.key]} onChange={handleFormChange} />
+                                                                        </div>
+                                                                        {currentHall[facility.key] && facility.key !== 'cctv' && (
+                                                                            <div className="input-group input-group-sm" style={{ width: '120px' }}>
+                                                                                <span className="input-group-text bg-white border-end-0 fw-bold">₹</span>
+                                                                                <input type="number" className="form-control border-start-0 ps-0" style={inputStyle} placeholder="Fee" name={`${facility.key}Price`} value={currentHall[`${facility.key}Price`]} onChange={handleFormChange} />
+                                                                            </div>
+                                                                        )}
+                                                                        {currentHall[facility.key] && facility.key === 'cctv' && (
+                                                                            <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style={{ fontSize: '0.65rem' }}>Complimentary</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-bold small text-secondary">Power Supply Details</label>
+                                                    <input type="text" className="form-control" style={inputStyle} name="powerSupply" value={currentHall.powerSupply} onChange={handleFormChange} placeholder="e.g. 3-Phase, 50KW" />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-bold small text-secondary">Rest Rooms Count</label>
+                                                    <input type="number" className="form-control" style={inputStyle} name="restRooms" value={currentHall.restRooms} onChange={handleFormChange} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     {/* 7. Images (Updated logic for existing vs new) */}
                                     <div className="col-12 col-xl-10"><div className="card border-0 shadow-sm rounded-4 p-4"><h4 style={sectionTitleStyle}>7. Images / Media</h4><div className="row g-4"><div className="col-md-4"><label className="form-label fw-bold small text-secondary mb-2">Main Cover Image <span className="text-danger">*</span></label><div className="position-relative rounded-3 bg-light border d-flex align-items-center justify-content-center" style={{ height: '200px', cursor: 'pointer' }} onClick={() => coverImageRef.current.click()}>{currentHall.coverImage ? (<img src={getPreview(currentHall.coverImage)} alt="Cover" className="w-100 h-100 object-fit-cover rounded-3" />) : (<div className="text-center text-muted"><FaCamera size={24} /><p className="small mb-0 mt-2">Upload Cover</p></div>)}</div><input type="file" ref={coverImageRef} accept="image/*" className="d-none" onChange={(e) => handleFileChange(e, 'coverImage')} /></div><div className="col-md-8"><div className="d-flex justify-content-between align-items-center mb-2"><label className="form-label fw-bold small text-secondary mb-0">Gallery Images (min 3) <span className="text-danger">*</span></label><button type="button" className="btn btn-sm btn-outline-danger" onClick={() => galleryImagesRef.current.click()}>+ Add Images</button></div><div className="d-flex gap-2 overflow-auto pb-2" style={{ whiteSpace: 'nowrap' }}>{currentHall.galleryImages.map((img, idx) => (<div key={idx} className="position-relative d-inline-block" style={{ width: '120px', height: '100px' }}><img src={getPreview(img)} alt="Gallery" className="w-100 h-100 object-fit-cover rounded shadow-sm border" /><button type="button" className="btn btn-danger btn-sm p-0 position-absolute top-0 end-0 m-1 rounded-circle" style={{ width: '20px', height: '20px' }} onClick={() => removeImage(idx, 'galleryImages')}><FaTrash size={10} /></button></div>))}</div><input type="file" ref={galleryImagesRef} accept="image/*" className="d-none" onChange={(e) => handleFileChange(e, 'galleryImages')} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Video URL (YouTube/Drive)</label><input type="url" className="form-control" style={inputStyle} name="videoUrl" value={currentHall.videoUrl} onChange={handleFormChange} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Brochure PDF (Optional)</label><input type="file" className="form-control" style={inputStyle} accept=".pdf" onChange={(e) => handleFileChange(e, 'brochureUrl')} /></div></div></div></div>

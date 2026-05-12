@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../../utils/function';
-import { FiArrowLeft, FiCheckCircle, FiStar, FiCalendar, FiMapPin, FiUsers, FiInfo, FiMessageCircle, FiSend, FiClock } from 'react-icons/fi';
-import { FaRupeeSign, FaChevronRight, FaTags } from 'react-icons/fa';
+import OnlineBookingForm from './components/OnlineBookingForm';
+import { FiArrowLeft, FiCheckCircle, FiStar, FiCalendar, FiMapPin, FiUsers, FiInfo, FiMessageCircle, FiSend, FiClock, FiPhone, FiMail } from 'react-icons/fi';
+import { FaRupeeSign, FaChevronRight, FaTags, FaUsers, FaUtensils, FaCar } from 'react-icons/fa';
 import Navbar from '../../components/Navbar';
 import Footer from './components/Footer';
 
@@ -25,6 +26,18 @@ const VenueDetailsPage = () => {
     const [calendarDate, setCalendarDate] = useState(new Date());
     const [calendarView, setCalendarView] = useState('calendar'); // 'calendar', 'month', 'year'
     const [yearRangeStart, setYearRangeStart] = useState(Math.floor(new Date().getFullYear() / 12) * 12);
+
+    // Booking Form State
+    const [showBookingModal, setShowBookingModal] = useState(false);
+    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [bookingForm, setBookingForm] = useState({
+        shift: 'Morning',
+        fullName: user?.fullName || user?.name || '',
+        phone: user?.phone || user?.mobile || '',
+        guests: ''
+    });
+    const [bookingLoading, setBookingLoading] = useState(false);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -61,12 +74,44 @@ const VenueDetailsPage = () => {
     const fetchBookings = async () => {
         try {
             const res = await axios.get(`${API_URL}/bookings`, {
-                params: {
-                    mahalId: id,
-                    all: 'true'
+                params: { mahalId: id, all: 'true' }
+            });
+            
+            const bookingsMap = {};
+            (res.data.bookings || []).forEach(booking => {
+                if (booking.isMultiDay && booking.endDate) {
+                    // Multi-day expansion
+                    let curr = new Date(booking.date);
+                    curr.setHours(0,0,0,0);
+                    const end = new Date(booking.endDate);
+                    end.setHours(0,0,0,0);
+
+                    while (curr <= end) {
+                        const dStr = `${curr.getFullYear()}-${String(curr.getMonth() + 1).padStart(2, '0')}-${String(curr.getDate()).padStart(2, '0')}`;
+                        if (!bookingsMap[dStr]) bookingsMap[dStr] = [];
+                        
+                        let dShift = 'Full Day';
+                        const isStartDay = curr.getTime() === new Date(booking.date).setHours(0,0,0,0);
+                        const isEndDay = curr.getTime() === end.getTime();
+
+                        if (isStartDay) {
+                            dShift = booking.shift === 'Evening' ? 'Evening' : 'Full Day';
+                        } else if (isEndDay) {
+                            const eShift = booking.endShift || booking.dayShifts?.[dStr] || 'Full Day';
+                            dShift = eShift === 'Morning' ? 'Morning' : 'Full Day';
+                        }
+
+                        bookingsMap[dStr].push({ ...booking, displayShift: dShift });
+                        curr.setDate(curr.getDate() + 1);
+                    }
+                } else {
+                    const bDate = new Date(booking.date);
+                    const dStr = `${bDate.getFullYear()}-${String(bDate.getMonth() + 1).padStart(2, '0')}-${String(bDate.getDate()).padStart(2, '0')}`;
+                    if (!bookingsMap[dStr]) bookingsMap[dStr] = [];
+                    bookingsMap[dStr].push({ ...booking, displayShift: booking.shift });
                 }
             });
-            setBookings(res.data.bookings || []);
+            setBookings(bookingsMap);
         } catch (error) {
             console.error("Error fetching bookings", error);
         }
@@ -99,14 +144,25 @@ const VenueDetailsPage = () => {
     };
 
     const getBookingStatus = (date) => {
-        const dateStr = date.toISOString().split('T')[0];
-        const dayBookings = bookings.filter(b => b.date.startsWith(dateStr));
-        if (dayBookings.length === 0) return { status: 'Free', color: 'text-success' };
-        const shifts = dayBookings.map(b => b.shift);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const checkDate = new Date(date);
+        checkDate.setHours(0, 0, 0, 0);
+
+        if (checkDate < today) return { status: 'Closed', color: 'text-muted' };
+
+        const dateStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
+        const dayBookings = (bookings[dateStr] || []).filter(b => b.bookingStatus !== 'Cancelled');
+        
+        if (dayBookings.length === 0) return { status: 'Available', color: 'text-success' };
+        
+        const shifts = dayBookings.map(b => b.displayShift || b.shift);
         if (shifts.includes('Full Day')) return { status: 'Fully Booked', color: 'text-danger' };
         if (shifts.includes('Morning') && shifts.includes('Evening')) return { status: 'Fully Booked', color: 'text-danger' };
+        
         if (shifts.includes('Morning')) return { status: 'Evening Free', color: 'text-warning' };
         if (shifts.includes('Evening')) return { status: 'Morning Free', color: 'text-warning' };
+        
         return { status: 'Booked', color: 'text-danger' };
     };
 
@@ -127,7 +183,58 @@ const VenueDetailsPage = () => {
         if (calendarView === 'calendar') setCalendarView('month');
         else if (calendarView === 'month') setCalendarView('year');
     };
+    const handleDateClick = (date, status) => {
+        if (status === 'Closed') {
+            alert("This date is in the past. Please select a future date for booking.");
+            return;
+        }
+        if (status === 'Fully Booked') {
+            alert("This date is fully booked. Please select another date.");
+            return;
+        }
 
+        if (!user) {
+            setShowLoginPrompt(true);
+            return;
+        }
+
+        setSelectedDate(date);
+        setBookingForm({
+            ...bookingForm,
+            fullName: user?.fullName || user?.name || '',
+            phone: user?.phone || user?.mobile || ''
+        });
+        setShowBookingModal(true);
+    };
+
+    const handleBookingSubmit = async (e) => {
+        e.preventDefault();
+        if (!bookingForm.shift || !bookingForm.guests) {
+            alert("Please select a shift and enter number of guests.");
+            return;
+        }
+
+        setBookingLoading(true);
+        try {
+            await axios.post(`${API_URL}/bookings`, {
+                mahalId: id,
+                customerName: bookingForm.fullName,
+                customerPhone: bookingForm.phone,
+                date: selectedDate.toISOString().split('T')[0],
+                shift: bookingForm.shift,
+                bookingType: 'Online',
+                guests: bookingForm.guests
+            });
+            alert("Booking request submitted successfully! The manager will contact you soon.");
+            setShowBookingModal(false);
+            fetchBookings();
+        } catch (error) {
+            console.error("Error submitting booking", error);
+            alert(error.response?.data?.message || "Failed to submit booking. Please try again.");
+        } finally {
+            setBookingLoading(false);
+        }
+    };
     if (loading) return (
         <div className="d-flex justify-content-center align-items-center vh-100">
             <div className="spinner-border text-danger" role="status"></div>
@@ -245,41 +352,73 @@ const VenueDetailsPage = () => {
                         <div className="tab-content">
                             {activeTab === 'details' && (
                                 <div className="animate-fade-in">
-                                    <h4 className="fw-bold mb-4">About the Venue</h4>
-                                    <p className="text-muted lh-lg mb-5" style={{ textAlign: 'justify', fontSize: '1rem' }}>{venue.description}</p>
+                                    <div className="d-flex align-items-center gap-3 mb-2">
+                                        <div style={{ width: '4px', height: '28px', borderRadius: '2px', background: 'linear-gradient(180deg, #dc3545, #ff8a94)' }} />
+                                        <h4 className="fw-bold mb-0" style={{ letterSpacing: '-0.01em' }}>About the Venue</h4>
+                                    </div>
+                                    <p className="text-muted lh-lg mb-5" style={{ textAlign: 'justify', fontSize: '0.95rem', paddingLeft: '16px', borderLeft: '2px solid #f0f0f0' }}>{venue.description}</p>
                                     
                                     <div className="row g-4 mb-5">
-                                        <div className="col-md-4">
-                                            <div className="p-4 border rounded-4 bg-light text-center">
-                                                <div className="small text-muted fw-bold text-uppercase mb-2" style={{ fontSize: '0.65rem', letterSpacing: '0.1em' }}>Seating</div>
-                                                <div className="h4 fw-bold mb-0 text-dark">{venue.seatingCapacity}</div>
-                                                <div className="small text-muted">Guests</div>
+                                        {[
+                                            { label: 'Seating', value: venue.seatingCapacity, sub: 'Guests', icon: <FaUsers size={24} /> },
+                                            { label: 'Dining', value: venue.diningCapacity, sub: 'Capacity', icon: <FaUtensils size={22} /> },
+                                            { label: 'Parking', value: venue.parkingCapacity, sub: 'Vehicles', icon: <FaCar size={24} /> },
+                                        ].map((stat) => (
+                                            <div className="col-md-4" key={stat.label}>
+                                                <div style={{
+                                                    padding: '24px',
+                                                    borderRadius: '16px',
+                                                    background: 'linear-gradient(135deg, #fff 60%, #fff5f5 100%)',
+                                                    border: '1px solid rgba(220,53,69,0.1)',
+                                                    boxShadow: '0 4px 20px rgba(220,53,69,0.06)',
+                                                    textAlign: 'center',
+                                                    transition: 'all 0.3s ease'
+                                                }} className="stat-detail-card">
+                                                    <div style={{ 
+                                                        width: '50px', height: '50px', 
+                                                        borderRadius: '12px', background: 'rgba(220,53,69,0.08)', 
+                                                        color: '#dc3545', display: 'flex', 
+                                                        alignItems: 'center', justifyContent: 'center',
+                                                        margin: '0 auto 12px auto' 
+                                                    }}>
+                                                        {stat.icon}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#dc3545', marginBottom: '6px' }}>{stat.label}</div>
+                                                    <div style={{ fontSize: '2rem', fontWeight: 900, color: '#111', letterSpacing: '-0.03em', lineHeight: 1 }}>{stat.value}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '4px' }}>{stat.sub}</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="p-4 border rounded-4 bg-light text-center">
-                                                <div className="small text-muted fw-bold text-uppercase mb-2" style={{ fontSize: '0.65rem', letterSpacing: '0.1em' }}>Dining</div>
-                                                <div className="h4 fw-bold mb-0 text-dark">{venue.diningCapacity}</div>
-                                                <div className="small text-muted">Capacity</div>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="p-4 border rounded-4 bg-light text-center">
-                                                <div className="small text-muted fw-bold text-uppercase mb-2" style={{ fontSize: '0.65rem', letterSpacing: '0.1em' }}>Parking</div>
-                                                <div className="h4 fw-bold mb-0 text-dark">{venue.parkingCapacity}</div>
-                                                <div className="small text-muted">Vehicles</div>
-                                            </div>
-                                        </div>
+                                        ))}
                                     </div>
 
-                                    <h5 className="fw-bold mb-4 mt-5 pt-3">Elite Amenities</h5>
+                                    <div className="d-flex align-items-center gap-3 mb-4 mt-5 pt-3">
+                                        <div style={{ width: '4px', height: '24px', borderRadius: '2px', background: 'linear-gradient(180deg, #dc3545, #ff8a94)' }} />
+                                        <h5 className="fw-bold mb-0">Elite Amenities</h5>
+                                    </div>
                                     <div className="row g-3 mb-5">
                                         {Object.entries(venue.facilities || {}).map(([key, val]) => (
-                                            val && (
+                                            val === true && !key.toLowerCase().includes('price') && (
                                                 <div key={key} className="col-md-4 col-6">
-                                                    <div className="p-3 p-md-4 rounded-4 border bg-light h-100 d-flex flex-column align-items-center text-center gap-2 transition-all hover-scale-sm">
-                                                        <div className="p-2 bg-white rounded-circle text-danger shadow-sm"><FiCheckCircle size={20} /></div>
-                                                        <div className="fw-bold text-uppercase" style={{ fontSize: '0.6rem', letterSpacing: '0.1em' }}>{key}</div>
+                                                    <div style={{
+                                                        padding: '14px 18px',
+                                                        borderRadius: '12px',
+                                                        background: 'linear-gradient(135deg, #fff5f5, #fff)',
+                                                        border: '1px solid rgba(220,53,69,0.12)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '10px',
+                                                        transition: 'all 0.3s ease',
+                                                        boxShadow: '0 2px 10px rgba(220,53,69,0.04)',
+                                                    }} className="amenity-chip">
+                                                        <div style={{
+                                                            width: '28px', height: '28px', borderRadius: '8px',
+                                                            background: 'linear-gradient(135deg, #dc3545, #ff6b7a)',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            flexShrink: 0,
+                                                        }}>
+                                                            <FiCheckCircle size={14} color="white" />
+                                                        </div>
+                                                        <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'capitalize', color: '#333', letterSpacing: '0.01em' }}>{key}</span>
                                                     </div>
                                                 </div>
                                             )
@@ -288,41 +427,63 @@ const VenueDetailsPage = () => {
 
                                     <div className="row g-4 mb-5">
                                         <div className="col-md-6">
-                                            <h5 className="fw-bold mb-4 mt-4">Operational Timings</h5>
-                                            <div className="p-4 border rounded-4 bg-light">
-                                                <div className="d-flex align-items-center gap-4 mb-4">
-                                                    <div className="p-3 bg-white rounded-4 shadow-sm text-danger"><FiClock size={24} /></div>
-                                                    <div>
-                                                        <div className="small text-muted fw-bold text-uppercase" style={{ fontSize: '0.6rem' }}>Morning Shift</div>
-                                                        <div className="fw-bold h5 mb-0">{venue.morningTimeFrom} - {venue.morningTimeTo}</div>
+                                            <div className="d-flex align-items-center gap-3 mb-4 mt-4">
+                                                <div style={{ width: '4px', height: '24px', borderRadius: '2px', background: 'linear-gradient(180deg, #dc3545, #ff8a94)' }} />
+                                                <h5 className="fw-bold mb-0">Operational Timings</h5>
+                                            </div>
+                                            <div style={{ borderRadius: '16px', border: '1px solid rgba(220,53,69,0.1)', overflow: 'hidden', boxShadow: '0 4px 20px rgba(220,53,69,0.05)' }}>
+                                                <div style={{ padding: '20px 24px', background: 'linear-gradient(135deg, #fff5f5, #fff)', borderBottom: '1px solid rgba(220,53,69,0.08)' }}>
+                                                    <div className="d-flex align-items-center gap-3">
+                                                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #dc3545, #ff6b7a)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(220,53,69,0.3)', flexShrink: 0 }}>
+                                                            <FiClock size={18} color="white" />
+                                                        </div>
+                                                        <div>
+                                                            <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#dc3545', marginBottom: '2px' }}>Morning Shift</div>
+                                                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111' }}>{venue.morningTimeFrom} — {venue.morningTimeTo}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="d-flex align-items-center gap-4">
-                                                    <div className="p-3 bg-white rounded-4 shadow-sm text-danger"><FiClock size={24} /></div>
-                                                    <div>
-                                                        <div className="small text-muted fw-bold text-uppercase" style={{ fontSize: '0.6rem' }}>Evening Shift</div>
-                                                        <div className="fw-bold h5 mb-0">{venue.eveningTimeFrom} - {venue.eveningTimeTo}</div>
+                                                <div style={{ padding: '20px 24px', background: '#fff' }}>
+                                                    <div className="d-flex align-items-center gap-3">
+                                                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #440a0e, #dc3545)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(68,10,14,0.25)', flexShrink: 0 }}>
+                                                            <FiClock size={18} color="white" />
+                                                        </div>
+                                                        <div>
+                                                            <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#440a0e', marginBottom: '2px' }}>Evening Shift</div>
+                                                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111' }}>{venue.eveningTimeFrom} — {venue.eveningTimeTo}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="col-md-6">
-                                            <h5 className="fw-bold mb-4 mt-4">Location Details</h5>
-                                            <div className="p-4 border rounded-4 bg-light h-100">
-                                                <div className="d-flex align-items-start gap-3 mb-4">
-                                                    <div className="p-2 bg-white rounded-circle text-danger shadow-sm mt-1"><FiMapPin /></div>
-                                                    <div>
-                                                        <div className="small text-muted fw-bold text-uppercase" style={{ fontSize: '0.6rem' }}>Full Address</div>
-                                                        <div className="fw-bold">{venue.doorNo}, {venue.street}</div>
-                                                        <div className="text-muted small">{venue.city}, {venue.district} - {venue.pincode}</div>
+                                            <div className="d-flex align-items-center gap-3 mb-4 mt-4">
+                                                <div style={{ width: '4px', height: '24px', borderRadius: '2px', background: 'linear-gradient(180deg, #dc3545, #ff8a94)' }} />
+                                                <h5 className="fw-bold mb-0">Location Details</h5>
+                                            </div>
+                                            <div style={{ borderRadius: '16px', border: '1px solid rgba(220,53,69,0.1)', overflow: 'hidden', boxShadow: '0 4px 20px rgba(220,53,69,0.05)', height: 'calc(100% - 68px)' }}>
+                                                <div style={{ padding: '20px 24px', background: 'linear-gradient(135deg, #fff5f5, #fff)', borderBottom: '1px solid rgba(220,53,69,0.08)' }}>
+                                                    <div className="d-flex align-items-start gap-3">
+                                                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #dc3545, #ff6b7a)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(220,53,69,0.3)', flexShrink: 0, marginTop: '2px' }}>
+                                                            <FiMapPin size={18} color="white" />
+                                                        </div>
+                                                        <div>
+                                                            <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#dc3545', marginBottom: '4px' }}>Full Address</div>
+                                                            <div style={{ fontWeight: 700, color: '#111', marginBottom: '2px' }}>{venue.doorNo}, {venue.street}</div>
+                                                            <div style={{ fontSize: '0.85rem', color: '#888' }}>{venue.city}, {venue.district} — {venue.pincode}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="d-flex align-items-start gap-3">
-                                                    <div className="p-2 bg-white rounded-circle text-danger shadow-sm mt-1"><FiInfo /></div>
-                                                    <div>
-                                                        <div className="small text-muted fw-bold text-uppercase" style={{ fontSize: '0.6rem' }}>Accessibility</div>
-                                                        <div className="fw-bold small">Prime Location in {venue.district}</div>
-                                                        <div className="text-muted small">Easily accessible by public transport</div>
+                                                <div style={{ padding: '20px 24px', background: '#fff' }}>
+                                                    <div className="d-flex align-items-start gap-3">
+                                                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #440a0e, #dc3545)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(68,10,14,0.25)', flexShrink: 0, marginTop: '2px' }}>
+                                                            <FiInfo size={18} color="white" />
+                                                        </div>
+                                                        <div>
+                                                            <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#440a0e', marginBottom: '4px' }}>Accessibility</div>
+                                                            <div style={{ fontWeight: 700, color: '#111', marginBottom: '2px' }}>Prime Location in {venue.district}</div>
+                                                            <div style={{ fontSize: '0.85rem', color: '#888' }}>Easily accessible by public transport</div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -357,10 +518,11 @@ const VenueDetailsPage = () => {
                                                 <button onClick={() => changePeriod(1)} className="btn btn-sm btn-light rounded-circle p-2 d-flex align-items-center shadow-sm border"><FaChevronRight size={14} /></button>
                                             </div>
                                         </div>
-                                        <div className="d-flex gap-2">
-                                            <div className="d-flex align-items-center gap-1 small fw-bold" style={{ fontSize: '0.7rem' }}><div style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#dcfce7' }}></div> Free</div>
-                                            <div className="d-flex align-items-center gap-1 small fw-bold" style={{ fontSize: '0.7rem' }}><div style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#fef9c3' }}></div> Partial</div>
-                                            <div className="d-flex align-items-center gap-1 small fw-bold" style={{ fontSize: '0.7rem' }}><div style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#fee2e2' }}></div> Booked</div>
+                                        <div className="d-flex gap-3">
+                                            <div className="d-flex align-items-center gap-2 small fw-bold" style={{ fontSize: '0.75rem', color: '#888' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#e5e7eb' }}></div> Closed</div>
+                                            <div className="d-flex align-items-center gap-2 small fw-bold" style={{ fontSize: '0.75rem', color: '#065f46' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10b981' }}></div> Available</div>
+                                            <div className="d-flex align-items-center gap-2 small fw-bold" style={{ fontSize: '0.75rem', color: '#92400e' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }}></div> Fast Filling</div>
+                                            <div className="d-flex align-items-center gap-2 small fw-bold" style={{ fontSize: '0.75rem', color: '#991b1b' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#dc3545' }}></div> Booked</div>
                                         </div>
                                     </div>
 
@@ -386,27 +548,54 @@ const VenueDetailsPage = () => {
                                                                     const { status } = getBookingStatus(dateObj);
                                                                     
                                                                     let bgColor = 'white';
-                                                                    if (status === 'Free') bgColor = '#dcfce7';
-                                                                    else if (status.includes('Free')) bgColor = '#fef9c3';
-                                                                    else if (status.includes('Booked')) bgColor = '#fee2e2';
+                                                                    let textColor = '#666';
+                                                                    let borderColor = 'rgba(0,0,0,0.05)';
+                                                                    let cursorStyle = 'pointer';
+                                                                    
+                                                                    if (status === 'Closed') {
+                                                                        bgColor = '#f9fafb';
+                                                                        textColor = '#9ca3af';
+                                                                        borderColor = '#e5e7eb';
+                                                                        cursorStyle = 'not-allowed';
+                                                                    } else if (status === 'Available') {
+                                                                        bgColor = '#f0fdf4';
+                                                                        textColor = '#16a34a';
+                                                                        borderColor = '#10b981';
+                                                                    } else if (status.includes('Free')) {
+                                                                        bgColor = '#fffbeb';
+                                                                        textColor = '#d97706';
+                                                                        borderColor = '#f59e0b';
+                                                                    } else if (status.includes('Booked')) {
+                                                                        bgColor = '#fef2f2';
+                                                                        textColor = '#dc3545';
+                                                                        borderColor = '#dc3545';
+                                                                    }
 
                                                                     return (
                                                                         <div 
                                                                             key={day} 
                                                                             className="calendar-day-box shadow-sm transition-all"
+                                                                            onClick={() => handleDateClick(dateObj, status)}
                                                                             style={{
                                                                                 aspectRatio: '1/1',
                                                                                 background: bgColor,
-                                                                                borderRadius: '8px',
+                                                                                color: textColor,
+                                                                                borderRadius: '12px',
                                                                                 display: 'flex',
                                                                                 flexDirection: 'column',
                                                                                 alignItems: 'center',
                                                                                 justifyContent: 'center',
-                                                                                cursor: 'pointer',
-                                                                                border: '1px solid rgba(0,0,0,0.03)'
+                                                                                cursor: cursorStyle,
+                                                                                border: `1px solid ${borderColor}`,
+                                                                                boxShadow: bgColor !== 'white' && status !== 'Closed' ? '0 2px 8px rgba(0,0,0,0.02)' : 'none',
+                                                                                position: 'relative',
+                                                                                opacity: status === 'Closed' ? 0.7 : 1
                                                                             }}
                                                                         >
                                                                             <div className="fw-bold" style={{ fontSize: '0.75rem' }}>{day}</div>
+                                                                            {status !== 'Available' && status !== 'Booked' && (
+                                                                                <div style={{ position: 'absolute', bottom: '4px', width: '4px', height: '4px', borderRadius: '50%', background: textColor }}></div>
+                                                                            )}
                                                                         </div>
                                                                     );
                                                                 })}
@@ -541,35 +730,90 @@ const VenueDetailsPage = () => {
                     <div className="col-lg-4">
                         <div className="sticky-top" style={{ top: '140px' }}>
                             <div className="card border-0 shadow-premium rounded-4 overflow-hidden mb-4 d-none d-lg-block">
-                                <div className="p-4 bg-dark text-white text-center">
-                                    <div className="small text-white-50 text-uppercase tracking-widest mb-1">Reservation Info</div>
-                                    <h5 className="fw-bold mb-0">Secure Your Date</h5>
+                                <div className="p-4 text-white" style={{ background: 'linear-gradient(135deg, #111 0%, #440a0e 100%)' }}>
+                                    <div className="d-flex justify-content-between align-items-center mb-1">
+                                        <div className="small text-white-50 text-uppercase tracking-widest fw-bold" style={{ fontSize: '0.6rem' }}>Premium Reservation</div>
+                                        <div className="badge bg-danger rounded-pill px-2 py-1" style={{ fontSize: '0.6rem' }}>OFFER ACTIVE</div>
+                                    </div>
+                                    <h4 className="fw-bold mb-0">Booking Details</h4>
                                 </div>
                                 <div className="p-4">
-                                    <div className="d-flex justify-content-between mb-3 pb-3 border-bottom">
-                                        <span className="text-muted">Morning Slot</span>
-                                        <span className="fw-bold text-dark"><FaRupeeSign /> {venue.morningPrice?.toLocaleString() || venue.fullDayPrice/2}</span>
+                                    <div className="mb-4">
+                                        <div className="text-muted small fw-bold text-uppercase mb-3" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>Pricing Options</div>
+                                        
+                                        <div className="p-3 rounded-4 mb-2 d-flex justify-content-between align-items-center transition-all hover-bg-light" style={{ border: '1px solid #f0f0f0' }}>
+                                            <div className="d-flex align-items-center gap-3">
+                                                <div className="p-2 bg-light rounded-3 text-danger"><FiClock size={16} /></div>
+                                                <div>
+                                                    <div className="fw-bold small">Morning Slot</div>
+                                                    <div className="text-muted" style={{ fontSize: '0.65rem' }}>{venue.morningTimeFrom} - {venue.morningTimeTo}</div>
+                                                </div>
+                                            </div>
+                                            <div className="text-end">
+                                                <div className="fw-bold text-dark"><FaRupeeSign size={12} /> {(venue.morningPrice || venue.fullDayPrice/2).toLocaleString()}</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-3 rounded-4 mb-2 d-flex justify-content-between align-items-center transition-all hover-bg-light" style={{ border: '1px solid #f0f0f0' }}>
+                                            <div className="d-flex align-items-center gap-3">
+                                                <div className="p-2 bg-light rounded-3 text-danger"><FiClock size={16} /></div>
+                                                <div>
+                                                    <div className="fw-bold small">Evening Slot</div>
+                                                    <div className="text-muted" style={{ fontSize: '0.65rem' }}>{venue.eveningTimeFrom} - {venue.eveningTimeTo}</div>
+                                                </div>
+                                            </div>
+                                            <div className="text-end">
+                                                <div className="fw-bold text-dark"><FaRupeeSign size={12} /> {(venue.eveningPrice || venue.fullDayPrice/2).toLocaleString()}</div>
+                                            </div>
+                                        </div>
+                                        <div className="p-3 rounded-4 bg-dark text-white d-flex justify-content-between align-items-center shadow-sm">
+                                            <div className="d-flex align-items-center gap-3">
+                                                <div className="p-2 bg-white-10 rounded-3 text-white"><FiCalendar size={16} /></div>
+                                                <div>
+                                                    <div className="fw-bold small">Full Day Booking</div>
+                                                    <div className="text-white-50" style={{ fontSize: '0.65rem' }}>Full Day Access</div>
+                                                </div>
+                                            </div>
+                                            <div className="text-end">
+                                                <div className="fw-bold" style={{ color: '#ff8a94' }}><FaRupeeSign size={12} /> {venue.fullDayPrice?.toLocaleString()}</div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="d-flex justify-content-between mb-3 pb-3 border-bottom">
-                                        <span className="text-muted">Evening Slot</span>
-                                        <span className="fw-bold text-dark"><FaRupeeSign /> {venue.eveningPrice?.toLocaleString() || venue.fullDayPrice/2}</span>
-                                    </div>
-                                    <div className="d-flex justify-content-between mb-4">
-                                        <span className="text-muted h6 mb-0">Full Day</span>
-                                        <span className="fw-bold text-danger h5 mb-0"><FaRupeeSign /> {venue.fullDayPrice?.toLocaleString()}</span>
+                                    <div className="alert alert-light border-0 rounded-4 p-3 mb-4 d-flex align-items-start gap-3" style={{ background: '#f8f9fa' }}>
+                                        <div className="p-2 bg-white rounded-circle shadow-sm text-info"><FiInfo size={16} /></div>
+                                        <div className="small text-muted lh-base">
+                                            Price may vary based on guest count and special requirements. Taxes applicable as per norms.
+                                        </div>
                                     </div>
 
+                                    <button 
+                                        className="btn btn-dark w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg transform-active"
+                                        style={{ background: 'linear-gradient(135deg, #111, #333)', border: 'none' }}
+                                        onClick={() => navigate('/user/register')}
+                                    >
+                                        Contact Manager to Book <FaChevronRight size={12} />
+                                    </button>
                                 </div>
                             </div>
                             
-                            <div className="p-4 rounded-4 border bg-light">
-                                <h6 className="fw-bold mb-3 d-flex align-items-center gap-2">
-                                    <FiInfo className="text-danger" /> Expert Assistance
-                                </h6>
-                                <p className="small text-muted mb-4">Need help? Our specialists are here to assist with your booking.</p>
-                                <button className="btn btn-outline-dark w-100 rounded-pill py-2 small fw-bold">
-                                    Contact Owner
-                                </button>
+                            <div className="p-4 rounded-4 border bg-white shadow-sm">
+                                <h6 className="fw-bold mb-3">Quick Support</h6>
+                                <div className="d-flex flex-column gap-3">
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="p-2 bg-light rounded-3 text-danger"><FiPhone size={16} /></div>
+                                        <div>
+                                            <div className="text-muted" style={{ fontSize: '0.65rem' }}>Call Us</div>
+                                            <div className="fw-bold small">+91 98765 43210</div>
+                                        </div>
+                                    </div>
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="p-2 bg-light rounded-3 text-danger"><FiMail size={16} /></div>
+                                        <div>
+                                            <div className="text-muted" style={{ fontSize: '0.65rem' }}>Email Us</div>
+                                            <div className="fw-bold small">support@mehfilone.com</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -578,13 +822,73 @@ const VenueDetailsPage = () => {
 
             <Footer />
 
+            {/* Premium Booking Modal */}
+            {showBookingModal && (
+                <div className="modal-overlay d-flex align-items-end align-items-md-center justify-content-center p-0 p-md-3" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(15px)', zIndex: 9999 }}>
+                    <div className="booking-modal-card bg-white w-100 rounded-t-4 rounded-md-4 animate-slide-up shadow-2xl" style={{ maxWidth: '1000px', maxHeight: '95vh', overflowY: 'auto', overflowX: 'hidden' }}>
+                        <div className="p-4 text-white d-flex justify-content-between align-items-center sticky-top" style={{ background: 'linear-gradient(135deg, #111, #440a0e)', zIndex: 10 }}>
+                            <div>
+                                <h5 className="fw-bold mb-0">Secure Your Slot</h5>
+                                <div className="small text-white-50">{selectedDate?.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                            </div>
+                            <button onClick={() => setShowBookingModal(false)} className="btn btn-link text-white p-0 text-decoration-none h4 mb-0">&times;</button>
+                        </div>
+                        <div className="p-4">
+                            <OnlineBookingForm 
+                                venue={venue} 
+                                selectedDate={selectedDate} 
+                                bookings={bookings}
+                                onClose={() => setShowBookingModal(false)}
+                                onSuccess={() => {
+                                    setShowBookingModal(false);
+                                    fetchBookings();
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Login Prompt Modal */}
+            {showLoginPrompt && (
+                <div className="modal-overlay d-flex align-items-center justify-content-center p-3" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(15px)', zIndex: 9999 }}>
+                    <div className="bg-white p-4 p-md-5 rounded-4 text-center animate-fade-in shadow-2xl" style={{ maxWidth: '420px', width: '100%' }}>
+                        <div className="p-4 bg-danger-soft rounded-circle d-inline-block mb-4 text-danger">
+                            <FiUsers size={40} />
+                        </div>
+                        <h4 className="fw-bold mb-3">Members Only</h4>
+                        <p className="text-muted mb-4 small">Please login or create an account to secure this venue for your special event.</p>
+                        <div className="d-flex flex-column gap-2">
+                            <button onClick={() => navigate('/user/login', { state: { from: location.pathname } })} className="btn btn-danger rounded-pill py-3 fw-bold shadow-sm">Sign In to Book</button>
+                            <button onClick={() => navigate('/user/register')} className="btn btn-light rounded-pill py-3 fw-bold border">Create Free Account</button>
+                            <button onClick={() => setShowLoginPrompt(false)} className="btn btn-link text-muted text-decoration-none mt-2 small">Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style>{`
-                .venue-hero-section { height: 45vh; }
-                .venue-title { font-size: 2.2rem; }
+                .venue-hero-section { height: 50vh; min-height: 400px; }
+                .venue-title { font-size: 2rem; line-height: 1.2; }
                 @media (min-width: 768px) {
-                    .venue-hero-section { height: 55vh; }
+                    .venue-hero-section { height: 60vh; }
                     .venue-title { font-size: 3.5rem; }
+                    .rounded-t-4 { border-top-left-radius: 24px !important; border-top-right-radius: 24px !important; }
                 }
+                @media (max-width: 767px) {
+                    .venue-hero-section { height: 65vh; min-height: 450px; }
+                    .venue-title { font-size: 2.2rem; }
+                    .rounded-t-4 { border-top-left-radius: 32px !important; border-top-right-radius: 32px !important; }
+                    .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0, 0, 0.2, 1); }
+                    .booking-modal-card { border-radius: 32px 32px 0 0 !important; }
+                }
+                @keyframes slideUp {
+                    from { transform: translateY(100%); }
+                    to { transform: translateY(0); }
+                }
+                .bg-danger-soft { background: rgba(220, 53, 69, 0.08); }
+                .alert-danger-soft { background: rgba(220, 53, 69, 0.05); color: #dc3545; }
+                .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
                 .hide-scrollbar::-webkit-scrollbar { display: none; }
                 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
@@ -595,6 +899,9 @@ const VenueDetailsPage = () => {
                 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
                 .shadow-premium { box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); }
                 .hover-scale:hover { transform: scale(1.05); }
+                .cursor-pointer { cursor: pointer; }
+                .transform-active:active { transform: scale(0.98); }
+                .border-transparent { border: 2px solid transparent; }
                 .hover-scale-sm:hover { transform: scale(1.02); }
             `}</style>
         </div>

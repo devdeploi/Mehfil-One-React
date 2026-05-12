@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserCircle } from 'react-icons/fa';
+import { API_URL } from '../../utils/function';
 
 const SuperAdminHeader = () => {
     const navigate = useNavigate();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [userProfile, setUserProfile] = useState({ name: 'Admin User', image: null });
+    const [imgError, setImgError] = useState(false);
 
     useEffect(() => {
         const updateProfile = () => {
@@ -16,6 +18,7 @@ const SuperAdminHeader = () => {
                     name: parsed.fullName || parsed.name || 'Admin User',
                     image: parsed.profileImage || null
                 });
+                setImgError(false); // Reset error state on new profile
             }
         };
 
@@ -48,10 +51,14 @@ const SuperAdminHeader = () => {
                 </div>
                 <div className="sa-header-actions">
                     <div className="sa-user-profile">
-                        {userProfile.image ? (
-                            <img src={userProfile.image} alt="User" />
+                        {userProfile.image && !imgError ? (
+                            <img 
+                                src={userProfile.image.startsWith('http') ? userProfile.image : `${API_URL.replace('/api', '')}/${userProfile.image}`} 
+                                alt="User" 
+                                onError={() => setImgError(true)}
+                                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+                            />
                         ) : (
-                            // The old avatar was hardcoded, now we use a dynamic one or default icon
                             <div className="text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }}>
                                 <FaUserCircle size={24} />
                             </div>

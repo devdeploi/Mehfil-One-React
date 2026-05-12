@@ -15,6 +15,7 @@ const VendorProfile = () => {
         businessName: '',
         gstNumber: '',
         businessAddress: '',
+        upiId: '',
         proofDocument: null
     });
     const [originalProfile, setOriginalProfile] = useState(null);
@@ -41,6 +42,7 @@ const VendorProfile = () => {
                             businessName: vendorData.businessName || '',
                             gstNumber: vendorData.gstNumber || '',
                             businessAddress: vendorData.businessAddress || '',
+                            upiId: vendorData.upiId || '',
                             proofDocument: vendorData.proofDocument ? `${BASE_URL}/${vendorData.proofDocument}` : null
                         };
                         setProfile(fetchedProfile);
@@ -94,6 +96,7 @@ const VendorProfile = () => {
         formData.append('businessName', profile.businessName);
         formData.append('gstNumber', profile.gstNumber);
         formData.append('businessAddress', profile.businessAddress);
+        formData.append('upiId', profile.upiId);
         if (selectedFile) {
             formData.append('profileImage', selectedFile);
         }
@@ -115,6 +118,7 @@ const VendorProfile = () => {
                 businessName: vendorData.businessName,
                 gstNumber: vendorData.gstNumber,
                 businessAddress: vendorData.businessAddress,
+                upiId: vendorData.upiId,
                 proofDocument: vendorData.proofDocument ? `${BASE_URL}/${vendorData.proofDocument}` : null
             };
 
@@ -322,6 +326,29 @@ const VendorProfile = () => {
                                             onChange={handleChange}
                                             readOnly={!isEditing}
                                             placeholder={isEditing ? 'Enter GST Number' : ''}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="form-label fw-bold text-secondary text-uppercase small">UPI ID</label>
+                                    <div className="input-group">
+                                        <span className="input-group-text bg-light border-end-0" style={{ borderTopLeftRadius: '10px', borderBottomLeftRadius: '10px', borderTopRightRadius: '0', borderBottomRightRadius: '0', border: '1px solid #e2e8f0' }}><i className="bi bi-wallet2 text-secondary"></i></span>
+                                        <input
+                                            type="text"
+                                            name="upiId"
+                                            className="form-control"
+                                            style={{ 
+                                                ...inputStyle, 
+                                                borderLeft: 'none', 
+                                                borderTopLeftRadius: '0', 
+                                                borderBottomLeftRadius: '0',
+                                                borderTopRightRadius: '10px',
+                                                borderBottomRightRadius: '10px'
+                                            }}
+                                            value={profile.upiId}
+                                            onChange={handleChange}
+                                            readOnly={!isEditing}
+                                            placeholder={isEditing ? 'user@bank' : ''}
                                         />
                                     </div>
                                 </div>

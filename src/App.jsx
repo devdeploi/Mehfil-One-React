@@ -20,6 +20,7 @@ import VendorLayout from './pages/vendor/VendorLayout';
 import VendorDashboard from './pages/vendor/VendorDashboard';
 import VendorProfile from './pages/vendor/VendorProfile';
 import VendorAvailability from './pages/vendor/VendorAvailability';
+import BookingList from './pages/vendor/BookingList';
 import MahalProfile from './pages/vendor/MahalProfile';
 import InstallPrompt from './components/InstallPrompt';
 
@@ -58,6 +59,7 @@ function App() {
             <Route path="profile" element={<VendorProfile />} />
             <Route path="mahal-profile" element={<MahalProfile />} />
             <Route path="availability" element={<VendorAvailability />} />
+            <Route path="bookings" element={<BookingList />} />
           </Route>
         </Route>
       </Routes>

@@ -38,9 +38,9 @@ const LandingPage = () => {
                 setActiveTab={setActiveTab} 
             />
 
-            <Features aboutRef={aboutRef} />
-
             <Venues venuesRef={venuesRef} />
+
+            <Features aboutRef={aboutRef} />
 
             <HowItWorks flowRef={flowRef} />
 
