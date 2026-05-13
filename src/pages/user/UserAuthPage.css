@@ -11,10 +11,12 @@
 /* Navbar */
 .vr-navbar {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    padding: 1.2rem 5%;
-    background: white;
+    padding: 0.8rem 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     border-bottom: 1px solid #e2e8f0;
     position: sticky;
     top: 0;
@@ -23,13 +25,14 @@
 
 .vr-nav-brand {
     font-size: 1.4rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    background: linear-gradient(135deg, #C8102E 0%, #9B0C23 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #1e293b;
     text-transform: uppercase;
+}
+
+.vr-nav-brand .text-red {
+    color: #C8102E;
 }
 
 .vr-nav-btn {
@@ -43,9 +46,48 @@
     transition: all 0.3s;
 }
 
+.vr-nav-btn.icon-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border-radius: 10px;
+}
+
 .vr-nav-btn:hover {
     border-color: #C8102E;
     color: #C8102E;
+    background: #fff;
+    transform: translateY(-2px);
+}
+
+.vr-nav-divider {
+    width: 1px;
+    height: 24px;
+    background: #e2e8f0;
+}
+
+.vr-nav-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+    .vr-nav-divider, .vr-nav-title {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .vr-nav-brand {
+        display: none;
+    }
 }
 
 /* Content Wrapper */
@@ -149,18 +191,23 @@
 /* Button */
 .sa-login-btn {
     width: 100%;
-    padding: 1.1rem;
+    padding: 1rem 1.5rem;
     font-weight: 700;
     border-radius: 12px;
     background: linear-gradient(135deg, #C8102E 0%, #9B0C23 100%);
     border: none;
     color: white;
-    font-size: 1.1rem;
+    font-size: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     cursor: pointer;
     transition: all 0.3s;
     box-shadow: 0 10px 20px -5px rgba(200, 16, 46, 0.4);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .sa-login-btn:hover {

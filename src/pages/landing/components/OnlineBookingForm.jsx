@@ -156,9 +156,11 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
 
         setLoading(true);
         try {
+            const storedUser = JSON.parse(localStorage.getItem('user') || localStorage.getItem('vendor_user') || '{}');
             const dateStr = formatDate(selectedDate);
             const payload = {
                 mahalId: venue._id || venue.id,
+                userId: storedUser.id || storedUser._id,
                 date: dateStr,
                 shift: formData.shift,
                 isMultiDay: formData.isMultiDay,

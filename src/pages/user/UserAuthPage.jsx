@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { FiMail, FiLock, FiUser, FiPhone, FiAlertCircle, FiArrowLeft, FiMapPin, FiFileText, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiMail, FiLock, FiUser, FiPhone, FiAlertCircle, FiArrowLeft, FiMapPin, FiFileText, FiEye, FiEyeOff, FiHome } from 'react-icons/fi';
 import { API_URL } from '../../utils/function';
 import './UserAuthPage.css';
 
@@ -33,6 +33,7 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
         setShowPassword(false);
         setShowConfirmPassword(false);
         setOtpStep(false);
+        setOtpArray(['', '', '', '', '', '']);
         setFormData(prev => ({ ...prev, otp: '' }));
     }, [defaultView]);
 
@@ -43,6 +44,27 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
         if (password.length >= 8 && /\d/.test(password)) strength += 1;
         if (password.length >= 10 && /[A-Z]/.test(password) && /[!@#$%^&*]/.test(password)) strength += 1;
         return strength + 1;
+    };
+
+    const [otpArray, setOtpArray] = useState(['', '', '', '', '', '']);
+
+    const handleOtpChange = (value, index) => {
+        if (isNaN(value)) return;
+        const newOtp = [...otpArray];
+        newOtp[index] = value.substring(value.length - 1);
+        setOtpArray(newOtp);
+        setFormData({ ...formData, otp: newOtp.join('') });
+
+        // Auto focus next
+        if (value && index < 5) {
+            document.getElementById(`otp-${index + 1}`).focus();
+        }
+    };
+
+    const handleOtpKeyDown = (e, index) => {
+        if (e.key === 'Backspace' && !otpArray[index] && index > 0) {
+            document.getElementById(`otp-${index - 1}`).focus();
+        }
     };
 
     const handleChange = (e) => {
@@ -84,6 +106,49 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
             } finally {
                 setLoading(false);
             }
+        } else if (view === 'forgot') {
+            try {
+                setLoading(true);
+                await axios.post(`${API_URL}/auth/forgot-password`, { email: formData.email });
+                setSuccessMsg('OTP sent to your email');
+                setView('verify-reset');
+            } catch (err) {
+                setError(err.response?.data?.msg || 'Failed to send OTP');
+            } finally {
+                setLoading(false);
+            }
+        } else if (view === 'verify-reset') {
+            try {
+                setLoading(true);
+                await axios.post(`${API_URL}/auth/verify-otp`, { 
+                    email: formData.email, 
+                    otp: formData.otp 
+                });
+                setSuccessMsg('OTP verified! Now create your new password.');
+                setView('reset');
+            } catch (err) {
+                setError(err.response?.data?.msg || 'Invalid OTP');
+            } finally {
+                setLoading(false);
+            }
+        } else if (view === 'reset') {
+            if (formData.password !== formData.confirmPassword) {
+                return setError('Passwords do not match');
+            }
+            try {
+                setLoading(true);
+                await axios.post(`${API_URL}/auth/reset-password`, { 
+                    email: formData.email, 
+                    otp: formData.otp, 
+                    newPassword: formData.password 
+                });
+                setSuccessMsg('Password reset successful! redirecting to login...');
+                setTimeout(() => setView('login'), 2000);
+            } catch (err) {
+                setError(err.response?.data?.msg || 'Password reset failed');
+            } finally {
+                setLoading(false);
+            }
         } else {
             // Login flow remains same
             try {
@@ -112,18 +177,42 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
         <div className="vr-page-container">
             {/* Navbar */}
             <nav className="vr-navbar">
-                <div className="vr-nav-brand">MEHFIL ONE</div>
-                <button onClick={() => navigate('/')} className="vr-nav-btn">
-                    Home
-                </button>
+                <div className="container d-flex align-items-center justify-content-between">
+                    <div className="nav-left d-flex align-items-center gap-3">
+                        <button onClick={() => navigate('/')} className="vr-nav-btn icon-btn">
+                            <FiHome />
+                        </button>
+                        <div className="vr-nav-divider"></div>
+                        <span className="vr-nav-title">
+                            {view === 'login' ? 'Login' : 
+                             view === 'register' ? 'Register' : 'Security'}
+                        </span>
+                    </div>
+
+                    <div className="vr-nav-brand">MEHFIL <span className="text-red">ONE</span></div>
+
+                    <div className="nav-right">
+                        {/* Empty spacer to keep brand centered */}
+                        <div style={{width: '40px'}}></div>
+                    </div>
+                </div>
             </nav>
 
             <div className="vr-content-wrapper">
-                <div className="sa-login-card vr-card-wide" style={{ maxWidth: view === 'login' ? '480px' : '850px' }}>
-                    <h2 className="sa-login-title">{view === 'login' ? 'User Login' : 'User Registration'}</h2>
+                <div className="sa-login-card vr-card-wide" style={{ maxWidth: (view === 'login' || view === 'forgot' || view === 'reset' || view === 'verify-reset') ? '480px' : '850px' }}>
+                    <h2 className="sa-login-title">
+                        {view === 'login' ? 'User Login' : 
+                         view === 'forgot' ? 'Forgot Password' : 
+                         view === 'verify-reset' ? 'Verify OTP' :
+                         view === 'reset' ? 'New Password' : 'User Registration'}
+                    </h2>
                     
                     <p className="text-center text-muted mb-4" style={{marginTop: '-1.5rem'}}>
-                        {view === 'login' ? 'Welcome back! Please enter your details.' : 'Join Mehfil One and start booking venues.'}
+                        {view === 'login' ? 'Welcome back! Please enter your details.' : 
+                         view === 'forgot' ? 'Enter your email to receive an OTP.' : 
+                         view === 'verify-reset' ? `Enter the 6-digit code sent to ${formData.email}` :
+                         view === 'reset' ? 'Create a new secure password for your account.' : 
+                         'Join Mehfil One and start booking venues.'}
                     </p>
 
                     {error && <div className="user-auth-alert error"><FiAlertCircle /> {error}</div>}
@@ -132,6 +221,7 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
                     <form className="sa-login-form" onSubmit={handleSubmit}>
                         {view === 'register' ? (
                             <>
+                                {/* ... register fields ... */}
                                 <div className="row">
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Full Name</label>
@@ -198,21 +288,6 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
                                                 {showPassword ? <FiEyeOff /> : <FiEye />}
                                             </button>
                                         </div>
-                                        <div className="sa-password-strength mt-2">
-                                            <div className="d-flex justify-content-between align-items-center mb-1">
-                                                <span className="small text-muted" style={{ fontSize: '0.75rem' }}>Use 8+ characters</span>
-                                                <span className={`small fw-bold ${passwordStrength >= 3 ? 'text-success' : passwordStrength >= 2 ? 'text-warning' : 'text-danger'}`} style={{ fontSize: '0.75rem' }}>
-                                                    {passwordStrength >= 3 ? 'Strong' : passwordStrength >= 2 ? 'Medium' : passwordStrength > 0 ? 'Weak' : ''}
-                                                </span>
-                                            </div>
-                                            <div className="progress" style={{ height: '4px', background: '#f1f5f9' }}>
-                                                <div 
-                                                    className={`progress-bar ${passwordStrength >= 3 ? 'bg-success' : passwordStrength >= 2 ? 'bg-warning' : 'bg-danger'}`} 
-                                                    role="progressbar" 
-                                                    style={{ width: `${(passwordStrength / 4) * 100}%`, transition: 'width 0.3s' }}
-                                                ></div>
-                                            </div>
-                                        </div>
                                     </div>
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Confirm Password</label>
@@ -237,33 +312,72 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
                                         </div>
                                     </div>
                                 </div>
-
-                                {otpStep && (
-                                    <div className="row">
-                                        <div className="col-md-12 mb-4">
-                                            <div className="p-4 rounded-4 border-2 border-danger border-dashed bg-light text-center">
-                                                <label className="form-label d-block mb-3">Enter 6-Digit OTP sent to your Email</label>
-                                                <div className="position-relative d-inline-block w-100" style={{ maxWidth: '300px' }}>
-                                                    <FiLock className="input-icon-left" />
-                                                    <input 
-                                                        type="text" 
-                                                        name="otp" 
-                                                        className="form-control ps-5 text-center fw-bold" 
-                                                        style={{ letterSpacing: '0.5rem', fontSize: '1.2rem' }}
-                                                        placeholder="000000" 
-                                                        maxLength="6"
-                                                        value={formData.otp} 
-                                                        onChange={handleChange} 
-                                                        required 
-                                                    />
-                                                </div>
-                                                <p className="mt-3 small text-muted">
-                                                    Didn't receive OTP? <span className="text-danger fw-bold" style={{cursor:'pointer'}} onClick={() => setOtpStep(false)}>Click here to retry</span>
-                                                </p>
-                                            </div>
+                            </>
+                        ) : view === 'forgot' ? (
+                            <>
+                                <div className="row justify-content-center">
+                                    <div className="col-md-12 mb-3">
+                                        <label className="form-label">Enter Email Address</label>
+                                        <div className="position-relative">
+                                            <FiMail className="input-icon-left" />
+                                            <input type="email" name="email" className="form-control ps-5" placeholder="email@example.com" value={formData.email} onChange={handleChange} required />
+                                        </div>
+                                        <div className="form-text mt-2 text-center">We will send a 6-digit OTP to this email</div>
+                                    </div>
+                                </div>
+                            </>
+                        ) : view === 'verify-reset' ? (
+                            <>
+                                <div className="row justify-content-center">
+                                    <div className="col-md-12 mb-3">
+                                        <label className="form-label d-block text-center mb-4">Verification OTP</label>
+                                        <div className="d-flex justify-content-center gap-2 mb-4">
+                                            {otpArray.map((digit, index) => (
+                                                <input
+                                                    key={index}
+                                                    id={`otp-${index}`}
+                                                    type="text"
+                                                    className="form-control text-center fw-bold"
+                                                    style={{ 
+                                                        width: '50px', 
+                                                        height: '60px', 
+                                                        fontSize: '1.5rem', 
+                                                        borderRadius: '12px',
+                                                        border: '2px solid #e2e8f0',
+                                                        background: '#f8fafc'
+                                                    }}
+                                                    value={digit}
+                                                    onChange={(e) => handleOtpChange(e.target.value, index)}
+                                                    onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                                                    maxLength="1"
+                                                    autoComplete="off"
+                                                />
+                                            ))}
+                                        </div>
+                                        <div className="form-text mt-2 text-center text-muted">Please enter the 6-digit code sent to your email</div>
+                                    </div>
+                                </div>
+                            </>
+                        ) : view === 'reset' ? (
+                            <>
+                                <div className="row justify-content-center">
+                                    <div className="col-md-12 mb-3">
+                                        <label className="form-label">New Password</label>
+                                        <div className="position-relative">
+                                            <FiLock className="input-icon-left" />
+                                            <input type={showPassword ? 'text' : 'password'} name="password" className="form-control ps-5 pe-5" placeholder="••••••••" value={formData.password} onChange={handleChange} required />
+                                            <button type="button" className="password-toggle-icon" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <FiEyeOff /> : <FiEye />}</button>
                                         </div>
                                     </div>
-                                )}
+                                    <div className="col-md-12 mb-3">
+                                        <label className="form-label">Confirm New Password</label>
+                                        <div className="position-relative">
+                                            <FiLock className="input-icon-left" />
+                                            <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" className="form-control ps-5 pe-5" placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange} required />
+                                            <button type="button" className="password-toggle-icon" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>{showConfirmPassword ? <FiEyeOff /> : <FiEye />}</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </>
                         ) : (
                             <>
@@ -299,21 +413,35 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
                                             </button>
                                         </div>
                                     </div>
+                                    <div className="col-md-12 text-end mb-2">
+                                        <span 
+                                            className="text-danger small fw-bold" 
+                                            style={{cursor:'pointer', fontSize: '0.8rem'}}
+                                            onClick={() => setView('forgot')}
+                                        >
+                                            Forgot Password?
+                                        </span>
+                                    </div>
                                 </div>
                             </>
                         )}
 
-                        <div className="row justify-content-center mt-2">
-                            <div className={view === 'login' ? 'col-md-12' : 'col-md-4'}>
-                                <button type="submit" className="sa-login-btn w-100" disabled={loading}>
-                                    {loading ? 'Processing...' : view === 'login' ? 'Login' : otpStep ? 'Verify & Create Account' : 'Create Account'}
-                                </button>
-                            </div>
+                        <div className="mt-4">
+                            <button type="submit" className="sa-login-btn" disabled={loading}>
+                                {loading ? 'Processing...' : 
+                                 view === 'forgot' ? 'Send Reset OTP' : 
+                                 view === 'verify-reset' ? 'Verify OTP' :
+                                 view === 'reset' ? 'Update Password' : 
+                                 view === 'login' ? 'Login' : 
+                                 otpStep ? 'Verify & Create Account' : 'Create Account'}
+                            </button>
                         </div>
                     </form>
 
                     <div className="user-auth-footer mt-4 text-center">
-                        {view === 'login' ? (
+                        {view === 'forgot' || view === 'reset' ? (
+                            <p className="text-muted">Remember your password? <span className="text-danger fw-bold" style={{cursor:'pointer'}} onClick={() => setView('login')}>Back to Login</span></p>
+                        ) : view === 'login' ? (
                             <p className="text-muted">Don't have an account? <span className="text-danger fw-bold" style={{cursor:'pointer'}} onClick={() => navigate('/user/register')}>Register here</span></p>
                         ) : (
                             <p className="text-muted">Already have an account? <span className="text-danger fw-bold" style={{cursor:'pointer'}} onClick={() => navigate('/user/login')}>Login here</span></p>
