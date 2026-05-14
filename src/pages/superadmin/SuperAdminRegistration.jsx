@@ -29,11 +29,11 @@ const SuperAdminRegistration = () => {
         <div className="sa-login-container">
             <div className="sa-login-card">
                 <div className="sa-login-brand">
-                    <i className="bi bi-calendar-check-fill"></i>
-                    <span>Booking</span>
+                    <i className="bi bi-shield-lock-fill"></i>
+                    <span>SUPER ADMIN</span>
                 </div>
-                <h2 className="sa-login-title">Create Account</h2>
-                <p className="sa-login-subtitle">Join us to manage your bookings efficiently</p>
+                <h2 className="sa-login-title">Admin Sign Up</h2>
+                <p className="sa-login-subtitle">Register a new system administrator account</p>
 
                 <form onSubmit={handleRegister} className="sa-login-form">
                     <div className="mb-3">

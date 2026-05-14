@@ -2,29 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../../../utils/function';
-import { FaUsers, FaMapMarkerAlt, FaRupeeSign, FaStar, FaChevronRight } from 'react-icons/fa';
-import { FiCalendar, FiInfo } from 'react-icons/fi';
+import { FaUsers, FaMapMarkerAlt, FaRupeeSign, FaStar, FaChevronRight, FaSnowflake } from 'react-icons/fa';
 
 const Venues = ({ venuesRef }) => {
     const navigate = useNavigate();
     const [venues, setVenues] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState(null);
-
-    useEffect(() => {
-        const checkUser = () => {
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                setUser(JSON.parse(storedUser));
-            } else {
-                setUser(null);
-            }
-        };
-
-        checkUser();
-        window.addEventListener('storage', checkUser);
-        return () => window.removeEventListener('storage', checkUser);
-    }, []);
 
     useEffect(() => {
         const fetchAllVenues = async () => {
@@ -65,15 +48,18 @@ const Venues = ({ venuesRef }) => {
                 ) : (
                     <div className="row g-4">
                         {venues.length > 0 ? (
-                            venues.map((venue) => (
-                                <div key={venue._id} className="col-lg-4 col-md-6 animate-fade-in-up">
+                            venues.slice(0, 6).map((venue, index) => (
+                                <div key={venue._id} className="col-lg-4 col-md-6 animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
                                     <div className="venue-card-premium h-100 shadow-sm transition-all" style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.04)' }}>
-                                        <div className="position-relative" style={{ height: '260px', cursor: 'pointer' }} onClick={() => handleOpenDetail(venue, 'details')}>
+                                        {/* Image Section */}
+                                        <div className="position-relative" style={{ height: '260px', cursor: 'pointer', overflow: 'hidden' }} onClick={() => handleOpenDetail(venue, 'details')}>
                                             <img 
                                                 src={`${API_URL.replace('/api', '')}/${venue.coverImage}`} 
                                                 alt={venue.mahalName} 
-                                                className="w-100 h-100 object-fit-cover transition-all"
+                                                className="w-100 h-100 object-fit-cover transition-all venue-img" 
                                             />
+                                            
+                                            {/* Badges Overlay */}
                                             <div className="position-absolute top-0 end-0 m-3 d-flex flex-column align-items-end gap-2">
                                                 <div className="badge bg-white text-dark shadow-sm px-3 py-2 rounded-pill fw-bold d-flex align-items-center gap-1" style={{ fontSize: '0.75rem' }}>
                                                     <FaStar className="text-warning" /> 
@@ -84,8 +70,14 @@ const Venues = ({ venuesRef }) => {
                                                         {venue.reviewCount} Reviews
                                                     </div>
                                                 )}
+                                                {venue.facilities?.ac && (
+                                                    <div className="badge bg-info text-white shadow-sm px-3 py-2 rounded-pill fw-bold d-flex align-items-center gap-1" style={{ fontSize: '0.65rem' }}>
+                                                        <FaSnowflake size={10} /> AC
+                                                    </div>
+                                                )}
                                             </div>
 
+                                            {/* Location Overlay */}
                                             <div className="position-absolute bottom-0 start-0 w-100 p-4" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }}>
                                                 <div className="d-flex align-items-center gap-2 text-white small fw-bold">
                                                     <FaMapMarkerAlt size={12} className="text-danger" />
@@ -93,16 +85,34 @@ const Venues = ({ venuesRef }) => {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {/* Content Section */}
                                         <div className="p-4">
                                             <div className="d-flex justify-content-between align-items-start mb-2">
                                                 <h4 className="fw-bold mb-0" style={{ letterSpacing: '-0.01em', color: '#111', cursor: 'pointer' }} onClick={() => handleOpenDetail(venue, 'details')}>{venue.mahalName}</h4>
                                             </div>
+                                            
                                             <p className="text-muted small mb-4 line-clamp-2" style={{ minHeight: '40px' }}>{venue.description}</p>
                                             
                                             <div className="d-flex align-items-center justify-content-between pt-3 border-top border-light">
-                                                <div className="d-flex align-items-center gap-2 text-muted small">
-                                                    <FaUsers className="text-danger" />
-                                                    <span className="fw-bold">{venue.seatingCapacity}+ Guests</span>
+                                                <div className="d-flex flex-column gap-1 text-muted small">
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        <FaUsers className="text-danger" size={14} />
+                                                        <span className="fw-bold">{venue.seatingCapacity}+ Guests</span>
+                                                    </div>
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        {venue.facilities?.ac ? (
+                                                            <>
+                                                                <FaSnowflake className="text-info" size={12} />
+                                                                <span className="fw-bold">Air Conditioned</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: '1.5px solid #666' }}></div>
+                                                                <span className="fw-bold">Non-AC Hall</span>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="text-end">
                                                     <div className="small text-muted mb-1" style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Starting From</div>
@@ -113,6 +123,7 @@ const Venues = ({ venuesRef }) => {
                                                 </div>
                                             </div>
                                             
+                                            {/* Action Button */}
                                             <div className="mt-4">
                                                 <button 
                                                     onClick={() => handleOpenDetail(venue, 'details')}
@@ -138,27 +149,42 @@ const Venues = ({ venuesRef }) => {
                             ))
                         ) : (
                             <div className="col-12 text-center py-5">
-                                <h3 className="text-muted">No Mahal's available at the moment.</h3>
+                                <h3 className="text-muted">No venues found</h3>
                             </div>
                         )}
                     </div>
                 )}
-                
-                <div className="text-center mt-5 pt-4">
-                    <button className="btn btn-outline-dark rounded-pill px-5 py-3 fw-bold transition-all">
-                        Discover All Mahal's
-                    </button>
-                </div>
+
+                {!loading && venues.length > 0 && (
+                    <div className="text-center mt-5 animate-fade-in">
+                        <button 
+                            className="btn btn-danger btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg transform-hover"
+                            onClick={() => navigate('/all-venues')}
+                            style={{ 
+                                background: 'linear-gradient(45deg, #C8102E, #E31837)',
+                                border: 'none',
+                                letterSpacing: '0.05em'
+                            }}
+                        >
+                            Discover ALL Mahal
+                        </button>
+                    </div>
+                )}
             </div>
 
             <style>{`
-                /* Venue cards */
+                .venue-card-premium {
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                }
                 .venue-card-premium:hover {
                     transform: translateY(-10px);
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
                 }
-                .venue-card-premium:hover img {
-                    transform: scale(1.05);
+                .venue-card-premium:hover .venue-img {
+                    transform: scale(1.1);
+                }
+                .venue-img {
+                    transition: all 0.6s ease;
                 }
                 .line-clamp-2 {
                     display: -webkit-box;
@@ -166,112 +192,39 @@ const Venues = ({ venuesRef }) => {
                     -webkit-box-orient: vertical;
                     overflow: hidden;
                 }
-
-                /* Lock screen - open layout */
-                .lock-open-section {
-                    background: #f8f8f8;
+                .btn-premium-action {
+                    transition: all 0.3s ease;
                 }
-
-                /* Animated orbs */
-                .lock-orb {
+                .btn-premium-action:hover {
+                    transform: scale(1.02);
+                }
+                .btn-sweep {
                     position: absolute;
-                    border-radius: 50%;
-                    pointer-events: none;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                    transition: 0.5s;
                     z-index: 1;
                 }
-                .lock-orb-1 {
-                    width: 400px; height: 400px;
-                    background: radial-gradient(circle, rgba(200,16,46,0.1) 0%, transparent 65%);
-                    top: -100px; left: -100px;
-                    animation: orbFloat1 9s ease-in-out infinite;
+                .btn-premium-action:hover .btn-sweep {
+                    left: 100%;
                 }
-                .lock-orb-2 {
-                    width: 300px; height: 300px;
-                    background: radial-gradient(circle, rgba(100,50,120,0.07) 0%, transparent 65%);
-                    bottom: -80px; right: -80px;
-                    animation: orbFloat2 11s ease-in-out infinite;
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(30px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
-                .lock-orb-3 {
-                    width: 220px; height: 220px;
-                    background: radial-gradient(circle, rgba(200,16,46,0.06) 0%, transparent 65%);
-                    top: 40%; left: 60%;
-                    animation: orbFloat1 7s ease-in-out infinite reverse;
+                .animate-fade-in-up {
+                    animation: fadeInUp 0.6s ease-out forwards;
                 }
-                @keyframes orbFloat1 {
-                    0%, 100% { transform: translate(0,0) scale(1); }
-                    50% { transform: translate(30px, 20px) scale(1.08); }
+                .transform-hover {
+                    transition: all 0.3s ease;
                 }
-                @keyframes orbFloat2 {
-                    0%, 100% { transform: translate(0,0) scale(1); }
-                    50% { transform: translate(-20px, -30px) scale(1.06); }
+                .transform-hover:hover {
+                    transform: scale(1.05) translateY(-3px);
+                    box-shadow: 0 15px 30px rgba(200, 16, 46, 0.4) !important;
                 }
-
-                /* Eyebrow label */
-                .lock-eyebrow {
-                    display: inline-block;
-                    font-size: 0.62rem;
-                    font-weight: 800;
-                    letter-spacing: 0.2em;
-                    color: #C8102E;
-                    background: rgba(200,16,46,0.07);
-                    padding: 5px 16px;
-                    border-radius: 999px;
-                }
-
-                /* Primary CTA */
-                .lock-btn-primary {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 10px;
-                    background: #0a0a0a;
-                    color: #fff;
-                    border: none;
-                    padding: 15px 30px;
-                    border-radius: 999px;
-                    font-weight: 700;
-                    font-size: 0.9rem;
-                    letter-spacing: 0.01em;
-                    cursor: pointer;
-                    position: relative;
-                    overflow: hidden;
-                    transition: transform 0.25s, box-shadow 0.25s;
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.16);
-                }
-                .lock-btn-primary::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
-                    transform: translateX(-100%);
-                    transition: transform 0.5s ease;
-                }
-                .lock-btn-primary:hover::before { transform: translateX(100%); }
-                .lock-btn-primary:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 14px 32px rgba(0,0,0,0.2);
-                }
-
-                /* Secondary CTA */
-                .lock-btn-secondary {
-                    display: inline-flex;
-                    align-items: center;
-                    background: transparent;
-                    color: #333;
-                    border: 1.5px solid rgba(0,0,0,0.14);
-                    padding: 15px 30px;
-                    border-radius: 999px;
-                    font-weight: 700;
-                    font-size: 0.9rem;
-                    cursor: pointer;
-                    transition: all 0.25s;
-                }
-                .lock-btn-secondary:hover {
-                    background: #0a0a0a;
-                    color: #fff;
-                    border-color: #0a0a0a;
-                    transform: translateY(-2px);
-                }
-
             `}</style>
         </section>
     );

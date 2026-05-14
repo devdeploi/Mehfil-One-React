@@ -22,9 +22,12 @@ import VendorProfile from './pages/vendor/VendorProfile';
 import VendorAvailability from './pages/vendor/VendorAvailability';
 import BookingList from './pages/vendor/BookingList';
 import MahalProfile from './pages/vendor/MahalProfile';
+import VendorLogin from './pages/vendor/VendorLogin';
 import InstallPrompt from './components/InstallPrompt';
 
 
+
+import AllVenuesPage from './pages/landing/AllVenuesPage';
 
 function App() {
   return (
@@ -33,7 +36,9 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/venue/:id" element={<VenueDetailsPage />} />
+        <Route path="/all-venues" element={<AllVenuesPage />} />
         <Route path="/superadmin/login" element={<SuperAdminLogin />} />
+        <Route path="/vendor/login" element={<VendorLogin />} />
         <Route path="/vendor/register" element={<VendorRegistration />} />
         <Route path="/user/login" element={<UserAuthPage defaultView="login" />} />
         <Route path="/user/register" element={<UserAuthPage defaultView="register" />} />

@@ -14,6 +14,9 @@ const UserList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: '' });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalUsers, setTotalUsers] = useState(0);
 
     // Modals state
     const [editModal, setEditModal] = useState({ show: false, user: null });
@@ -27,14 +30,16 @@ const UserList = () => {
     });
 
     useEffect(() => {
-        fetchUsers();
-    }, []);
+        fetchUsers(currentPage);
+    }, [currentPage]);
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (page) => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_URL}/users`);
-            setUsers(response.data);
+            const response = await axios.get(`${API_URL}/users?page=${page}&limit=50`);
+            setUsers(response.data.users);
+            setTotalPages(response.data.totalPages);
+            setTotalUsers(response.data.totalUsers);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -247,6 +252,30 @@ const UserList = () => {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="sa-pagination mt-4 px-4">
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(prev => prev - 1)}
+                        className="sa-pagination-btn"
+                        title="Previous Page"
+                    >
+                        <FaChevronLeft />
+                    </button>
+                    <span className="sa-pagination-info">
+                        Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+                        <span className="text-muted ms-2 small">(Total {totalUsers} users)</span>
+                    </span>
+                    <button
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(prev => prev + 1)}
+                        className="sa-pagination-btn"
+                        title="Next Page"
+                    >
+                        <FaChevronRight />
+                    </button>
                 </div>
             </div>
 

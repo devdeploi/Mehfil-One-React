@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../utils/function';
 import FOG from 'vanta/dist/vanta.fog.min';
 import * as THREE from 'three';
-import '../../styles/superadmin/SuperAdminLogin.css';
+import '../../styles/vendor/VendorLogin.css';
 
-const SuperAdminLogin = () => {
+const VendorLogin = () => {
     const navigate = useNavigate();
 
     // Vanta Effect
@@ -20,7 +20,7 @@ const SuperAdminLogin = () => {
                     el: vantaRef.current,
                     THREE: THREE,
                     mouseControls: false,
-                    touchControls: false, // Disabled for performance
+                    touchControls: false,
                     gyroControls: false,
                     minHeight: 200.00,
                     minWidth: 200.00,
@@ -28,9 +28,9 @@ const SuperAdminLogin = () => {
                     midtoneColor: 0xffffff,
                     lowlightColor: 0xff8fab,
                     baseColor: 0xffffff,
-                    blurFactor: 0.4, // Reduced blur
-                    speed: 1.0, // Reduced speed
-                    zoom: 0.8 // Reduced zoom
+                    blurFactor: 0.4,
+                    speed: 1.0,
+                    zoom: 0.8
                 }));
             } catch (error) {
                 console.warn("Vanta Effect failed to initialize", error);
@@ -61,6 +61,7 @@ const SuperAdminLogin = () => {
     const [loginError, setLoginError] = useState('');
     const [otpError, setOtpError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const calculateStrength = (password) => {
         let strength = 0;
@@ -88,6 +89,36 @@ const SuperAdminLogin = () => {
         }
     };
 
+    const handleOtpBoxChange = (element, index) => {
+        if (isNaN(element.value)) return false;
+
+        const newOtp = resetData.otp.split('');
+        while (newOtp.length < 6) newOtp.push('');
+
+        newOtp[index] = element.value;
+        const finalOtp = newOtp.join('').substring(0, 6);
+        setResetData(prev => ({ ...prev, otp: finalOtp }));
+
+        if (element.value && element.nextSibling) {
+            element.nextSibling.focus();
+        }
+    };
+
+    const handleOtpBoxKeyDown = (e, index) => {
+        if (e.key === "Backspace") {
+            if (!resetData.otp[index] && e.target.previousSibling) {
+                e.target.previousSibling.focus();
+            }
+        }
+    };
+
+    const handleOtpPaste = (e) => {
+        e.preventDefault();
+        const data = e.clipboardData.getData("text").trim();
+        if (!data || isNaN(data)) return;
+        setResetData(prev => ({ ...prev, otp: data.slice(0, 6) }));
+    };
+
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
 
@@ -97,14 +128,14 @@ const SuperAdminLogin = () => {
             if (response.status === 200) {
                 const userData = response.data.vendor;
                 
-                if (userData.role !== 'superadmin') {
-                    setLoginError('Access denied. This portal is for Super Admins only.');
+                if (userData.role !== 'vendor') {
+                    setLoginError('This portal is for vendors only.');
                     setShakeTrigger(prev => prev + 1);
                     return;
                 }
 
                 localStorage.setItem('vendor_user', JSON.stringify(userData));
-                navigate('/superadmin/dashboard');
+                navigate('/vendor/dashboard');
             }
         } catch (error) {
             console.error('Login Error:', error);
@@ -118,6 +149,7 @@ const SuperAdminLogin = () => {
         e.preventDefault();
         setLoginError('');
         setSuccessMsg('');
+        setIsLoading(true);
         
         try {
             const response = await axios.post(`${API_URL}/auth/forgot-password`, { email: resetData.email });
@@ -130,11 +162,15 @@ const SuperAdminLogin = () => {
             const msg = error.response?.data?.msg || 'Failed to send verification code';
             setLoginError(msg);
             setShakeTrigger(prev => prev + 1);
+            setView('forgot'); // Stay on forgot view if error
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleVerifyOTP = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
         try {
             const response = await axios.post(`${API_URL}/auth/verify-otp`, { 
                 email: resetData.email, 
@@ -150,6 +186,8 @@ const SuperAdminLogin = () => {
             const msg = error.response?.data?.msg || 'Invalid OTP. Please check the code.';
             setOtpError(msg);
             setShakeTrigger(prev => prev + 1);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -171,6 +209,7 @@ const SuperAdminLogin = () => {
             if (response.status === 200) {
                 setSuccessMsg('Password Reset Successfully! Please login with your new password.');
                 setView('login');
+                // Clear reset data
                 setResetData({ email: '', otp: '', password: '', confirmPassword: '' });
             }
         } catch (error) {
@@ -182,17 +221,17 @@ const SuperAdminLogin = () => {
     };
 
     return (
-        <div className="sa-login-container" ref={vantaRef}>
-            <div className={`sa-login-card ${view === 'reset' ? 'sa-register-mode' : ''}`}>
-                <div className="sa-login-brand">
-                    <i className="bi bi-shield-lock-fill"></i>
-                    <span>SUPER ADMIN</span>
+        <div className="v-login-container" ref={vantaRef}>
+            <div className={`v-login-card ${view === 'reset' ? 'v-register-mode' : ''}`}>
+                <div className="v-login-brand">
+                    <i className="bi bi-shop"></i>
+                    <span>VENDOR PORTAL</span>
                 </div>
 
                 {view === 'login' && (
                     <>
-                        <h2 className="sa-login-title">Admin Access</h2>
-                        <p className="sa-login-subtitle">System management portal for super administrators</p>
+                        <h2 className="v-login-title">Partner Login</h2>
+                        <p className="v-login-subtitle">Manage your venue and bookings with ease</p>
 
                         {successMsg && (
                             <div className="d-flex align-items-center gap-2 mb-3 justify-content-center" style={{ color: '#4ade80', fontSize: '0.9rem' }}>
@@ -201,7 +240,7 @@ const SuperAdminLogin = () => {
                             </div>
                         )}
 
-                        <form onSubmit={handleLoginSubmit} className="sa-login-form">
+                        <form onSubmit={handleLoginSubmit} className="v-login-form">
                             <div className="mb-3">
                                 <label className="form-label">Email Address</label>
                                 <input
@@ -211,7 +250,7 @@ const SuperAdminLogin = () => {
                                     value={loginData.email}
                                     onChange={handleLoginChange}
                                     required
-                                    placeholder="name@example.com"
+                                    placeholder="vendor@example.com"
                                 />
                             </div>
                             <div className="mb-3">
@@ -224,9 +263,9 @@ const SuperAdminLogin = () => {
                                         value={loginData.password}
                                         onChange={handleLoginChange}
                                         required
-                                        placeholder="Enter your password"
+                                        placeholder="••••••••"
                                     />
-                                    <button type="button" className="btn sa-password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                                    <button type="button" className="btn v-password-toggle" onClick={() => setShowPassword(!showPassword)}>
                                         <i className={`bi ${showPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'}`}></i>
                                     </button>
                                 </div>
@@ -238,9 +277,9 @@ const SuperAdminLogin = () => {
                             </div>
                             <button
                                 type="submit"
-                                className="btn btn-primary sa-login-btn mt-2"
+                                className="btn btn-primary v-login-btn mt-2"
                             >
-                                Login
+                                Sign In
                             </button>
 
                             {loginError && (
@@ -250,20 +289,20 @@ const SuperAdminLogin = () => {
                                 </div>
                             )}
 
-                            {/* <div className="text-center mt-4">
+                            <div className="text-center mt-4">
                                 <button type="button" onClick={() => navigate('/vendor/register')} className="btn btn-link text-decoration-none" style={{ fontSize: '0.9rem', color: '#64748b' }}>
-                                    Don't have an account? <span className="text-danger fw-bold">Register as Vendor</span>
+                                    Don't have an account? <span className="text-danger fw-bold">Register Now</span>
                                 </button>
-                            </div> */}
+                            </div>
                         </form>
                     </>
                 )}
 
                 {view === 'forgot' && (
                     <>
-                        <h2 className="sa-login-title">Reset Password</h2>
-                        <p className="sa-login-subtitle">Enter your email to receive an OTP</p>
-                        <form onSubmit={handleSendOTP} className="sa-login-form">
+                        <h2 className="v-login-title">Reset Password</h2>
+                        <p className="v-login-subtitle">Enter your email to receive an OTP</p>
+                        <form onSubmit={handleSendOTP} className="v-login-form">
                             <div className="mb-3">
                                 <label className="form-label">Email Address</label>
                                 <input
@@ -273,10 +312,12 @@ const SuperAdminLogin = () => {
                                     value={resetData.email}
                                     onChange={handleResetChange}
                                     required
-                                    placeholder="name@example.com"
+                                    placeholder="vendor@example.com"
                                 />
                             </div>
-                            <button type="submit" className="btn btn-primary sa-login-btn">Send OTP</button>
+                            <button type="submit" className="btn btn-primary v-login-btn" disabled={isLoading}>
+                                {isLoading ? 'Sending...' : 'Send OTP'}
+                            </button>
                             <div className="text-center mt-3">
                                 <button type="button" onClick={() => setView('login')} className="btn btn-link text-muted text-decoration-none">Back to Login</button>
                             </div>
@@ -286,23 +327,24 @@ const SuperAdminLogin = () => {
 
                 {view === 'otp' && (
                     <>
-                        <h2 className="sa-login-title">Enter OTP</h2>
-                        <p className="sa-login-subtitle">We sent a code to {resetData.email}</p>
-                        <form onSubmit={handleVerifyOTP} className="sa-login-form">
-                            <div className="mb-3">
-                                <label className="form-label">6-Digit Code</label>
-                                <input
-                                    type="text"
-                                    name="otp"
-                                    className="form-control text-center"
-                                    style={{ letterSpacing: '0.5em', fontSize: '1.2rem' }}
-                                    value={resetData.otp}
-                                    onChange={handleResetChange}
-                                    required
-                                    placeholder="------"
-                                    maxLength={6}
-                                />
-                                <div className="form-text text-muted text-center mt-2">Check your email for the code</div>
+                        <h2 className="v-login-title">Enter OTP</h2>
+                        <p className="v-login-subtitle">We sent a 6-digit code to {resetData.email}</p>
+                        <form onSubmit={handleVerifyOTP} className="v-login-form">
+                            <div className="mb-4 d-flex justify-content-center gap-2">
+                                {[...Array(6)].map((_, index) => (
+                                    <input
+                                        key={index}
+                                        type="text"
+                                        className="form-control text-center v-otp-box"
+                                        maxLength={1}
+                                        value={resetData.otp[index] || ''}
+                                        onChange={(e) => handleOtpBoxChange(e.target, index)}
+                                        onKeyDown={(e) => handleOtpBoxKeyDown(e, index)}
+                                        onFocus={e => e.target.select()}
+                                        onPaste={index === 0 ? handleOtpPaste : undefined}
+                                        required
+                                    />
+                                ))}
                             </div>
 
                             {otpError && (
@@ -312,9 +354,16 @@ const SuperAdminLogin = () => {
                                 </div>
                             )}
 
-                            <button type="submit" className="btn btn-primary sa-login-btn">Verify</button>
-                            <div className="text-center mt-3">
-                                <button type="button" onClick={() => setView('forgot')} className="btn btn-link text-muted text-decoration-none">Resend Code</button>
+                            <button type="submit" className="btn btn-primary v-login-btn" disabled={isLoading || resetData.otp.length !== 6}>
+                                {isLoading ? 'Verifying...' : 'Verify'}
+                            </button>
+                            <div className="text-center mt-3 d-flex flex-column gap-2">
+                                <button type="button" onClick={handleSendOTP} className="btn btn-link text-muted text-decoration-none small" disabled={isLoading}>
+                                    Resend Code
+                                </button>
+                                <button type="button" onClick={() => setView('login')} className="btn btn-link text-muted text-decoration-none small">
+                                    Back to Login
+                                </button>
                             </div>
                         </form>
                     </>
@@ -322,9 +371,9 @@ const SuperAdminLogin = () => {
 
                 {view === 'reset' && (
                     <>
-                        <h2 className="sa-login-title">New Password</h2>
-                        <p className="sa-login-subtitle">Create a strong password for your account</p>
-                        <form onSubmit={handleResetPassword} className="sa-login-form">
+                        <h2 className="v-login-title">New Password</h2>
+                        <p className="v-login-subtitle">Create a strong password for your account</p>
+                        <form onSubmit={handleResetPassword} className="v-login-form">
                             <div className="mb-3">
                                 <label className="form-label">New Password</label>
                                 <div className="position-relative">
@@ -337,28 +386,10 @@ const SuperAdminLogin = () => {
                                         required
                                         placeholder="New Password"
                                     />
-                                    <button type="button" className="btn sa-password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                                    <button type="button" className="btn v-password-toggle" onClick={() => setShowPassword(!showPassword)}>
                                         <i className={`bi ${showPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'}`}></i>
                                     </button>
                                 </div>
-                                {resetData.password && (
-                                    <>
-                                        <div className="mt-2 d-flex gap-1" style={{ height: '4px' }}>
-                                            {[1, 2, 3, 4].map(level => (
-                                                <div key={level} className="flex-grow-1 rounded-pill" style={{
-                                                    background: level <= passwordStrength ? (passwordStrength === 1 ? '#dc2626' : passwordStrength === 2 ? '#fbbf24' : passwordStrength === 3 ? '#3b82f6' : '#22c55e') : '#e2e8f0',
-                                                    transition: 'background-color 0.5s ease'
-                                                }}></div>
-                                            ))}
-                                        </div>
-                                        <div className="d-flex justify-content-between mt-1" style={{ fontSize: '0.75rem' }}>
-                                            <span className="text-muted">Use 8+ characters</span>
-                                            <span style={{ color: passwordStrength === 1 ? '#dc2626' : passwordStrength === 2 ? '#fbbf24' : passwordStrength === 3 ? '#3b82f6' : '#22c55e', fontWeight: 'bold' }}>
-                                                {passwordStrength === 1 && "Weak"} {passwordStrength === 2 && "Fair"} {passwordStrength === 3 && "Good"} {passwordStrength === 4 && "Strong"}
-                                            </span>
-                                        </div>
-                                    </>
-                                )}
                             </div>
                             <div className="mb-3">
                                 <label className="form-label">Confirm Password</label>
@@ -372,18 +403,21 @@ const SuperAdminLogin = () => {
                                         required
                                         placeholder="Confirm Password"
                                     />
-                                    <button type="button" className="btn sa-password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                                    <button type="button" className="btn v-password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                                         <i className={`bi ${showConfirmPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'}`}></i>
                                     </button>
                                 </div>
                                 {passwordError && (
-                                    <div key={shakeTrigger} className="animate-shake d-flex align-items-center gap-2 mt-2" style={{ color: '#d9e711ff', fontSize: '0.85rem' }}>
+                                    <div key={shakeTrigger} className="animate-shake d-flex align-items-center gap-2 mt-2" style={{ color: '#ef4444', fontSize: '0.85rem' }}>
                                         <i className="bi bi-exclamation-circle"></i>
                                         <span>{passwordError}</span>
                                     </div>
                                 )}
                             </div>
-                            <button type="submit" className="btn btn-primary sa-login-btn">Reset Password</button>
+                            <button type="submit" className="btn btn-primary v-login-btn">Reset Password</button>
+                            <div className="text-center mt-3">
+                                <button type="button" onClick={() => setView('login')} className="btn btn-link text-muted text-decoration-none small">Back to Login</button>
+                            </div>
                         </form>
                     </>
                 )}
@@ -392,4 +426,4 @@ const SuperAdminLogin = () => {
     );
 };
 
-export default SuperAdminLogin;
+export default VendorLogin;

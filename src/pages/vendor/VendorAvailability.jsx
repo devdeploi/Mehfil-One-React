@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaChevronLeft, FaChevronRight, FaTimes, FaBuilding, FaSave, FaPhone, FaUser, FaClock, FaCalendarAlt, FaSun, FaMoon, FaCalendarDay, FaWallet, FaCreditCard, FaMobileAlt, FaCheckCircle, FaHourglassHalf, FaBan, FaUsers, FaRupeeSign, FaMapMarkerAlt, FaSnowflake, FaBolt, FaParking, FaVideo, FaMicrophone, FaCouch, FaShieldAlt, FaTint, FaConciergeBell, FaChair, FaMinus, FaPlus, FaTags, FaChevronCircleUp, FaBroom, FaLayerGroup, FaBed, FaPaintBrush, FaStore, FaUtensils } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaTimes, FaBuilding, FaSave, FaPhone, FaUser, FaClock, FaCalendarAlt, FaSun, FaMoon, FaCalendarDay, FaWallet, FaCreditCard, FaMobileAlt, FaCheckCircle, FaHourglassHalf, FaBan, FaUsers, FaRupeeSign, FaMapMarkerAlt, FaSnowflake, FaBolt, FaParking, FaVideo, FaMicrophone, FaCouch, FaShieldAlt, FaTint, FaConciergeBell, FaChair, FaMinus, FaPlus, FaTags, FaChevronCircleUp, FaBroom, FaLayerGroup, FaBed, FaPaintBrush, FaStore, FaUtensils, FaEnvelope } from 'react-icons/fa';
 import axios from 'axios';
 import { API_URL } from '../../utils/function';
 import '../../styles/superadmin/Dashboard.css';
@@ -121,6 +121,7 @@ const VendorAvailability = () => {
     const [formData, setFormData] = useState({
         customerName: '',
         customerPhone: '',
+        customerEmail: '',
         shift: 'Morning',
         paymentMode: 'Offline - Cash',
         paymentStatus: 'Pending',
@@ -249,6 +250,7 @@ const VendorAvailability = () => {
         setFormData({
             customerName: '',
             customerPhone: '',
+            customerEmail: '',
             shift: initialShift,
             paymentMode: 'Offline - Cash',
             paymentStatus: 'Pending',
@@ -328,6 +330,7 @@ const VendorAvailability = () => {
                 endShift: formData.isMultiDay ? formData.endShift : null,
                 customerName: formData.customerName,
                 customerPhone: formData.customerPhone,
+                customerEmail: formData.customerEmail || null,
                 paymentMode: formData.paymentMode,
                 paymentStatus: formData.paymentStatus,
                 bookingStatus: formData.bookingStatus,
@@ -714,13 +717,13 @@ const VendorAvailability = () => {
                                 );
                             })()}
 
-                            {/* ═══ RIGHT PANEL: Bookings + Form ═══ */}
+                            {/* RIGHT PANEL: Bookings + Form */}
                             <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', background: '#fff', borderRadius: '0 16px 16px 0' }}>
 
-                            {filteredModalBookings.length > 0 && (
-                                <div className="mb-4">
-                                    {filteredModalBookings.map((booking, idx) => {
-                                        const bookingId = booking._id; // Real ID
+                                    {filteredModalBookings.length > 0 && (
+                                    <div className="mb-4">
+                                        {filteredModalBookings.map((booking, idx) => {
+                                            const bookingId = booking._id;
                                         const updates = editingUpdates[bookingId] || {};
                                         const payStatus = updates.paymentStatus || booking.paymentStatus;
                                         const bookStatus = updates.bookingStatus || booking.bookingStatus;
@@ -766,6 +769,12 @@ const VendorAvailability = () => {
                                                             <FaPhone className="text-secondary small" />
                                                             {booking.customerPhone || 'No Phone Provided'}
                                                         </small>
+                                                        {booking.customerEmail && (
+                                                            <small className="text-muted d-flex align-items-center gap-2">
+                                                                <FaEnvelope className="text-secondary small" style={{ fontSize: '0.65rem' }} />
+                                                                {booking.customerEmail}
+                                                            </small>
+                                                        )}
                                                     </div>
 
                                                     {/* Total Amount & Facilities display */}
@@ -788,54 +797,37 @@ const VendorAvailability = () => {
                                                             </div>
                                                         )}
                                                     </div>
-
-                                                    {/* Save Button (Condition: Show if changed) */}
-                                                    {(updates.paymentStatus || updates.bookingStatus) && (
-                                                        <button
-                                                            className="btn btn-sm btn-dark rounded-pill px-3 shadow-sm d-flex align-items-center gap-2 animate__animated animate__fadeIn ms-2"
-                                                            onClick={() => handleSaveChanges(bookingId)}
-                                                        >
-                                                            <FaSave /> Save
-                                                        </button>
-                                                    )}
                                                 </div>
 
-                                                <div className="row g-2 ps-2">
-                                                    <div className="col-6">
-                                                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Payment Status</label>
-                                                        <select
-                                                            className={`form-select form-select-sm fw-bold border-0 ${getStatusColor(payStatus)}`}
-                                                            value={payStatus}
-                                                            onChange={(e) => handleLocalUpdate(bookingId, 'paymentStatus', e.target.value)}
-                                                            style={{ cursor: 'pointer' }}
-                                                        >
-                                                            <option value="Pending">Pending</option>
-                                                            <option value="Paid">Paid</option>
-                                                            <option value="Partial">Partial</option>
-                                                        </select>
+                                                <div className="d-flex justify-content-between align-items-center mt-3 ps-2 pt-3 border-top border-light-subtle">
+                                                    <div className="d-flex gap-2">
+                                                        <div className="d-flex flex-column">
+                                                            <span style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Booking</span>
+                                                            <span className={`badge ${booking.bookingStatus === 'Confirmed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'} border-0 px-2 py-1 mt-1`} style={{ fontSize: '0.7rem' }}>
+                                                                {booking.bookingStatus}
+                                                            </span>
+                                                        </div>
+                                                        <div className="d-flex flex-column ms-3">
+                                                            <span style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Payment</span>
+                                                            <span className={`badge ${booking.paymentStatus === 'Paid' ? 'bg-success-subtle text-success' : booking.paymentStatus === 'Partial' ? 'bg-primary-subtle text-primary' : 'bg-warning-subtle text-warning'} border-0 px-2 py-1 mt-1`} style={{ fontSize: '0.7rem' }}>
+                                                                {booking.paymentStatus}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className="col-6">
-                                                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Booking Status</label>
-                                                        <select
-                                                            className={`form-select form-select-sm fw-bold border-0 ${getStatusColor(bookStatus)}`}
-                                                            value={bookStatus}
-                                                            onChange={(e) => handleLocalUpdate(bookingId, 'bookingStatus', e.target.value)}
-                                                            style={{ cursor: 'pointer' }}
-                                                        >
-                                                            <option value="Pending">Pending</option>
-                                                            <option value="Confirmed">Confirmed</option>
-                                                            <option value="Cancelled">Cancelled</option>
-                                                        </select>
+                                                    
+                                                    <div className="text-end">
+                                                        <div style={{ fontSize: '0.55rem', color: '#94a3b8', textTransform: 'uppercase' }}>Applied Discount</div>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>{booking.appliedDiscount || 0}%</div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        )
-                                    })}
-                                </div>
-                            )}
+                                            );
+                                        })}
+                                    </div>
+                                )}
 
-                            {!isDayFull && !isPastSelected && (
-                                <form onSubmit={handleSaveBooking}>
+                                {!isDayFull && !isPastSelected && (
+                                    <form onSubmit={handleSaveBooking}>
                                     {/* ── Section Label ── */}
                                     <div className="d-flex align-items-center gap-2 mb-3">
                                         <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right,rgba(220,53,69,0.4),transparent)' }} />
@@ -868,6 +860,22 @@ const VendorAvailability = () => {
                                                     required
                                                     value={formData.customerPhone}
                                                     onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* ── Customer Email Row ── */}
+                                    <div className="row g-3 mb-3">
+                                        <div className="col-12">
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Customer Email (Optional)</label>
+                                            <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor='#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor='#e9ecef'}>
+                                                <span style={{ padding: '0 12px', color: '#e63946' }}><FaEnvelope style={{ fontSize: 13 }} /></span>
+                                                <input
+                                                    style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
+                                                    placeholder="customer@example.com (optional)"
+                                                    value={formData.customerEmail}
+                                                    onChange={e => setFormData({ ...formData, customerEmail: e.target.value })}
                                                 />
                                             </div>
                                         </div>

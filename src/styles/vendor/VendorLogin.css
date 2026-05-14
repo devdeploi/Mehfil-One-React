@@ -1,0 +1,199 @@
+/* VendorLogin.css - Professional Teal/Navy Theme */
+
+.v-login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.v-login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 2.5rem;
+    border-radius: 24px;
+    background: white;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #f1f5f9;
+}
+
+.v-login-brand {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #C8102E 0%, #9B0C23 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #C8102E;
+}
+
+.v-login-brand i {
+    color: #C8102E;
+    -webkit-text-fill-color: #C8102E;
+}
+
+.v-login-title {
+    text-align: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.v-login-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: #C8102E;
+    border-radius: 2px;
+}
+
+.v-login-subtitle {
+    text-align: center;
+    color: #64748b;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+
+.v-login-form .form-label {
+    color: #334155;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.v-login-form .form-control {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.v-login-form .form-control:focus {
+    background: white;
+    border-color: #C8102E;
+    box-shadow: 0 0 0 4px rgba(200, 16, 46, 0.1);
+    outline: none;
+}
+
+.v-password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    padding: 0;
+}
+
+.v-password-toggle:hover {
+    color: #C8102E;
+}
+
+.v-login-btn {
+    width: 100%;
+    padding: 1rem;
+    font-weight: 700;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #C8102E 0%, #9B0C23 100%);
+    border: none;
+    color: white;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 15px -3px rgba(200, 16, 46, 0.3);
+    margin-top: 1rem;
+}
+
+.v-login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(200, 16, 46, 0.4);
+    background: linear-gradient(135deg, #ef4444 0%, #C8102E 100%);
+}
+
+.v-otp-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.v-otp-modal {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 24px;
+    text-align: center;
+    max-width: 340px;
+    width: 90%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.v-otp-icon {
+    font-size: 3.5rem;
+    color: #C8102E;
+    margin-bottom: 1.5rem;
+}
+
+.v-otp-code {
+    background: #f1f5f9;
+    padding: 1.25rem;
+    border-radius: 12px;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: 0.3em;
+    color: #0f172a;
+    margin-bottom: 2rem;
+    border: 2px dashed #cbd5e1;
+}
+
+.v-otp-box {
+    width: 45px !important;
+    height: 45px !important;
+    padding: 0 !important;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+    border: 2px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    transition: all 0.2s ease !important;
+}
+
+.v-otp-box:focus {
+    border-color: #C8102E !important;
+    background: white !important;
+    box-shadow: 0 0 0 4px rgba(200, 16, 46, 0.1) !important;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
+
+.animate-shake {
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}

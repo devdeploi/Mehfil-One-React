@@ -34,6 +34,10 @@ const BookingList = () => {
     // Editing Status States
     const [tempStatus, setTempStatus] = useState({ bookingStatus: '', paymentStatus: '' });
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalBookings, setTotalBookings] = useState(0);
+
     useEffect(() => {
         const vendorData = JSON.parse(localStorage.getItem('vendor_user'));
         if (vendorData) {
@@ -41,33 +45,39 @@ const BookingList = () => {
         }
     }, []);
 
+    useEffect(() => {
+        const vendorData = JSON.parse(localStorage.getItem('vendor_user'));
+        if (vendorData && mahals.length > 0) {
+            fetchAllBookings(vendorData.id || vendorData._id, currentPage);
+        }
+    }, [currentPage, mahals]);
+
     const fetchMahals = async (vendorId) => {
         try {
             const res = await axios.get(`${API_URL}/mahals?vendorId=${vendorId}`);
             setMahals(res.data.mahals || []);
-            fetchAllBookings(vendorId);
         } catch (error) {
             console.error("Error fetching mahals", error);
             setLoading(false);
         }
     };
 
-    const fetchAllBookings = async (vendorId) => {
+    const fetchAllBookings = async (vendorId, page) => {
         try {
             setLoading(true);
             const res = await axios.get(`${API_URL}/bookings`, {
-                params: { vendorId, all: 'true' }
+                params: { vendorId, page, limit: 50 }
             });
 
-            // Backend now populates mahalId
+            // Backend now populates mahalId and returns paginated data
             const processed = (res.data.bookings || []).map(b => ({
                 ...b,
                 mahalName: b.mahalId?.mahalName || 'Unknown Venue'
             }));
 
-            // Sort by date descending
-            processed.sort((a, b) => new Date(b.date) - new Date(a.date));
             setBookings(processed);
+            setTotalPages(res.data.totalPages);
+            setTotalBookings(res.data.totalBookings);
         } catch (error) {
             console.error("Error fetching bookings", error);
         } finally {
@@ -226,7 +236,7 @@ const BookingList = () => {
                             </div>
                         </div>
                         <div className="col-md-2 text-md-end">
-                            <span className="text-muted small fw-bold">{filteredBookings.length} Bookings Found</span>
+                            <span className="text-muted small fw-bold">{totalBookings} Total Bookings Found</span>
                         </div>
                     </div>
                 </div>
@@ -337,13 +347,28 @@ const BookingList = () => {
                     </table>
                 </div>
 
-                {/* Pagination Placeholder */}
-                {!loading && filteredBookings.length > 0 && (
+                {/* Pagination Controls */}
+                {!loading && bookings.length > 0 && (
                     <div className="px-4 py-3 bg-light d-flex justify-content-between align-items-center border-top">
-                        <span className="text-muted small">Showing 1 to {filteredBookings.length} of {filteredBookings.length} results</span>
+                        <span className="text-muted small">
+                            Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+                            <span className="ms-2">(Total {totalBookings} results)</span>
+                        </span>
                         <div className="d-flex gap-2">
-                            <button className="btn btn-white btn-sm border shadow-sm bg-white" disabled><FaChevronLeft size={10} /></button>
-                            <button className="btn btn-white btn-sm border shadow-sm bg-white" disabled><FaChevronRight size={10} /></button>
+                            <button 
+                                className="btn btn-white btn-sm border shadow-sm bg-white" 
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(prev => prev - 1)}
+                            >
+                                <FaChevronLeft size={10} />
+                            </button>
+                            <button 
+                                className="btn btn-white btn-sm border shadow-sm bg-white" 
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(prev => prev + 1)}
+                            >
+                                <FaChevronRight size={10} />
+                            </button>
                         </div>
                     </div>
                 )}

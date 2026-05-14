@@ -6,7 +6,8 @@ const ProtectedRoute = ({ allowedRoles }) => {
     const user = storedUser ? JSON.parse(storedUser) : null;
 
     if (!user) {
-        return <Navigate to="/superadmin/login" replace />;
+        const redirectPath = allowedRoles?.includes('superadmin') ? '/superadmin/login' : '/vendor/login';
+        return <Navigate to={redirectPath} replace />;
     }
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {

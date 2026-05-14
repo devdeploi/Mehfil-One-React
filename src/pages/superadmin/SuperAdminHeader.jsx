@@ -33,9 +33,17 @@ const SuperAdminHeader = () => {
     };
 
     const confirmLogout = () => {
+        const storedUser = localStorage.getItem('vendor_user');
+        const role = storedUser ? JSON.parse(storedUser).role : 'superadmin';
+        
         localStorage.removeItem('vendor_user');
         setShowLogoutModal(false);
-        navigate('/superadmin/login');
+        
+        if (role === 'superadmin') {
+            navigate('/superadmin/login');
+        } else {
+            navigate('/vendor/login');
+        }
     };
 
     const cancelLogout = () => {

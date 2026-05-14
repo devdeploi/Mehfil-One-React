@@ -8,6 +8,7 @@ const VendorList = () => {
     const [vendors, setVendors] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
+    const [totalVendors, setTotalVendors] = useState(0);
 
     // UI States
     const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
@@ -25,6 +26,7 @@ const VendorList = () => {
             const response = await axios.get(`${API_URL}/vendors?page=${currentPage}`);
             setVendors(response.data.vendors);
             setTotalPages(response.data.totalPages);
+            setTotalVendors(response.data.totalVendors);
         } catch (error) {
             console.error('Error fetching vendors:', error);
             showToast('Failed to fetch vendors', 'error');
@@ -191,6 +193,7 @@ const VendorList = () => {
                 </button>
                 <span className="sa-pagination-info">
                     Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+                    <span className="text-muted ms-2 small">(Total {totalVendors} vendors)</span>
                 </span>
                 <button
                     disabled={currentPage === totalPages}

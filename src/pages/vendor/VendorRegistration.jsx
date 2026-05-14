@@ -873,6 +873,16 @@ const VendorRegistration = () => {
                     </div>
 
 
+                    {!isRegistered && (
+                        <div className="text-center mt-4">
+                            <p className="text-muted small">
+                                Already have an account?{' '}
+                                <Link to="/vendor/login" className="text-danger fw-bold text-decoration-none">
+                                    Sign In
+                                </Link>
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
 
