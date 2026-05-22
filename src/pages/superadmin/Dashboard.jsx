@@ -9,7 +9,14 @@ const Dashboard = () => {
         totalVendors: 0,
         activeVendors: 0,
         totalUsers: 0,
-        recentVendors: []
+        recentVendors: [],
+        activePlans: 0,
+        currentMonthRevenue: 0,
+        lastMonthRevenue: 0,
+        revenueGrowth: 0,
+        pendingVendors: 0,
+        planRenewals: 0,
+        pendingBookings: 0
     });
 
     useEffect(() => {
@@ -48,7 +55,7 @@ const Dashboard = () => {
         },
         {
             title: "Active Plans",
-            value: 45, // Assuming this is still placeholder or should be fetched
+            value: statsData.activePlans || 0,
             icon: <FaLayerGroup />,
             colorClass: "icon-red"
         }
@@ -136,14 +143,16 @@ const Dashboard = () => {
                                 <div className="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 className="text-white-50 text-uppercase mb-2">Monthly Target</h6>
-                                        <h3 className="mb-0 fw-bold">₹45,200 <span className="fs-6 text-white-50">/ ₹50k</span></h3>
+                                        <h3 className="mb-0 fw-bold">₹{(statsData.currentMonthRevenue || 0).toLocaleString()} <span className="fs-6 text-white-50">/ ₹50k</span></h3>
                                     </div>
-                                    <div className="sa-circular-chart" style={{ "--progress": "90%" }}>
-                                        <span>90%</span>
+                                    <div className="sa-circular-chart" style={{ "--progress": `${Math.min(((statsData.currentMonthRevenue || 0) / 50000) * 100, 100).toFixed(0)}%` }}>
+                                        <span>{Math.min(((statsData.currentMonthRevenue || 0) / 50000) * 100, 100).toFixed(0)}%</span>
                                     </div>
                                 </div>
                                 <p className="mt-3 mb-0 small text-white-50">
-                                    <span className="text-success fw-bold">↑ 12%</span> vs last month
+                                    <span className={statsData.revenueGrowth >= 0 ? "text-success fw-bold" : "text-danger fw-bold"}>
+                                        {statsData.revenueGrowth >= 0 ? '↑' : '↓'} {Math.abs(statsData.revenueGrowth)}%
+                                    </span> vs last month
                                 </p>
                             </div>
                         </div>
@@ -163,7 +172,7 @@ const Dashboard = () => {
                                                 <small className="text-muted">High Priority</small>
                                             </div>
                                         </div>
-                                        <span className="badge bg-warning rounded-pill text-dark">5</span>
+                                        <span className="badge bg-warning rounded-pill text-dark">{statsData.pendingVendors || 0}</span>
                                     </div>
                                     <div className="list-group-item px-0 d-flex justify-content-between align-items-center bg-transparent border-bottom-0 mb-2">
                                         <div className="d-flex align-items-center">
@@ -171,11 +180,11 @@ const Dashboard = () => {
                                                 <i className="bi bi-exclamation-circle"></i>
                                             </div>
                                             <div>
-                                                <h6 className="mb-0 fw-bold">Support Tickets</h6>
+                                                <h6 className="mb-0 fw-bold">Pending Bookings</h6>
                                                 <small className="text-muted">Needs Attention</small>
                                             </div>
                                         </div>
-                                        <span className="badge bg-danger rounded-pill">12</span>
+                                        <span className="badge bg-danger rounded-pill">{statsData.pendingBookings || 0}</span>
                                     </div>
                                     <div className="list-group-item px-0 d-flex justify-content-between align-items-center bg-transparent">
                                         <div className="d-flex align-items-center">
@@ -187,7 +196,7 @@ const Dashboard = () => {
                                                 <small className="text-muted">Next 7 days</small>
                                             </div>
                                         </div>
-                                        <span className="badge bg-info rounded-pill text-white">4</span>
+                                        <span className="badge bg-info rounded-pill text-white">{statsData.planRenewals || 0}</span>
                                     </div>
                                 </div>
                             </div>

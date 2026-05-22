@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FiMenu, FiX, FiUser, FiHome, FiLayers, FiArrowRight, FiShield, FiActivity, FiTag, FiLogIn, FiBriefcase, FiMap } from 'react-icons/fi';
+import GooeyNav from './GooeyNav';
 
 const Navbar = ({ scrollToSection, refs }) => {
     const navigate = useNavigate();
@@ -100,15 +101,14 @@ const Navbar = ({ scrollToSection, refs }) => {
         navLink: {
             fontSize: '0.85rem',
             fontWeight: 700,
-            color: isScrolled ? '#ffffff' : (isHomePage ? '#2d3436' : '#ffffff'),
             textDecoration: 'none',
-            padding: '10px 16px',
             borderRadius: '12px',
             position: 'relative',
             cursor: 'pointer',
             transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             letterSpacing: '0.02em',
             textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
         },
         actionBtn: {
             padding: '10px 24px',
@@ -122,6 +122,17 @@ const Navbar = ({ scrollToSection, refs }) => {
             gap: '8px',
         }
     };
+
+    const navItems = isHomePage ? [
+        { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiHome size={15} /> Home</span>, onClick: () => handleNavClick('home') },
+        { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiMap size={15} /> Mahal's</span>, onClick: () => handleNavClick('venues') },
+        { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiLayers size={15} /> Features</span>, onClick: () => handleNavClick('about') },
+        { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiActivity size={15} /> User Flow</span>, onClick: () => handleNavClick('flow') },
+        { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiTag size={15} /> Pricing</span>, onClick: () => handleNavClick('plans') }
+    ] : [
+        { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiHome size={15} /> Home</span>, onClick: () => navigate('/') },
+        { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiUser size={15} /> My Dashboard</span>, onClick: () => navigate('/user/profile') }
+    ];
 
     return (
         <>
@@ -159,35 +170,17 @@ const Navbar = ({ scrollToSection, refs }) => {
                     </div>
 
                     {/* Desktop Navigation - Centered */}
-                    <div className="d-none d-lg-flex align-items-center" style={{ gap: '5px', flex: 1, justifyContent: 'center' }}>
-                        {isHomePage ? (
-                            <>
-                                <span onClick={() => handleNavClick('home')} className="nav-premium-link d-flex align-items-center gap-2" style={styles.navLink}>
-                                    <FiHome size={15} /> Home
-                                </span>
-                                <span onClick={() => handleNavClick('venues')} className="nav-premium-link d-flex align-items-center gap-2" style={styles.navLink}>
-                                    <FiMap size={15} /> Mahal's
-                                </span>
-                                <span onClick={() => handleNavClick('about')} className="nav-premium-link d-flex align-items-center gap-2" style={styles.navLink}>
-                                    <FiLayers size={15} /> Features
-                                </span>
-                                <span onClick={() => handleNavClick('flow')} className="nav-premium-link d-flex align-items-center gap-2" style={styles.navLink}>
-                                    <FiActivity size={15} /> User Flow
-                                </span>
-                                <span onClick={() => handleNavClick('plans')} className="nav-premium-link d-flex align-items-center gap-2" style={styles.navLink}>
-                                    <FiTag size={15} /> Pricing
-                                </span>
-                            </>
-                        ) : (
-                            <>
-                                <span onClick={() => navigate('/')} className="nav-premium-link d-flex align-items-center gap-2" style={styles.navLink}>
-                                    <FiHome size={15} /> Home
-                                </span>
-                                <span onClick={() => navigate('/user/profile')} className="nav-premium-link d-flex align-items-center gap-2" style={styles.navLink}>
-                                    <FiUser size={15} /> My Dashboard
-                                </span>
-                            </>
-                        )}
+                    <div className={`d-none d-lg-flex align-items-center gooey-nav-wrapper ${isScrolled ? 'scrolled' : (isHomePage ? 'light-mode' : 'dark-mode')}`} style={{ flex: 1, justifyContent: 'center' }}>
+                        <GooeyNav
+                            items={navItems}
+                            particleCount={15}
+                            particleDistances={[90, 10]}
+                            particleR={100}
+                            initialActiveIndex={0}
+                            animationTime={600}
+                            timeVariance={300}
+                            colors={[1, 2, 3, 1, 2, 3, 1, 4]}
+                        />
                     </div>
 
                     {/* Actions - Far Right */}

@@ -550,8 +550,9 @@ h1, h2, h3, h4 {
     padding: 1rem;
     border-radius: 12px;
     font-weight: 700;
-    border: 1px solid var(--lp-border);
-    background: white;
+    border: none;
+    background: var(--lp-red-600);
+    color: white;
     cursor: pointer;
     transition: all 0.2s;
 }

@@ -25,7 +25,7 @@ const toastStyles = `
 
 const VendorRegistration = () => {
 
-    const RAZORPAY_KEY_ID = "rzp_test_S0aFMLxRqwkL8z";
+    const RAZORPAY_KEY_ID = "rzp_test_UrJKDxSMMBVdgW";
     const isTestMode = RAZORPAY_KEY_ID.startsWith('rzp_test_');
 
     const navigate = useNavigate();
@@ -865,6 +865,31 @@ const VendorRegistration = () => {
                                             >
                                                 {isProcessing ? 'Processing Payment...' : (isTestMode ? `Pay ₹${selectedPlan?.price}` : `Pay ₹${selectedPlan?.price} & Register`)}
                                             </button>
+
+                                            {isTestMode && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-dark w-100 mt-3 py-3 rounded-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
+                                                    disabled={isProcessing || !termsAccepted}
+                                                    onClick={async () => {
+                                                        setIsProcessing(true);
+                                                        try {
+                                                            const fakePaymentId = `pay_fake_${Date.now()}`;
+                                                            const fakeOrderId = `order_fake_${Date.now()}`;
+                                                            setIsRegistering(true);
+                                                            await registerVendor(fakePaymentId, fakeOrderId);
+                                                        } catch (err) {
+                                                            console.error('Simulation Error:', err);
+                                                            showToast('Simulation failed.', 'error');
+                                                            setIsRegistering(false);
+                                                        } finally {
+                                                            setIsProcessing(false);
+                                                        }
+                                                    }}
+                                                >
+                                                    Simulate Payment Success (Test Mode)
+                                                </button>
+                                            )}
                                         </form>
                                     )}
                                 </>

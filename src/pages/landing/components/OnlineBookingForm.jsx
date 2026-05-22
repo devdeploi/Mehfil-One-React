@@ -242,189 +242,186 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
             <div className="row g-4">
                 {/* Left Column: Form Inputs */}
                 <div className="col-lg-7">
-                    <div className="bg-light-subtle p-4 rounded-4 border border-light-subtle h-100">
-                        <h6 className="fw-bold mb-4 d-flex align-items-center gap-2">
-                            <FaUser className="text-danger" /> Primary Details
-                        </h6>
-                        <div className="row g-3">
-                            <div className="col-md-12">
-                                <label className="form-label small fw-bold text-muted text-uppercase tracking-wider">Full Name</label>
-                                <div className="input-group shadow-sm rounded-4 overflow-hidden border">
-                                    <span className="input-group-text bg-white border-0"><FaUser className="text-danger-light" size={12} /></span>
-                                    <input 
-                                        type="text" 
-                                        className="form-control border-0 p-3" 
-                                        placeholder="Enter your name"
-                                        value={formData.customerName}
-                                        onChange={e => setFormData({...formData, customerName: e.target.value})}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                            <div className="col-md-6">
-                                <label className="form-label small fw-bold text-muted text-uppercase tracking-wider">Contact Number</label>
-                                <div className="input-group shadow-sm rounded-4 overflow-hidden border">
-                                    <span className="input-group-text bg-white border-0"><FaPhone className="text-danger-light" size={12} /></span>
-                                    <input 
-                                        type="text" 
-                                        className="form-control border-0 p-3" 
-                                        placeholder="Phone number"
-                                        value={formData.customerPhone}
-                                        onChange={e => setFormData({...formData, customerPhone: e.target.value})}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                            <div className="col-md-6">
-                                <label className="form-label small fw-bold text-muted text-uppercase tracking-wider">Estimated Guests</label>
-                                <div className="input-group shadow-sm rounded-4 overflow-hidden border">
-                                    <span className="input-group-text bg-white border-0"><FaUsers className="text-danger-light" size={12} /></span>
-                                    <input 
-                                        type="number" 
-                                        className="form-control border-0 p-3" 
-                                        placeholder={`Max ${venue.seatingCapacity}`}
-                                        value={formData.guests}
-                                        onChange={e => setFormData({...formData, guests: e.target.value})}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="col-12 mt-2">
-                                <div className="d-flex justify-content-between align-items-center mb-2">
-                                    <label className="form-label small fw-bold text-muted text-uppercase mb-0 tracking-wider">
-                                        {formData.isMultiDay ? 'Select End Date First' : 'Booking Shift'}
-                                    </label>
-                                    <div className="form-check form-switch d-flex align-items-center gap-2">
+                    <div className="d-flex flex-column gap-4 h-100">
+                        <div className="bg-light-subtle p-4 rounded-4 border border-light-subtle h-100">
+                            <h6 className="fw-bold mb-4 d-flex align-items-center gap-2">
+                                <FaUser className="text-danger" /> Primary Details
+                            </h6>
+                            <div className="row g-3">
+                                <div className="col-md-12">
+                                    <label className="form-label small fw-bold text-muted text-uppercase tracking-wider">Full Name</label>
+                                    <div className="input-group shadow-sm rounded-4 overflow-hidden border">
+                                        <span className="input-group-text bg-white border-0"><FaUser className="text-danger-light" size={12} /></span>
                                         <input 
-                                            className="form-check-input custom-switch" 
-                                            type="checkbox" 
-                                            id="multiDaySwitch"
-                                            checked={formData.isMultiDay}
-                                            onChange={e => {
-                                                const checked = e.target.checked;
-                                                const dStr = formatDate(selectedDate);
-                                                setFormData(prev => ({
-                                                    ...prev, 
-                                                    isMultiDay: checked,
-                                                    dayShifts: checked ? { [dStr]: prev.shift } : {}
-                                                }));
-                                                if(checked) setMultiDayWarning(true);
-                                            }}
+                                            type="text" 
+                                            className="form-control border-0 p-3" 
+                                            placeholder="Enter your name"
+                                            value={formData.customerName}
+                                            onChange={e => setFormData({...formData, customerName: e.target.value})}
+                                            required
                                         />
-                                        <label className="form-check-label small fw-bold text-danger" htmlFor="multiDaySwitch" style={{ cursor: 'pointer' }}>Multi-day Booking</label>
+                                    </div>
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="form-label small fw-bold text-muted text-uppercase tracking-wider">Contact Number</label>
+                                    <div className="input-group shadow-sm rounded-4 overflow-hidden border">
+                                        <span className="input-group-text bg-white border-0"><FaPhone className="text-danger-light" size={12} /></span>
+                                        <input 
+                                            type="text" 
+                                            className="form-control border-0 p-3" 
+                                            placeholder="Phone number"
+                                            value={formData.customerPhone}
+                                            onChange={e => setFormData({...formData, customerPhone: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="form-label small fw-bold text-muted text-uppercase tracking-wider">Estimated Guests</label>
+                                    <div className="input-group shadow-sm rounded-4 overflow-hidden border">
+                                        <span className="input-group-text bg-white border-0"><FaUsers className="text-danger-light" size={12} /></span>
+                                        <input 
+                                            type="number" 
+                                            className="form-control border-0 p-3" 
+                                            placeholder={`Max ${venue.seatingCapacity}`}
+                                            value={formData.guests}
+                                            onChange={e => setFormData({...formData, guests: e.target.value})}
+                                            required
+                                        />
                                     </div>
                                 </div>
 
-                                {formData.isMultiDay ? (
-                                    <div className="animate-fade-in">
-                                        <div className="input-group shadow-sm rounded-4 overflow-hidden border mb-3">
-                                            <span className="input-group-text bg-white border-0"><FaCalendarAlt className="text-danger-light" size={12} /></span>
+                                <div className="col-12 mt-2">
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <label className="form-label small fw-bold text-muted text-uppercase mb-0 tracking-wider">
+                                            {formData.isMultiDay ? 'Select End Date First' : 'Booking Shift'}
+                                        </label>
+                                        <div className="form-check form-switch d-flex align-items-center gap-2">
                                             <input 
-                                                type="date" 
-                                                className="form-control border-0 p-3" 
-                                                value={formData.endDate}
+                                                className="form-check-input custom-switch" 
+                                                type="checkbox" 
+                                                id="multiDaySwitch"
+                                                checked={formData.isMultiDay}
                                                 onChange={e => {
-                                                    const end = e.target.value;
-                                                    const start = new Date(selectedDate);
-                                                    const endDateObj = new Date(end);
-                                                    const newDayShifts = {};
-                                                    let curr = new Date(start);
-                                                    while (curr <= endDateObj) {
-                                                        const dStr = formatDate(curr);
-                                                        newDayShifts[dStr] = formData.dayShifts[dStr] || 'Full Day';
-                                                        curr.setDate(curr.getDate() + 1);
-                                                    }
-                                                    setFormData(prev => ({ ...prev, endDate: end, dayShifts: newDayShifts }));
+                                                    const checked = e.target.checked;
+                                                    const dStr = formatDate(selectedDate);
+                                                    setFormData(prev => ({
+                                                        ...prev, 
+                                                        isMultiDay: checked,
+                                                        dayShifts: checked ? { [dStr]: prev.shift } : {}
+                                                    }));
+                                                    if(checked) setMultiDayWarning(true);
                                                 }}
-                                                onFocus={(e) => e.target.showPicker && e.target.showPicker()}
-                                                onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                                                min={formatDate(selectedDate)}
-                                                required
                                             />
+                                            <label className="form-check-label small fw-bold text-danger" htmlFor="multiDaySwitch" style={{ cursor: 'pointer' }}>Multi-day Booking</label>
                                         </div>
+                                    </div>
 
-                                        {formData.endDate && (
-                                            <div className="mt-3">
-                                                <label className="form-label small fw-bold text-muted text-uppercase mb-2 tracking-wider d-block">Select Shifts for Each Day</label>
-                                                <div style={{ maxHeight: '250px', overflowY: 'auto', overflowX: 'hidden', padding: '5px' }}>
-                                                    <div className="row g-2">
-                                                        {Object.keys(formData.dayShifts).sort().map((dStr) => (
-                                                            <div key={dStr} className="col-6">
-                                                                <div className="p-2 rounded-3 border bg-white shadow-sm">
-                                                                    <div className="d-flex justify-content-between align-items-center mb-1">
-                                                                        <span className="fw-bold text-dark" style={{ fontSize: '0.65rem' }}>
-                                                                            {new Date(dStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                                                                        </span>
-                                                                        <span className="text-muted" style={{ fontSize: '0.55rem' }}>
-                                                                            {new Date(dStr).toLocaleDateString('en-IN', { weekday: 'short' })}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div style={{ display: 'flex', gap: 2, background: '#f0f2f5', borderRadius: 8, padding: 2 }}>
-                                                                        {[
-                                                                            { val: 'Morning', icon: <FaClock />, color: '#f59e0b' },
-                                                                            { val: 'Evening', icon: <FaClock />, color: '#3b82f6' },
-                                                                            { val: 'Full Day', icon: <FaCheckCircle />, color: '#e63946' }
-                                                                        ].map((item) => (
-                                                                            <button
-                                                                                key={item.val} type="button"
-                                                                                onClick={() => setFormData(prev => ({
-                                                                                    ...prev,
-                                                                                    dayShifts: { ...prev.dayShifts, [dStr]: item.val }
-                                                                                }))}
-                                                                                className={`btn p-1 flex-fill border-0 rounded-2 d-flex flex-column align-items-center transition-all ${formData.dayShifts[dStr] === item.val ? 'bg-white shadow-sm' : 'opacity-50'}`}
-                                                                                style={{ fontSize: '0.55rem' }}
-                                                                            >
-                                                                                <span style={{ color: formData.dayShifts[dStr] === item.val ? item.color : '#94a3b8' }}>
-                                                                                    {React.cloneElement(item.icon, { size: 8 })}
-                                                                                </span>
-                                                                                <span className="fw-bold" style={{ color: formData.dayShifts[dStr] === item.val ? '#1a1a2e' : '#94a3b8' }}>
-                                                                                    {item.val === 'Full Day' ? 'Full' : item.val[0]}
-                                                                                </span>
-                                                                            </button>
-                                                                        ))}
+                                    {formData.isMultiDay ? (
+                                        <div className="animate-fade-in">
+                                            <div className="input-group shadow-sm rounded-4 overflow-hidden border mb-3">
+                                                <span className="input-group-text bg-white border-0"><FaCalendarAlt className="text-danger-light" size={12} /></span>
+                                                <input 
+                                                    type="date" 
+                                                    className="form-control border-0 p-3" 
+                                                    value={formData.endDate}
+                                                    onChange={e => {
+                                                        const end = e.target.value;
+                                                        const start = new Date(selectedDate);
+                                                        const endDateObj = new Date(end);
+                                                        const newDayShifts = {};
+                                                        let curr = new Date(start);
+                                                        while (curr <= endDateObj) {
+                                                            const dStr = formatDate(curr);
+                                                            newDayShifts[dStr] = formData.dayShifts[dStr] || 'Full Day';
+                                                            curr.setDate(curr.getDate() + 1);
+                                                        }
+                                                        setFormData(prev => ({ ...prev, endDate: end, dayShifts: newDayShifts }));
+                                                    }}
+                                                    onFocus={(e) => e.target.showPicker && e.target.showPicker()}
+                                                    onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                                                    min={formatDate(selectedDate)}
+                                                    required
+                                                />
+                                            </div>
+
+                                            {formData.endDate && (
+                                                <div className="mt-3">
+                                                    <label className="form-label small fw-bold text-muted text-uppercase mb-2 tracking-wider d-block">Select Shifts for Each Day</label>
+                                                    <div style={{ maxHeight: '250px', overflowY: 'auto', overflowX: 'hidden', padding: '5px' }}>
+                                                        <div className="row g-2">
+                                                            {Object.keys(formData.dayShifts).sort().map((dStr) => (
+                                                                <div key={dStr} className="col-6">
+                                                                    <div className="p-2 rounded-3 border bg-white shadow-sm">
+                                                                        <div className="d-flex justify-content-between align-items-center mb-1">
+                                                                            <span className="fw-bold text-dark" style={{ fontSize: '0.65rem' }}>
+                                                                                {new Date(dStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                                                            </span>
+                                                                            <span className="text-muted" style={{ fontSize: '0.55rem' }}>
+                                                                                {new Date(dStr).toLocaleDateString('en-IN', { weekday: 'short' })}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div style={{ display: 'flex', gap: 2, background: '#f0f2f5', borderRadius: 8, padding: 2 }}>
+                                                                            {[
+                                                                                { val: 'Morning', icon: <FaClock />, color: '#f59e0b' },
+                                                                                { val: 'Evening', icon: <FaClock />, color: '#3b82f6' },
+                                                                                { val: 'Full Day', icon: <FaCheckCircle />, color: '#e63946' }
+                                                                            ].map((item) => (
+                                                                                <button
+                                                                                    key={item.val} type="button"
+                                                                                    onClick={() => setFormData(prev => ({
+                                                                                        ...prev,
+                                                                                        dayShifts: { ...prev.dayShifts, [dStr]: item.val }
+                                                                                    }))}
+                                                                                    className={`btn p-1 flex-fill border-0 rounded-2 d-flex flex-column align-items-center transition-all ${formData.dayShifts[dStr] === item.val ? 'bg-white shadow-sm' : 'opacity-50'}`}
+                                                                                    style={{ fontSize: '0.55rem' }}
+                                                                                >
+                                                                                    <span style={{ color: formData.dayShifts[dStr] === item.val ? item.color : '#94a3b8' }}>
+                                                                                        {React.cloneElement(item.icon, { size: 8 })}
+                                                                                    </span>
+                                                                                    <span className="fw-bold" style={{ color: formData.dayShifts[dStr] === item.val ? '#1a1a2e' : '#94a3b8' }}>
+                                                                                        {item.val === 'Full Day' ? 'Full' : item.val[0]}
+                                                                                    </span>
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="d-flex gap-1 bg-white p-1 rounded-4 shadow-sm border">
-                                        {['Morning', 'Evening', 'Full Day'].map(s => {
-                                            const disabled = isShiftDisabled(s);
-                                            return (
-                                                <button 
-                                                    key={s} type="button"
-                                                    disabled={disabled}
-                                                    onClick={() => setFormData({...formData, shift: s})}
-                                                    className={`btn flex-fill rounded-3 py-2 fw-bold transition-all ${formData.shift === s ? 'bg-danger text-white shadow-sm' : 'text-muted border-0'} ${disabled ? 'opacity-25' : ''}`}
-                                                    style={{ fontSize: '0.75rem', position: 'relative' }}
-                                                >
-                                                    {s}
-                                                    {disabled && <span className="position-absolute start-50 translate-middle-x" style={{ fontSize: '0.45rem', bottom: '2px', color: '#ff8a94' }}>BOOKED</span>}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                )}
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="d-flex gap-1 bg-white p-1 rounded-4 shadow-sm border">
+                                            {['Morning', 'Evening', 'Full Day'].map(s => {
+                                                const disabled = isShiftDisabled(s);
+                                                return (
+                                                    <button 
+                                                        key={s} type="button"
+                                                        disabled={disabled}
+                                                        onClick={() => setFormData({...formData, shift: s})}
+                                                        className={`btn flex-fill rounded-3 py-2 fw-bold transition-all ${formData.shift === s ? 'bg-danger text-white shadow-sm' : 'text-muted border-0'} ${disabled ? 'opacity-25' : ''}`}
+                                                        style={{ fontSize: '0.75rem', position: 'relative' }}
+                                                    >
+                                                        {s}
+                                                        {disabled && <span className="position-absolute start-50 translate-middle-x" style={{ fontSize: '0.45rem', bottom: '2px', color: '#ff8a94' }}>BOOKED</span>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* Right Column: Facilities & Receipt */}
-                <div className="col-lg-5">
-                    <div className="d-flex flex-column gap-4 h-100">
-                        {/* Facilities Selection */}
-                        <div className="bg-light-subtle p-4 rounded-4 border border-light-subtle flex-grow-1 shadow-sm">
+                        {/* Facilities Selection (Premium Add-ons - Left Bottom) */}
+                        <div className="bg-light-subtle p-4 rounded-4 border border-light-subtle shadow-sm">
                             <h6 className="fw-bold mb-4 d-flex align-items-center gap-2">
                                 <FaBolt className="text-danger" /> Premium Add-ons
                             </h6>
-                            <div className="row g-2 custom-scrollbar" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                            <div className="row g-2 custom-scrollbar" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                                 {[
                                     { key: 'ac', label: 'AC', icon: <FaSnowflake />, available: venue?.facilities?.ac },
                                     { key: 'generator', label: 'Genset', icon: <FaBolt />, available: venue?.facilities?.generator },
@@ -439,7 +436,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                     { key: 'utensils', label: 'Utensils', icon: <FaUtensils />, available: venue?.utensils?.available },
                                     { key: 'catering', label: 'Catering', icon: <FaUtensils />, available: venue?.catering?.available }
                                 ].map(f => f.available && (
-                                    <div key={f.key} className="col-4">
+                                    <div key={f.key} className="col-md-3 col-4">
                                         <div 
                                             onClick={() => toggleFacility(f.key)}
                                             className={`p-2 rounded-3 border transition-all cursor-pointer d-flex flex-column align-items-center gap-1 position-relative ${formData.extraFacilities[f.key].selected ? 'border-danger bg-danger-soft' : 'border-light bg-white opacity-75'}`}
@@ -456,7 +453,12 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                 ))}
                             </div>
                         </div>
+                    </div>
+                </div>
 
+                {/* Right Column: Receipt & Payment */}
+                <div className="col-lg-5">
+                    <div className="d-flex flex-column gap-4 h-100">
                         {/* Pricing Summary */}
                         <div style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)', borderRadius: '24px', padding: '24px', color: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
                             <div className="d-flex justify-content-between align-items-center mb-3">

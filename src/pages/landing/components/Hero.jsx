@@ -1,135 +1,146 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaStar, FaArrowRight, FaChartLine, FaCalendarAlt, FaUserTie, FaGem, FaCheckCircle, FaRocket, FaShieldAlt, FaUsers } from 'react-icons/fa';
+import { FaStar, FaArrowRight, FaRocket, FaShieldAlt, FaCheckCircle, FaPlay } from 'react-icons/fa';
+import Lanyard from './Lanyard';
 
-// Import premium background assets
-import heroBg1 from '../../../assets/landing/hero-bg-1.png';
-import heroBg2 from '../../../assets/landing/hero-bg-2.png';
+const STATS = [
+    { value: '500+', label: 'Elite Venues' },
+    { value: '10K+', label: 'Events Hosted' },
+    { value: '98%',  label: 'Satisfaction' },
+];
+
+const TRUST_ITEMS = [
+    'No credit card required',
+    'Setup in minutes',
+    'Cancel anytime',
+];
 
 const Hero = ({ homeRef, activeTab, setActiveTab }) => {
     const navigate = useNavigate();
+    const blobRef = useRef(null);
+
+    /* Parallax blob on mouse move */
+    useEffect(() => {
+        const move = (e) => {
+            if (!blobRef.current) return;
+            const x = (e.clientX / window.innerWidth  - 0.5) * 30;
+            const y = (e.clientY / window.innerHeight - 0.5) * 30;
+            blobRef.current.style.transform = `translate(${x}px, ${y}px)`;
+        };
+        window.addEventListener('mousemove', move);
+        return () => window.removeEventListener('mousemove', move);
+    }, []);
 
     return (
-        <section className="lp-hero position-relative overflow-hidden py-5" ref={homeRef} style={{ background: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', contain: 'paint' }}>
-            {/* Grain Texture Overlay */}
-            <div className="position-absolute w-100 h-100 top-0 left-0" style={{ pointerEvents: 'none', zIndex: 1, opacity: 0.03, background: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
+        <section ref={homeRef} className="hero-section">
+            {/* ── Background ── */}
+            <div className="hero-bg-layer" />
 
-            {/* Cinematic Background Atmosphere */}
-            <div className="position-absolute d-none d-xl-block" style={{ top: '-5%', right: '-2%', width: '45%', height: '75%', zIndex: 0, opacity: 0.18 }}>
-                <img src={heroBg1} alt="" className="w-100 h-100" style={{ objectFit: 'cover', borderRadius: '50%', filter: 'blur(30px)' }} />
-            </div>
-            <div className="position-absolute d-none d-xl-block" style={{ bottom: '-10%', left: '-5%', width: '40%', height: '65%', zIndex: 0, opacity: 0.12 }}>
-                <img src={heroBg2} alt="" className="w-100 h-100" style={{ objectFit: 'cover', borderRadius: '50%', filter: 'blur(35px)' }} />
+            {/* Parallax blob */}
+            <div ref={blobRef} className="hero-parallax-blob" />
+
+            {/* Floating particles */}
+            <div className="hero-particles">
+                {[
+                    { w:5, l:'8%',  t:'18%', d:'8s',  delay:'0s'   },
+                    { w:3, l:'15%', t:'72%', d:'10s', delay:'1.2s' },
+                    { w:6, l:'80%', t:'22%', d:'7s',  delay:'0.5s' },
+                    { w:4, l:'88%', t:'65%', d:'9s',  delay:'2s'   },
+                    { w:3, l:'50%', t:'88%', d:'11s', delay:'0.8s' },
+                    { w:5, l:'35%', t:'10%', d:'8s',  delay:'1.5s' },
+                ].map((p, i) => (
+                    <span key={i} className="hero-particle" style={{
+                        width: p.w, height: p.w,
+                        left: p.l, top: p.t,
+                        animationDuration: p.d,
+                        animationDelay: p.delay,
+                    }} />
+                ))}
             </div>
 
-            <div className="container position-relative py-5" style={{ zIndex: 2 }}>
-                <div className="row align-items-center g-5">
-                    
-                    {/* Content Column */}
-                    <div className="col-lg-7 text-center text-lg-start animate-fade-in-up">
-                        <div className="mb-4">
-                            <span className="badge rounded-pill px-4 py-2 shadow-sm" style={{ background: 'white', color: '#C8102E', border: '1px solid rgba(200, 16, 46, 0.1)', letterSpacing: '0.12em', fontWeight: 800, fontSize: '0.7rem' }}>
-                                <FaStar className="me-2 animate-pulse-small" /> THE GOLD STANDARD FOR VENUES
-                            </span>
+            <div className="hero-container">
+                <div className="hero-layout">
+
+                    {/* ── LEFT: Content ── */}
+                    <div className="hero-content">
+
+                        {/* Badge */}
+                        <div className="hero-badge">
+                            <span className="hero-badge-dot" />
+                            <FaStar style={{ fontSize: '0.6rem', color: '#dc3545' }} />
+                            THE GOLD STANDARD FOR VENUES
                         </div>
-                        
-                        <h1 className="display-3 fw-bolder mb-4 lh-sm hero-main-title" style={{ letterSpacing: '-0.04em', color: '#111' }}>
-                            Scale Your <br />
-                            <span className="text-gradient-red sweep-text">Venue Empire.</span>
+
+                        {/* Heading */}
+                        <h1 className="hero-title">
+                            Scale Your<br />
+                            <span className="hero-title-accent">Venue Empire.</span>
                         </h1>
-                        
-                        <p className="lead text-muted mb-5 mx-auto mx-lg-0 pe-lg-5" style={{ lineHeight: 1.8, maxWidth: '640px' }}>
-                            The definitive platform for high-end venue management. 
-                            Automate operations, maximize revenue, and deliver 
+
+                        {/* Description */}
+                        <p className="hero-desc">
+                            The definitive platform for high-end venue management.
+                            Automate operations, maximize revenue, and deliver
                             extraordinary events with Mehfil One's elite toolkit.
                         </p>
 
-                        <div className="d-flex flex-column flex-md-row justify-content-center justify-content-lg-start gap-3 mb-5">
-                            <button 
-                                onClick={() => navigate('/vendor/register')} 
-                                className="btn btn-dark btn-lg px-5 py-3 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-3 shadow-lg"
-                                style={{ background: '#111' }}
-                            >
-                                Get Started Free <FaArrowRight />
+                        {/* Trust chips */}
+                        <div className="hero-trust-chips">
+                            {TRUST_ITEMS.map((t, i) => (
+                                <span key={i} className="hero-chip">
+                                    <FaCheckCircle className="hero-chip-icon" />
+                                    {t}
+                                </span>
+                            ))}
+                        </div>
+
+                        {/* CTAs */}
+                        <div className="hero-ctas">
+                            <button className="hero-btn-primary" onClick={() => navigate('/vendor/register')}>
+                                Get Started Free
+                                <FaArrowRight className="hero-btn-arrow" />
                             </button>
-                            <button 
-                                className="btn btn-outline-dark btn-lg px-5 py-3 rounded-pill fw-bold"
-                                style={{ border: '2px solid #111' }}
-                            >
+                            <button className="hero-btn-secondary">
+                                <span className="hero-play-icon"><FaPlay style={{ fontSize: '0.65rem' }} /></span>
                                 See How It Works
                             </button>
                         </div>
 
-                        {/* Social Proof Strip */}
-                        <div className="d-flex flex-wrap justify-content-center justify-content-lg-start align-items-center gap-4 py-4 px-4 rounded-4 shadow-sm bg-white border mt-2 mx-auto mx-lg-0" style={{ width: 'fit-content' }}>
-                            <div className="d-flex align-items-center gap-3">
-                                <div className="p-2 bg-danger-subtle rounded-3 text-danger"><FaRocket size={18} /></div>
-                                <div className="lh-1 text-start">
-                                    <div className="fw-bold h5 mb-0">500+</div>
-                                    <div className="small text-muted fw-bold text-uppercase" style={{ fontSize: '0.6rem' }}>Elite Venues</div>
-                                </div>
-                            </div>
-                            <div className="vr d-none d-md-block" style={{ height: '35px', opacity: 0.1 }}></div>
-                            <div className="d-flex align-items-center gap-3">
-                                <div className="p-2 bg-success-subtle rounded-3 text-success"><FaShieldAlt size={18} /></div>
-                                <div className="lh-1 text-start">
-                                    <div className="fw-bold h5 mb-0">100%</div>
-                                    <div className="small text-muted fw-bold text-uppercase" style={{ fontSize: '0.6rem' }}>Secure Tech</div>
-                                </div>
-                            </div>
+                        {/* Stats strip */}
+                        <div className="hero-stats">
+                            {STATS.map((s, i) => (
+                                <React.Fragment key={i}>
+                                    <div className="hero-stat">
+                                        <div className="hero-stat-value">{s.value}</div>
+                                        <div className="hero-stat-label">{s.label}</div>
+                                    </div>
+                                    {i < STATS.length - 1 && <div className="hero-stat-divider" />}
+                                </React.Fragment>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Visual Column */}
-                    <div className="col-lg-5 animate-fade-in-up delay-200 mt-5 mt-lg-0">
-                        <div className="position-relative p-2 mx-auto" style={{ maxWidth: '450px' }}>
-                            <div className="hero-dashboard-mockup shadow-2xl rounded-4 overflow-hidden border border-8 border-dark bg-dark">
-                                <div className="mockup-header px-3 py-2 d-flex gap-1 bg-dark">
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff5f56' }}></div>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbd2e' }}></div>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#27c93f' }}></div>
-                                </div>
-                                <div className="mockup-body d-flex bg-white" style={{ height: '380px' }}>
-                                    <div className="sidebar p-2 border-end bg-light d-flex flex-column align-items-center" style={{ width: '60px' }}>
-                                        <div className="mb-3 opacity-25 mt-2"><FaChartLine size={16} /></div>
-                                        <div className="mb-3 text-danger"><FaCalendarAlt size={16} /></div>
-                                        <div className="mb-3 opacity-25"><FaUserTie size={16} /></div>
-                                    </div>
-                                    <div className="content flex-grow-1 p-3">
-                                        <div className="d-flex justify-content-between align-items-center mb-3">
-                                            <div className="fw-bold small text-dark">Revenue</div>
-                                            <div className="badge bg-danger rounded-pill smaller" style={{ fontSize: '0.5rem' }}>LIVE</div>
-                                        </div>
-                                        <div className="row g-2 mb-3">
-                                            <div className="col-6">
-                                                <div className="p-2 bg-light rounded-3">
-                                                    <div className="fw-bold text-dark small">₹2.4M</div>
-                                                </div>
-                                            </div>
-                                            <div className="col-6">
-                                                <div className="p-2 bg-danger-subtle rounded-3 text-danger">
-                                                    <div className="fw-bold small">88%</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="p-3 border rounded-3 bg-light">
-                                            <div className="d-flex align-items-end gap-1" style={{ height: '80px' }}>
-                                                <div className="bg-danger-subtle flex-grow-1 rounded-top" style={{ height: '35%' }}></div>
-                                                <div className="bg-danger flex-grow-1 rounded-top" style={{ height: '65%' }}></div>
-                                                <div className="bg-danger-subtle flex-grow-1 rounded-top" style={{ height: '45%' }}></div>
-                                                <div className="bg-danger flex-grow-1 rounded-top" style={{ height: '90%' }}></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                    {/* ── RIGHT: Visual ── */}
+                    <div className="hero-visual">
+                        {/* Glow behind Lanyard */}
+                        <div className="hero-visual-glow" />
+                        <div className="hero-lanyard-wrap">
+                            <Lanyard position={[0, 3, 24]} gravity={[0, -40, 0]} transparent={true} />
+                        </div>
+
+                        {/* Floating info cards */}
+                        <div className="hero-float-card hero-float-card--tl">
+                            <span className="hero-float-icon"><FaRocket /></span>
+                            <div>
+                                <div className="hero-float-val">500+</div>
+                                <div className="hero-float-lbl">Venues Live</div>
                             </div>
-                            
-                            {/* Floating Card */}
-                            <div className="position-absolute animate-float d-none d-md-block" style={{ top: '-20px', right: '-30px', zIndex: 10 }}>
-                                <div className="p-3 bg-white rounded-4 shadow-lg border d-flex align-items-center gap-3">
-                                    <div className="bg-success rounded-circle p-2 text-white d-flex"><FaCheckCircle size={14} /></div>
-                                    <div className="small fw-bold">Booking Confirmed</div>
-                                </div>
+                        </div>
+                        <div className="hero-float-card hero-float-card--br">
+                            <span className="hero-float-icon hero-float-icon--green"><FaShieldAlt /></span>
+                            <div>
+                                <div className="hero-float-val">100%</div>
+                                <div className="hero-float-lbl">Secure</div>
                             </div>
                         </div>
                     </div>
@@ -137,45 +148,381 @@ const Hero = ({ homeRef, activeTab, setActiveTab }) => {
             </div>
 
             <style>{`
-                .hero-main-title { font-size: 2.5rem; line-height: 1.2; }
-                @media (min-width: 768px) {
-                    .hero-main-title { font-size: 4.5rem; }
-                }
-                
-                .hero-dashboard-mockup {
-                    transform: perspective(1000px) rotateY(-5deg) rotateX(5deg);
-                    transition: transform 0.5s ease;
-                }
-                @media (max-width: 991px) {
-                    .hero-dashboard-mockup { transform: none; }
+                /* ── Section ── */
+                .hero-section {
+                    position: relative;
+                    overflow: hidden;
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    font-family: 'Outfit', sans-serif;
+                    background: #ffffff;
                 }
 
-                .text-gradient-red {
-                    background: linear-gradient(135deg, #C8102E 0%, #ff4d4d 100%);
-                    -webkit-background-clip: text;
-                    background-clip: text;
-                    -webkit-text-fill-color: transparent;
+                /* Background gradient */
+                .hero-bg-layer {
+                    position: absolute;
+                    inset: 0;
+                    background:
+                        radial-gradient(ellipse 60% 50% at 70% 20%, rgba(220,53,69,0.07) 0%, transparent 70%),
+                        radial-gradient(ellipse 50% 60% at 10% 80%, rgba(220,53,69,0.05) 0%, transparent 70%),
+                        linear-gradient(170deg, #fff8f8 0%, #ffffff 50%, #fff5f6 100%);
+                    pointer-events: none;
                 }
 
-                @keyframes sweep {
-                    0% { background-position: -200% center; }
-                    100% { background-position: 200% center; }
+                /* Parallax blob */
+                .hero-parallax-blob {
+                    position: absolute;
+                    width: 700px; height: 700px;
+                    top: 50%; right: -10%;
+                    transform: translateY(-50%);
+                    border-radius: 50%;
+                    background: radial-gradient(circle, rgba(220,53,69,0.08) 0%, transparent 70%);
+                    filter: blur(60px);
+                    pointer-events: none;
+                    transition: transform 0.2s ease-out;
+                    will-change: transform;
                 }
-                .sweep-text {
-                    background: linear-gradient(to right, #C8102E 20%, #ff8080 40%, #ff8080 60%, #C8102E 80%);
+
+                /* Particles */
+                .hero-particles { position: absolute; inset: 0; pointer-events: none; }
+                .hero-particle {
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(220,53,69,0.3);
+                    animation: hero-float linear infinite;
+                }
+                @keyframes hero-float {
+                    0%   { transform: translateY(0) scale(1); opacity: 0; }
+                    15%  { opacity: 0.8; }
+                    85%  { opacity: 0.4; }
+                    100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
+                }
+
+                /* Container */
+                .hero-container {
+                    max-width: 1260px;
+                    margin: 0 auto;
+                    padding: 100px 5% 80px;
+                    position: relative;
+                    z-index: 2;
+                    width: 100%;
+                }
+
+                /* Layout */
+                .hero-layout {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 60px;
+                    align-items: center;
+                }
+
+                /* ── Content ── */
+                .hero-content {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0;
+                }
+
+                /* Badge */
+                .hero-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 0.65rem;
+                    font-weight: 800;
+                    letter-spacing: 0.2em;
+                    text-transform: uppercase;
+                    color: #dc3545;
+                    background: rgba(220,53,69,0.07);
+                    border: 1px solid rgba(220,53,69,0.18);
+                    padding: 7px 18px;
+                    border-radius: 999px;
+                    margin-bottom: 28px;
+                    width: fit-content;
+                }
+                .hero-badge-dot {
+                    width: 6px; height: 6px;
+                    border-radius: 50%;
+                    background: #dc3545;
+                    animation: hero-pulse 2s ease-in-out infinite;
+                }
+                @keyframes hero-pulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50%       { opacity: 0.4; transform: scale(1.4); }
+                }
+
+                /* Title */
+                .hero-title {
+                    font-size: clamp(2.8rem, 5.5vw, 5rem);
+                    font-weight: 900;
+                    color: #111111;
+                    letter-spacing: -0.04em;
+                    line-height: 1.1;
+                    margin: 0 0 24px;
+                }
+                .hero-title-accent {
+                    background: linear-gradient(to right, #dc3545 20%, #ff6b7a 50%, #dc3545 80%);
                     background-size: 200% auto;
                     -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
                     background-clip: text;
-                    animation: sweep 4s linear infinite;
+                    animation: hero-sweep 4s linear infinite;
                 }
-                
-                @keyframes float {
+                @keyframes hero-sweep {
+                    0%   { background-position: -200% center; }
+                    100% { background-position: 200% center; }
+                }
+
+                /* Description */
+                .hero-desc {
+                    font-size: 1.05rem;
+                    color: #64748b;
+                    line-height: 1.85;
+                    margin: 0 0 24px;
+                    max-width: 520px;
+                }
+
+                /* Trust chips */
+                .hero-trust-chips {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    margin-bottom: 32px;
+                }
+                .hero-chip {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 0.78rem;
+                    font-weight: 600;
+                    color: #475569;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    padding: 5px 12px;
+                    border-radius: 999px;
+                }
+                .hero-chip-icon { color: #dc3545; font-size: 0.7rem; }
+
+                /* CTAs */
+                .hero-ctas {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 14px;
+                    margin-bottom: 40px;
+                }
+                .hero-btn-primary {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 15px 32px;
+                    background: linear-gradient(135deg, #dc3545, #a51020);
+                    color: white;
+                    border: none;
+                    border-radius: 14px;
+                    font-size: 1rem;
+                    font-weight: 700;
+                    font-family: 'Outfit', sans-serif;
+                    cursor: pointer;
+                    box-shadow: 0 8px 28px rgba(220,53,69,0.35);
+                    transition: transform 0.25s, box-shadow 0.25s;
+                }
+                .hero-btn-primary:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 14px 36px rgba(220,53,69,0.45);
+                }
+                .hero-btn-arrow {
+                    font-size: 0.85rem;
+                    transition: transform 0.2s;
+                }
+                .hero-btn-primary:hover .hero-btn-arrow {
+                    transform: translateX(4px);
+                }
+                .hero-btn-secondary {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 15px 28px;
+                    background: white;
+                    color: #111;
+                    border: 1px solid rgba(0,0,0,0.1);
+                    border-radius: 14px;
+                    font-size: 1rem;
+                    font-weight: 700;
+                    font-family: 'Outfit', sans-serif;
+                    cursor: pointer;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+                    transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+                }
+                .hero-btn-secondary:hover {
+                    transform: translateY(-2px);
+                    border-color: rgba(220,53,69,0.25);
+                    box-shadow: 0 8px 24px rgba(220,53,69,0.1);
+                }
+                .hero-play-icon {
+                    width: 28px; height: 28px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #dc3545, #a51020);
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    flex-shrink: 0;
+                }
+
+                /* Stats */
+                .hero-stats {
+                    display: flex;
+                    align-items: center;
+                    gap: 28px;
+                    padding: 24px 28px;
+                    background: white;
+                    border: 1px solid rgba(220,53,69,0.1);
+                    border-radius: 18px;
+                    box-shadow: 0 4px 20px rgba(220,53,69,0.07);
+                    width: fit-content;
+                }
+                .hero-stat { text-align: center; }
+                .hero-stat-value {
+                    font-size: 1.5rem;
+                    font-weight: 900;
+                    color: #111;
+                    letter-spacing: -0.02em;
+                    line-height: 1;
+                    margin-bottom: 4px;
+                }
+                .hero-stat-label {
+                    font-size: 0.68rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                    color: #94a3b8;
+                }
+                .hero-stat-divider {
+                    width: 1px;
+                    height: 36px;
+                    background: rgba(220,53,69,0.12);
+                }
+
+                /* ── Visual ── */
+                .hero-visual {
+                    position: relative;
+                    min-height: 600px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .hero-visual-glow {
+                    position: absolute;
+                    width: 400px; height: 400px;
+                    border-radius: 50%;
+                    background: radial-gradient(circle, rgba(220,53,69,0.12) 0%, transparent 70%);
+                    top: 50%; left: 50%;
+                    transform: translate(-50%, -50%);
+                    pointer-events: none;
+                    filter: blur(30px);
+                }
+                .hero-lanyard-wrap {
+                    position: absolute;
+                    top: 50%; left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 150%;
+                    height: 700px;
+                }
+
+                /* Floating cards */
+                .hero-float-card {
+                    position: absolute;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    background: white;
+                    border: 1px solid rgba(220,53,69,0.12);
+                    border-radius: 14px;
+                    padding: 14px 18px;
+                    box-shadow: 0 8px 32px rgba(220,53,69,0.1);
+                    z-index: 10;
+                    animation: hero-bob 4s ease-in-out infinite;
+                }
+                .hero-float-card--tl { top: 10%; left: -5%; animation-delay: 0s; }
+                .hero-float-card--br { bottom: 18%; right: -5%; animation-delay: 1.5s; }
+                @keyframes hero-bob {
                     0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-10px); }
+                    50%       { transform: translateY(-8px); }
                 }
-                .animate-float { animation: float 5s infinite ease-in-out; }
-                
-                .shadow-2xl { box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.3); }
+                .hero-float-icon {
+                    width: 34px; height: 34px;
+                    border-radius: 10px;
+                    background: rgba(220,53,69,0.1);
+                    color: #dc3545;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 0.9rem;
+                    flex-shrink: 0;
+                }
+                .hero-float-icon--green {
+                    background: rgba(34,197,94,0.1);
+                    color: #16a34a;
+                }
+                .hero-float-val {
+                    font-size: 1.1rem;
+                    font-weight: 900;
+                    color: #111;
+                    line-height: 1;
+                    margin-bottom: 2px;
+                }
+                .hero-float-lbl {
+                    font-size: 0.65rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                    color: #94a3b8;
+                }
+
+                /* ── Responsive ── */
+                @media (max-width: 1024px) {
+                    .hero-layout {
+                        grid-template-columns: 1fr;
+                        gap: 0;
+                        text-align: center;
+                    }
+                    .hero-visual { display: none; }
+                    .hero-badge { margin: 0 auto 24px; }
+                    .hero-desc  { margin: 0 auto 20px; max-width: 100%; }
+                    .hero-trust-chips { justify-content: center; }
+                    .hero-ctas  { justify-content: center; }
+                    .hero-stats { margin: 0 auto; }
+                    .hero-content { align-items: center; }
+                }
+
+                @media (max-width: 640px) {
+                    .hero-section { min-height: auto; }
+                    .hero-container { padding: 90px 6% 60px; }
+                    .hero-title {
+                        font-size: 2.2rem;
+                        letter-spacing: -0.03em;
+                    }
+                    .hero-desc { font-size: 0.95rem; }
+                    .hero-badge { font-size: 0.58rem; padding: 6px 14px; }
+                    .hero-ctas {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 12px;
+                    }
+                    .hero-btn-primary,
+                    .hero-btn-secondary { justify-content: center; width: 100%; }
+                    .hero-trust-chips { gap: 8px; }
+                    .hero-chip { font-size: 0.72rem; }
+                    .hero-stats {
+                        width: 100%;
+                        justify-content: space-around;
+                        gap: 0;
+                        padding: 18px 16px;
+                    }
+                    .hero-stat-divider { display: block; }
+                    .hero-stat-value { font-size: 1.3rem; }
+                }
             `}</style>
         </section>
     );
