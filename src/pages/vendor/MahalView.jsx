@@ -2,6 +2,18 @@ import React from 'react';
 import { FaMapMarkerAlt, FaFilePdf, FaCheckCircle, FaEdit } from 'react-icons/fa';
 import { API_URL } from '../../utils/function';
 
+const format12Hour = (timeStr) => {
+    if (!timeStr) return '';
+    const [hoursStr, minutesStr] = timeStr.split(':');
+    let hours = parseInt(hoursStr, 10);
+    const minutes = minutesStr;
+    if (isNaN(hours)) return timeStr;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+};
+
 const InfoItem = ({ label, value }) => (
     <div className="col-md-6 col-lg-4">
         <label className="fw-bold text-secondary small d-block mb-1">{label}</label>
@@ -117,8 +129,8 @@ const MahalView = ({ currentHall, onEdit }) => {
                                 <h4 style={sectionTitleStyle}>5. Availability</h4>
                                 <div className="row g-3">
                                     <InfoItem label="Days" value={currentHall.availableDays} />
-                                    <InfoItem label="Morning Slot" value={`${currentHall.morningTimeFrom} - ${currentHall.morningTimeTo}`} />
-                                    <InfoItem label="Evening Slot" value={`${currentHall.eveningTimeFrom} - ${currentHall.eveningTimeTo}`} />
+                                    <InfoItem label="Morning Slot" value={`${format12Hour(currentHall.morningTimeFrom)} - ${format12Hour(currentHall.morningTimeTo)}`} />
+                                    <InfoItem label="Evening Slot" value={`${format12Hour(currentHall.eveningTimeFrom)} - ${format12Hour(currentHall.eveningTimeTo)}`} />
                                 </div>
                             </div>
 

@@ -7,13 +7,15 @@ import {
     FaArrowRight, FaRupeeSign, FaEye, FaTrash, FaInfoCircle,
     FaCheck, FaTimes, FaLayerGroup, FaSnowflake, FaBolt,
     FaMicrophone, FaParking, FaChevronCircleUp, FaTint,
-    FaBed, FaPaintBrush, FaStore, FaUtensils, FaUsers
+    FaBed, FaPaintBrush, FaStore, FaUtensils, FaUsers,
+    FaDownload, FaPrint
 } from 'react-icons/fa';
 
 import { API_URL } from '../../utils/function';
 
 const BookingList = () => {
     const [bookings, setBookings] = useState([]);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
@@ -37,6 +39,12 @@ const BookingList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [totalBookings, setTotalBookings] = useState(0);
+
+    const [toast, setToast] = useState({ show: false, message: '', type: '' });
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => setToast({ show: false, message: '', type: '' }), 3000);
+    };
 
     useEffect(() => {
         const vendorData = JSON.parse(localStorage.getItem('vendor_user'));
@@ -91,9 +99,9 @@ const BookingList = () => {
             await axios.delete(`${API_URL}/bookings/${id}`);
             setBookings(prev => prev.filter(b => b._id !== id));
             if (selectedBooking?._id === id) setShowDetailsModal(false);
-            alert("Booking deleted successfully.");
+            showToast("Booking deleted successfully.", "success");
         } catch (error) {
-            alert("Error deleting booking.");
+            showToast("Error deleting booking.", "error");
         }
     };
 
@@ -103,10 +111,11 @@ const BookingList = () => {
             await axios.put(`${API_URL}/bookings/${id}`, { [field]: value });
             setBookings(prev => prev.map(b => b._id === id ? { ...b, [field]: value } : b));
             if (selectedBooking?._id === id) {
-                setSelectedBooking(prev => ({ ...prev, [field]: value }));
+                setShowDetailsModal(false);
             }
+            showToast("Status updated successfully!", "success");
         } catch (error) {
-            alert("Error updating status.");
+            showToast("Error updating status.", "error");
         } finally {
             setIsUpdating(false);
         }
@@ -154,8 +163,421 @@ const BookingList = () => {
         return <span className="fw-bold">{start}</span>;
     };
 
+    const loadScript = (src) => new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+    });
+
+    const handleDownloadReceipt = async (booking) => {
+        setIsGeneratingPDF(true);
+        const bookingId = booking._id.slice(-6).toUpperCase();
+        const startDate = new Date(booking.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const endDate = booking.isMultiDay && booking.endDate
+            ? new Date(booking.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+            : null;
+        const createdAt = booking.createdAt
+            ? new Date(booking.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+            : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        const statusColor = booking.bookingStatus === 'Confirmed' ? '#16a34a'
+            : booking.bookingStatus === 'Cancelled' ? '#dc2626' : '#d97706';
+        const payStatusColor = booking.paymentStatus === 'Paid' ? '#16a34a' : '#d97706';
+
+        // Build selected facilities list
+        const selectedFacilities = booking.extraFacilities
+            ? Object.entries(booking.extraFacilities).filter(([_, f]) => f.selected)
+            : [];
+
+        const facilityRowsHTML = selectedFacilities.length > 0
+            ? selectedFacilities.map(([key, f]) => `
+                <tr>
+                    <td style="padding:3px 8px;color:rgba(255,255,255,0.55);font-size:10.5px;">+ ${key.charAt(0).toUpperCase() + key.slice(1)}</td>
+                    <td style="padding:3px 8px;text-align:right;font-size:10.5px;color:rgba(255,255,255,0.75);font-weight:600;">&#8377;${Number(f.price || 0).toLocaleString('en-IN')}</td>
+                </tr>`).join('')
+            : `<tr><td colspan="2" style="padding:3px 8px;color:rgba(255,255,255,0.35);font-size:10px;">No extra facilities</td></tr>`;
+
+        const facilityBadgesHTML = selectedFacilities.length > 0
+            ? selectedFacilities.map(([key]) =>
+                `<span style="display:inline-block;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:2px 9px;font-size:9.5px;font-weight:600;color:rgba(255,255,255,0.7);margin:2px;">${key.charAt(0).toUpperCase() + key.slice(1)}</span>`
+              ).join('')
+            : `<span style="color:rgba(255,255,255,0.35);font-size:9.5px;">Standard amenities</span>`;
+
+        const shiftLabel = booking.isMultiDay && booking.dayShifts
+            ? Object.values(booking.dayShifts).join(' / ')
+            : (booking.shift || 'Full Day');
+
+        const receiptHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Receipt #${bookingId}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  .sheet, .sheet *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+  .sheet{
+    width:794px;
+    min-height:1123px;
+    background:#fff;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ── TOP DARK HEADER ── */
+  .hdr{
+    background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
+    padding:18px 28px 14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hdr::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:rgba(220,38,38,0.12);border-radius:50%;}
+  .hdr-row1{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-icon{width:34px;height:34px;background:#dc2626;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .brand-name{color:#fff;font-size:15px;font-weight:800;letter-spacing:-0.3px;}
+  .brand-sub{color:rgba(255,255,255,0.4);font-size:9px;margin-top:1px;}
+  .receipt-pill{background:rgba(220,38,38,0.18);border:1px solid rgba(220,38,38,0.4);color:#fca5a5;padding:4px 12px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;}
+  .hdr-row2{display:flex;justify-content:space-between;align-items:flex-end;}
+  .ref-label{color:rgba(255,255,255,0.35);font-size:8.5px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:2px;}
+  .ref-id{color:#fff;font-size:22px;font-weight:800;letter-spacing:2px;}
+  .status-right{text-align:right;}
+  .status-chip{display:inline-block;padding:4px 14px;border-radius:20px;font-size:10px;font-weight:700;}
+  .issued{color:rgba(255,255,255,0.35);font-size:9px;margin-top:4px;}
+
+  /* ── MAHAL BANNER ── */
+  .mahal-banner{
+    background:linear-gradient(90deg,#dc2626,#b91c1c);
+    padding:10px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .mahal-label{color:rgba(255,255,255,0.65);font-size:8.5px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;}
+  .mahal-name{color:#fff;font-size:18px;font-weight:800;letter-spacing:-0.3px;}
+  .mahal-right{text-align:right;}
+  .mahal-date-lbl{color:rgba(255,255,255,0.6);font-size:8px;letter-spacing:1px;text-transform:uppercase;}
+  .mahal-date-val{color:#fff;font-size:12px;font-weight:700;margin-top:1px;}
+
+  /* ── COLOUR STRIPE ── */
+  .stripe{height:3px;background:linear-gradient(90deg,#dc2626,#f97316,#eab308,#dc2626);}
+
+  /* ── BODY ── */
+  .body{padding:16px 28px;flex:1;display:flex;flex-direction:column;gap:12px;}
+
+  /* customer row */
+  .cust-row{display:flex;gap:10px;}
+  .cust-main{flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;}
+  .cust-name{font-size:16px;font-weight:800;color:#0f172a;}
+  .cust-phone{font-size:10.5px;color:#64748b;font-weight:500;margin-top:2px;}
+  .pill-box{display:flex;gap:8px;flex-direction:column;justify-content:center;}
+  .mini-pill{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;text-align:center;min-width:72px;}
+  .mini-pill .lbl{font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:700;}
+  .mini-pill .val{font-size:11px;font-weight:700;color:#0f172a;margin-top:1px;}
+
+  /* info grid */
+  .info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .info-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;}
+  .info-card .lbl{font-size:7.5px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:3px;}
+  .info-card .val{font-size:11px;font-weight:700;color:#0f172a;line-height:1.3;}
+
+  /* 2-column lower section */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  /* left details */
+  .detail-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;}
+  .detail-title{font-size:7.5px;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+  .detail-title::after{content:'';flex:1;height:1px;background:#e2e8f0;}
+  .detail-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #f1f5f9;}
+  .detail-row:last-child{border-bottom:none;}
+  .dr-key{font-size:10px;color:#64748b;}
+  .dr-val{font-size:10.5px;font-weight:700;color:#0f172a;}
+
+  /* financial dark card */
+  .fin-card{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:10px;overflow:hidden;}
+  .fin-hdr{padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.07);}
+  .fin-hdr-txt{color:rgba(255,255,255,0.4);font-size:7.5px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;}
+  .fin-table{width:100%;border-collapse:collapse;}
+  .fin-table td{padding:3.5px 14px;}
+  .fin-lbl{color:rgba(255,255,255,0.6);font-size:10px;}
+  .fin-val{text-align:right;color:rgba(255,255,255,0.85);font-weight:600;font-size:10px;}
+  .fin-divider td{padding:2px 14px;border-top:1px solid rgba(255,255,255,0.07);}
+  .fin-total-row{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.1);}
+  .total-lbl{color:rgba(255,255,255,0.4);font-size:7.5px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;}
+  .total-amt{font-size:24px;font-weight:800;color:#f87171;letter-spacing:-0.5px;}
+  .pay-badge{padding:5px 16px;border-radius:20px;font-size:10px;font-weight:700;}
+
+  ${booking.transactionId ? `
+  .txn-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:7px 12px;}
+  .txn-lbl{font-size:7.5px;color:#93c5fd;text-transform:uppercase;letter-spacing:1px;font-weight:700;}
+  .txn-val{font-size:12px;font-weight:700;color:#1d4ed8;letter-spacing:0.5px;margin-top:2px;}
+  ` : ''}
+
+  /* footer */
+  .footer{border-top:1px solid #f1f5f9;padding:10px 28px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;margin-top:auto;}
+  .footer-note{font-size:9px;color:#94a3b8;max-width:320px;line-height:1.55;}
+  .footer-stamp{background:#0f172a;border-radius:8px;padding:7px 14px;text-align:center;}
+  .fs-lbl{font-size:7px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.35);}
+  .fs-val{font-size:11px;font-weight:700;margin-top:1px;}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-row1">
+      <div class="brand">
+        <div class="brand-icon">&#128197;</div>
+        <div>
+          <div class="brand-name">BookMyVenue</div>
+          <div class="brand-sub">Venue Booking Platform</div>
+        </div>
+      </div>
+      <div class="receipt-pill">Official Receipt</div>
+    </div>
+    <div class="hdr-row2">
+      <div>
+        <div class="ref-label">Booking Reference</div>
+        <div class="ref-id">#${bookingId}</div>
+      </div>
+      <div class="status-right">
+        <div class="status-chip" style="background:${statusColor}25;border:1px solid ${statusColor}50;color:${statusColor};">${booking.bookingStatus}</div>
+        <div class="issued">Issued: ${createdAt}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAHAL NAME BANNER -->
+  <div class="mahal-banner">
+    <div>
+      <div class="mahal-label">&#127970; Venue / Mahal</div>
+      <div class="mahal-name">${booking.mahalName}</div>
+    </div>
+    <div class="mahal-right">
+      <div class="mahal-date-lbl">Event Date</div>
+      <div class="mahal-date-val">${startDate}${endDate ? ' &rarr; ' + endDate : ''}</div>
+    </div>
+  </div>
+  <div class="stripe"></div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- Customer row -->
+    <div class="cust-row">
+      <div class="cust-main">
+        <div class="cust-name">${booking.customerName}</div>
+        <div class="cust-phone">&#128222; ${booking.customerPhone}</div>
+      </div>
+      <div class="pill-box">
+        <div class="mini-pill">
+          <div class="lbl">Guests</div>
+          <div class="val">&#128101; ${booking.guests || 'N/A'}</div>
+        </div>
+        <div class="mini-pill">
+          <div class="lbl">Type</div>
+          <div class="val">${booking.bookingType || 'Offline'}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info grid: 4 cols -->
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="lbl">Shift</div>
+        <div class="val">${shiftLabel}</div>
+      </div>
+      <div class="info-card">
+        <div class="lbl">Payment Mode</div>
+        <div class="val">${booking.paymentMode || 'N/A'}</div>
+      </div>
+      <div class="info-card">
+        <div class="lbl">Advance Paid</div>
+        <div class="val" style="color:#16a34a;">&#8377;${Number(booking.advancePaid || 0).toLocaleString('en-IN')}${booking.isVerified ? ' &#10003;' : ''}</div>
+      </div>
+      <div class="info-card">
+        <div class="lbl">Payment Status</div>
+        <div class="val" style="color:${payStatusColor};">${booking.paymentStatus}</div>
+      </div>
+    </div>
+
+    <!-- 2-column: left=details+facilities, right=financial -->
+    <div class="cols">
+
+      <!-- Left -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+
+        <!-- Booking details -->
+        <div class="detail-box">
+          <div class="detail-title">Booking Details</div>
+          <div class="detail-row">
+            <span class="dr-key">Booking ID</span>
+            <span class="dr-val">#${bookingId}</span>
+          </div>
+          <div class="detail-row">
+            <span class="dr-key">Start Date</span>
+            <span class="dr-val">${startDate}</span>
+          </div>
+          ${endDate ? `<div class="detail-row"><span class="dr-key">End Date</span><span class="dr-val">${endDate}</span></div>` : ''}
+          <div class="detail-row">
+            <span class="dr-key">Shift</span>
+            <span class="dr-val">${shiftLabel}</span>
+          </div>
+          <div class="detail-row">
+            <span class="dr-key">Booking Status</span>
+            <span class="dr-val" style="color:${statusColor};">${booking.bookingStatus}</span>
+          </div>
+          <div class="detail-row">
+            <span class="dr-key">Booking Type</span>
+            <span class="dr-val">${booking.bookingType || 'Offline'}</span>
+          </div>
+          ${booking.transactionId ? `<div class="detail-row"><span class="dr-key">Transaction ID</span><span class="dr-val" style="color:#2563eb;font-size:9px;">${booking.transactionId}</span></div>` : ''}
+        </div>
+
+        <!-- Facilities -->
+        <div class="detail-box" style="background:linear-gradient(135deg,#1e293b,#0f172a);">
+          <div class="detail-title" style="color:rgba(255,255,255,0.4);">Facilities Included</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+            ${facilityBadgesHTML}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: Financial card -->
+      <div class="fin-card">
+        <div class="fin-hdr">
+          <div class="fin-hdr-txt">&#128178; Financial Breakdown</div>
+        </div>
+        <table class="fin-table">
+          <tr>
+            <td class="fin-lbl" style="color:#fff;font-weight:700;font-size:11px;padding-top:8px;padding-bottom:6px;">Venue Base Price</td>
+            <td class="fin-val" style="color:#fff;font-size:11px;font-weight:700;padding-top:8px;padding-bottom:6px;">&#8377;${Number(booking.price || 0).toLocaleString('en-IN')}</td>
+          </tr>
+          <tr class="fin-divider"><td colspan="2"></td></tr>
+          ${facilityRowsHTML}
+          <tr class="fin-divider"><td colspan="2"></td></tr>
+          <tr>
+            <td class="fin-lbl" style="padding-top:6px;">Advance Paid</td>
+            <td class="fin-val" style="color:#4ade80;padding-top:6px;">&#8377;${Number(booking.advancePaid || 0).toLocaleString('en-IN')}${booking.isVerified ? ' &#10003;' : ''}</td>
+          </tr>
+          <tr>
+            <td class="fin-lbl">Payment Status</td>
+            <td class="fin-val" style="color:${payStatusColor};">${booking.paymentStatus}</td>
+          </tr>
+        </table>
+        <div class="fin-total-row">
+          <div>
+            <div class="total-lbl">Total Amount Due</div>
+            <div class="total-amt">&#8377;${Number(booking.totalAmount || 0).toLocaleString('en-IN')}</div>
+          </div>
+          <div class="pay-badge" style="background:${payStatusColor}22;border:1px solid ${payStatusColor}55;color:${payStatusColor};">${booking.paymentStatus}</div>
+        </div>
+      </div>
+
+    </div><!-- /cols -->
+
+  </div><!-- /body -->
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-note">
+      This is an official booking receipt generated by BookMyVenue.<br/>
+      Keep this for your records. Reference: <strong>#${bookingId}</strong> &bull; Venue: <strong>${booking.mahalName}</strong>
+    </div>
+    <div class="footer-stamp">
+      <div class="fs-lbl">Booking Status</div>
+      <div class="fs-val" style="color:${statusColor};">${booking.bookingStatus}</div>
+    </div>
+  </div>
+
+</div><!-- /sheet -->
+</body>
+</html>`;
+
+        // ---- Off-screen render ----
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;z-index:-9999;overflow:visible;';
+        container.innerHTML = receiptHTML
+            .replace(/[\s\S]*<body>/, '')
+            .replace(/<\/body>[\s\S]*/, '');
+
+        // Inject styles
+        const styleMatch = receiptHTML.match(/<style>([\s\S]*?)<\/style>/);
+        if (styleMatch) {
+            const styleEl = document.createElement('style');
+            styleEl.textContent = styleMatch[1];
+            container.prepend(styleEl);
+        }
+        document.body.appendChild(container);
+
+        try {
+            await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+            await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+
+            // Wait a tick for fonts/styles to apply
+            await new Promise(r => setTimeout(r, 300));
+
+            const sheetEl = container.querySelector('.sheet') || container;
+            const canvas = await window.html2canvas(sheetEl, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: 794,
+                width: 794,
+            });
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+            // Force entire canvas into exactly ONE A4 page (210 x 297 mm)
+            const imgData = canvas.toDataURL('image/jpeg', 0.96);
+            pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+
+            const safeName = booking.customerName.replace(/\s+/g, '_');
+            pdf.save(`Receipt_${bookingId}_${safeName}.pdf`);
+        } catch (err) {
+            console.error('PDF generation failed:', err);
+            showToast('Could not generate PDF. Please try again.', 'error');
+        } finally {
+            document.body.removeChild(container);
+            setIsGeneratingPDF(false);
+        }
+    };
+
+    const toastStyles = `
+        @keyframes slideInTop {
+            from {transform: translateY(-100%); opacity: 0; }
+            to {transform: translateY(0); opacity: 1; }
+        }
+        .custom-toast {
+            animation: slideInTop 0.3s ease-out;
+            z-index: 9999;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    `;
+
     return (
         <div className="container-fluid py-4" style={{ background: '#f8fafc', minHeight: '100vh' }}>
+            <style>{toastStyles}</style>
+
+            {/* Toast Notification */}
+            {toast.show && (
+                <div className={`custom-toast position-fixed top-0 start-50 translate-middle-x mt-4 p-3 rounded-3 d-flex align-items-center gap-3 bg-white border-${toast.type === 'error' ? 'danger' : 'success'} border-start border-5`} style={{ minWidth: '300px' }}>
+                    <div className={`text-${toast.type === 'error' ? 'danger' : 'success'}`}>
+                        {toast.type === 'error' ? <FaBan size={20} /> : <FaCheckCircle size={20} />}
+                    </div>
+                    <div>
+                        <h6 className="mb-0 fw-bold">{toast.type === 'error' ? 'Error' : 'Success'}</h6>
+                        <small className="text-secondary">{toast.message}</small>
+                    </div>
+                </div>
+            )}
+
             {/* Header Section */}
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
                 <div>
@@ -402,13 +824,45 @@ const BookingList = () => {
                                     </div>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setShowDetailsModal(false)}
-                                className="btn btn-light rounded-circle p-2 d-flex align-items-center justify-content-center border"
-                                style={{ width: 40, height: 40, background: '#f1f5f9' }}
-                            >
-                                <FaTimes className="text-secondary" />
-                            </button>
+                            <div className="d-flex align-items-center gap-2">
+                                <button
+                                    onClick={() => handleDownloadReceipt(selectedBooking)}
+                                    disabled={isGeneratingPDF}
+                                    className="btn d-flex align-items-center gap-2 px-3 py-2 fw-bold rounded-pill shadow-sm"
+                                    style={{
+                                        background: isGeneratingPDF
+                                            ? 'linear-gradient(135deg, #475569, #334155)'
+                                            : 'linear-gradient(135deg, #1e293b, #0f172a)',
+                                        color: '#fff',
+                                        border: 'none',
+                                        fontSize: '0.8rem',
+                                        letterSpacing: '0.3px',
+                                        opacity: isGeneratingPDF ? 0.85 : 1,
+                                        minWidth: '155px',
+                                        justifyContent: 'center'
+                                    }}
+                                    title="Download PDF Receipt"
+                                >
+                                    {isGeneratingPDF ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm" style={{ width: 12, height: 12, borderWidth: 2 }} />
+                                            Generating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaDownload size={12} />
+                                            Download Receipt
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setShowDetailsModal(false)}
+                                    className="btn btn-light rounded-circle p-2 d-flex align-items-center justify-content-center border"
+                                    style={{ width: 40, height: 40, background: '#f1f5f9' }}
+                                >
+                                    <FaTimes className="text-secondary" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Body */}
@@ -636,7 +1090,6 @@ const BookingList = () => {
                                                 onClick={async () => {
                                                     await handleUpdateStatus(selectedBooking._id, 'bookingStatus', tempStatus.bookingStatus);
                                                     await handleUpdateStatus(selectedBooking._id, 'paymentStatus', tempStatus.paymentStatus);
-                                                    alert("Changes saved successfully!");
                                                 }}
                                                 disabled={isUpdating || (tempStatus.bookingStatus === selectedBooking.bookingStatus && tempStatus.paymentStatus === selectedBooking.paymentStatus)}
                                                 className="btn btn-danger w-100 rounded-pill py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
@@ -721,7 +1174,6 @@ const BookingList = () => {
                                         await handleUpdateStatus(selectedBooking._id, 'advancePaid', Number(verifyAmount));
                                         await handleUpdateStatus(selectedBooking._id, 'isVerified', true);
                                         setShowVerifyModal(false);
-                                        alert("Payment verified successfully!");
                                     }}
                                     className="btn btn-danger flex-fill rounded-pill py-3 fw-bold shadow-lg"
                                 >

@@ -185,7 +185,7 @@ const SuperAdminLogin = () => {
         <div className="sa-login-container" ref={vantaRef}>
             <div className={`sa-login-card ${view === 'reset' ? 'sa-register-mode' : ''}`}>
                 <div className="sa-login-brand">
-                    <i className="bi bi-shield-lock-fill"></i>
+                    <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', WebkitTextFillColor: 'initial', background: 'none' }} />
                     <span>SUPER ADMIN</span>
                 </div>
 

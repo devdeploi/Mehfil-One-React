@@ -224,7 +224,7 @@ const VendorLogin = () => {
         <div className="v-login-container" ref={vantaRef}>
             <div className={`v-login-card ${view === 'reset' ? 'v-register-mode' : ''}`}>
                 <div className="v-login-brand">
-                    <i className="bi bi-shop"></i>
+                    <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', WebkitTextFillColor: 'initial', background: 'none' }} />
                     <span>VENDOR PORTAL</span>
                 </div>
 

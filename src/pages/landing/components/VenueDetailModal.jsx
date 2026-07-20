@@ -1,10 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../../../utils/function';
 import { FiX, FiCheckCircle, FiStar, FiCalendar, FiMapPin, FiUsers, FiInfo, FiMessageCircle, FiSend, FiClock } from 'react-icons/fi';
 import { FaRupeeSign } from 'react-icons/fa';
+import { useToast } from '../../../hooks/useToast';
+import Toast from '../../../components/Toast';
+
+const format12Hour = (timeStr) => {
+    if (!timeStr) return '';
+    const [hoursStr, minutesStr] = timeStr.split(':');
+    let hours = parseInt(hoursStr, 10);
+    const minutes = minutesStr;
+    if (isNaN(hours)) return timeStr;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+};
 
 const VenueDetailModal = ({ venue, initialTab, onClose }) => {
+    const { toast, showToast } = useToast();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState(initialTab || 'details');
     const [reviews, setReviews] = useState([]);
     const [bookings, setBookings] = useState([]);
@@ -42,7 +59,7 @@ const VenueDetailModal = ({ venue, initialTab, onClose }) => {
     const handleAddReview = async (e) => {
         e.preventDefault();
         if (!user) {
-            alert("Please login to add a review");
+            showToast("Please login to add a review", "error");
             return;
         }
         if (!newReview.comment) return;
@@ -189,7 +206,7 @@ const VenueDetailModal = ({ venue, initialTab, onClose }) => {
                                                 <div className="p-2 bg-white rounded-3 shadow-sm text-danger"><FiClock size={20} /></div>
                                                 <div>
                                                     <div className="small text-muted fw-bold">Shift Timing</div>
-                                                    <div className="fw-bold">{venue.morningTimeFrom} - {venue.eveningTimeTo}</div>
+                                                    <div className="fw-bold">{format12Hour(venue.morningTimeFrom)} - {format12Hour(venue.eveningTimeTo)}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -207,6 +224,21 @@ const VenueDetailModal = ({ venue, initialTab, onClose }) => {
                                             )
                                         ))}
                                     </div>
+
+                                    <button 
+                                        className="btn btn-dark w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg transform-active mt-5"
+                                        style={{ background: 'linear-gradient(135deg, #111, #333)', border: 'none' }}
+                                        onClick={() => {
+                                            if(!user) {
+                                                showToast("Please login to contact the manager", "error");
+                                                return;
+                                            }
+                                            navigate(`/user/profile?tab=messages&contactVendor=${venue.vendorId?._id || venue.vendorId}&autoMessage=${encodeURIComponent(`Hi, I am interested in booking "${venue.mahalName}". Could you please share more details regarding availability, pricing, and services?`)}`);
+                                            onClose();
+                                        }}
+                                    >
+                                        <FiMessageCircle size={18} /> Contact Manager to Book
+                                    </button>
                                 </div>
                             )}
 
@@ -334,6 +366,7 @@ const VenueDetailModal = ({ venue, initialTab, onClose }) => {
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
                 .hover-scale-sm:hover { transform: scale(1.02); }
             `}</style>
+            <Toast toast={toast} />
         </div>
     );
 };

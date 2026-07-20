@@ -189,7 +189,10 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
                         </span>
                     </div>
 
-                    <div className="vr-nav-brand">MEHFIL <span className="text-red">ONE</span></div>
+                    <div className="d-flex align-items-center gap-2" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+                        <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+                        <span className="vr-nav-brand">MEHFIL <span className="text-red">ONE</span></span>
+                    </div>
 
                     <div className="nav-right">
                         {/* Empty spacer to keep brand centered */}
@@ -452,7 +455,10 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
 
             {/* Footer */}
             <footer className="vr-footer">
-                <div className="vr-footer-brand">MEHFIL ONE</div>
+                <div className="vr-footer-brand d-flex align-items-center justify-content-center gap-2">
+                    <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                    <span>MEHFIL ONE</span>
+                </div>
                 <div className="vr-footer-right">
                     <span>&copy; {new Date().getFullYear()} Mehfil One. All rights reserved.</span>
                     <span className="vr-footer-sep">|</span>

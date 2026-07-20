@@ -54,7 +54,7 @@ const SuperAdminHeader = () => {
         <>
             <header className="sa-header">
                 <div className="sa-header-brand">
-                    <i className="bi bi-calendar-check-fill"></i>
+                    <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
                     <span>MEHFIL ONE</span>
                 </div>
                 <div className="sa-header-actions">

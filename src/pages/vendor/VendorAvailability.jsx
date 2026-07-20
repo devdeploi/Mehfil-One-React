@@ -3,9 +3,23 @@ import { FaChevronLeft, FaChevronRight, FaTimes, FaBuilding, FaSave, FaPhone, Fa
 import axios from 'axios';
 import { API_URL } from '../../utils/function';
 import '../../styles/superadmin/Dashboard.css';
+import { useToast } from '../../hooks/useToast';
+import Toast from '../../components/Toast';
+
+const format12Hour = (timeStr) => {
+    if (!timeStr) return '';
+    const [hoursStr, minutesStr] = timeStr.split(':');
+    let hours = parseInt(hoursStr, 10);
+    const minutes = minutesStr;
+    if (isNaN(hours)) return timeStr;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+};
 
 const VendorAvailability = () => {
-
+    const { toast, showToast } = useToast();
     const [mahals, setMahals] = useState([]);
     const [selectedMahalId, setSelectedMahalId] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -80,7 +94,7 @@ const VendorAvailability = () => {
                     while (curr <= end) {
                         const dateKey = formatDate(curr);
                         if (!bookingsMap[dateKey]) bookingsMap[dateKey] = [];
-                        
+
                         // Use dayShifts if available, otherwise fallback to start/end logic
                         let displayShift = 'Full Day';
                         if (booking.dayShifts && booking.dayShifts[dateKey]) {
@@ -89,12 +103,12 @@ const VendorAvailability = () => {
                             if (curr.getTime() === start.getTime()) displayShift = booking.shift;
                             else if (curr.getTime() === end.getTime()) displayShift = booking.endShift || 'Full Day';
                         }
-                        
+
                         bookingsMap[dateKey].push({
                             ...booking,
                             displayShift: displayShift
                         });
-                        
+
                         curr.setDate(curr.getDate() + 1);
                         curr.setHours(0, 0, 0, 0);
                     }
@@ -157,7 +171,7 @@ const VendorAvailability = () => {
     // --- 2. Multi-day Price Calculation ---
     const recommendedPrice = React.useMemo(() => {
         if (!currentMahal || !selectedDate) return 0;
-        
+
         const mPrice = Number(currentMahal.morningPrice) || 0;
         const ePrice = Number(currentMahal.eveningPrice) || 0;
         const fPrice = Number(currentMahal.fullDayPrice) || 0;
@@ -176,7 +190,7 @@ const VendorAvailability = () => {
         let total = 0;
         const start = new Date(selectedDate);
         const end = formData.endDate ? new Date(formData.endDate) : start;
-        
+
         let curr = new Date(start);
         while (curr <= end) {
             const dStr = `${curr.getFullYear()}-${String(curr.getMonth() + 1).padStart(2, '0')}-${String(curr.getDate()).padStart(2, '0')}`;
@@ -224,7 +238,7 @@ const VendorAvailability = () => {
 
     const handleDateClick = (dayStr) => {
         if (!selectedMahalId) {
-            alert("Please select a Mahal first.");
+            showToast("Please select a Mahal first.", "error");
             return;
         }
         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(dayStr).padStart(2, '0')}`;
@@ -289,7 +303,7 @@ const VendorAvailability = () => {
 
         try {
             await axios.put(`${API_URL}/bookings/${bookingId}`, updates);
-            alert("Booking updated successfully!");
+            showToast("Booking updated successfully!", "success");
 
             // Optimistic Update or Refetch
             fetchBookings();
@@ -302,7 +316,7 @@ const VendorAvailability = () => {
             setShowModal(false);
         } catch (error) {
             console.error("Update failed", error);
-            alert("Failed to update booking.");
+            showToast("Failed to update booking.", "error");
         }
     };
 
@@ -323,7 +337,7 @@ const VendorAvailability = () => {
         try {
             const payload = {
                 mahalId: selectedMahalId,
-                date: selectedDate, 
+                date: selectedDate,
                 shift: formData.shift,
                 isMultiDay: formData.isMultiDay,
                 endDate: formData.isMultiDay ? formData.endDate : null,
@@ -338,25 +352,25 @@ const VendorAvailability = () => {
                 price: formData.price,
                 extraFacilities: formData.extraFacilities,
                 dayShifts: formData.dayShifts,
-                totalAmount: Number(formData.price || 0) + 
-                            Object.values(formData.extraFacilities).reduce((acc, f) => {
-                                if (!f.selected) return acc;
-                                const dayCount = formData.isMultiDay && formData.endDate 
-                                    ? Math.max(1, Math.ceil((new Date(formData.endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24)) + 1)
-                                    : 1;
-                                return acc + (Number(f.price) * dayCount);
-                            }, 0)
+                totalAmount: Number(formData.price || 0) +
+                    Object.values(formData.extraFacilities).reduce((acc, f) => {
+                        if (!f.selected) return acc;
+                        const dayCount = formData.isMultiDay && formData.endDate
+                            ? Math.max(1, Math.ceil((new Date(formData.endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24)) + 1)
+                            : 1;
+                        return acc + (Number(f.price) * dayCount);
+                    }, 0)
             };
 
             await axios.post(`${API_URL}/bookings`, payload);
-            alert("Booking Confirmed!");
+            showToast("Booking Confirmed!", "success");
             setShowModal(false);
             fetchBookings(); // Refresh
 
         } catch (error) {
             console.error("Booking failed", error);
             const msg = error.response?.data?.msg || "Booking failed.";
-            alert(msg);
+            showToast(msg, "error");
         }
     };
 
@@ -573,7 +587,7 @@ const VendorAvailability = () => {
                                     </div>
                                 </div>
                             </div>
-                            <button onClick={() => setShowModal(false)} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'rgba(220,53,69,0.08)', color: '#e63946', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background='rgba(220,53,69,0.18)'} onMouseLeave={e => e.currentTarget.style.background='rgba(220,53,69,0.08)'}><FaTimes /></button>
+                            <button onClick={() => setShowModal(false)} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'rgba(220,53,69,0.08)', color: '#e63946', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(220,53,69,0.18)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(220,53,69,0.08)'}><FaTimes /></button>
                         </div>
                         <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
@@ -658,7 +672,7 @@ const VendorAvailability = () => {
                                                         <FaSun style={{ color: '#f59e0b', fontSize: 13, flexShrink: 0 }} />
                                                         <div style={{ flex: 1 }}>
                                                             <div style={{ fontSize: '0.6rem', color: '#94a3b8', textTransform: 'uppercase' }}>Morning</div>
-                                                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#fbbf24' }}>{mahal.morningTimeFrom} – {mahal.morningTimeTo || '...'}</div>
+                                                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#fbbf24' }}>{format12Hour(mahal.morningTimeFrom)} – {format12Hour(mahal.morningTimeTo)}</div>
                                                         </div>
                                                         {mahal.morningPrice && <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#fbbf24' }}>₹{mahal.morningPrice.toLocaleString('en-IN')}</span>}
                                                     </div>
@@ -668,7 +682,7 @@ const VendorAvailability = () => {
                                                         <FaMoon style={{ color: '#60a5fa', fontSize: 12, flexShrink: 0 }} />
                                                         <div style={{ flex: 1 }}>
                                                             <div style={{ fontSize: '0.6rem', color: '#94a3b8', textTransform: 'uppercase' }}>Evening</div>
-                                                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#60a5fa' }}>{mahal.eveningTimeFrom} – {mahal.eveningTimeTo || '...'}</div>
+                                                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#60a5fa' }}>{format12Hour(mahal.eveningTimeFrom)} – {format12Hour(mahal.eveningTimeTo)}</div>
                                                         </div>
                                                         {mahal.eveningPrice && <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#60a5fa' }}>₹{mahal.eveningPrice.toLocaleString('en-IN')}</span>}
                                                     </div>
@@ -720,107 +734,107 @@ const VendorAvailability = () => {
                             {/* RIGHT PANEL: Bookings + Form */}
                             <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', background: '#fff', borderRadius: '0 16px 16px 0' }}>
 
-                                    {filteredModalBookings.length > 0 && (
+                                {filteredModalBookings.length > 0 && (
                                     <div className="mb-4">
                                         {filteredModalBookings.map((booking, idx) => {
                                             const bookingId = booking._id;
-                                        const updates = editingUpdates[bookingId] || {};
-                                        const payStatus = updates.paymentStatus || booking.paymentStatus;
-                                        const bookStatus = updates.bookingStatus || booking.bookingStatus;
+                                            const updates = editingUpdates[bookingId] || {};
+                                            const payStatus = updates.paymentStatus || booking.paymentStatus;
+                                            const bookStatus = updates.bookingStatus || booking.bookingStatus;
 
-                                        // Status Colors
-                                        const getStatusColor = (status) => {
-                                            switch (status) {
-                                                case 'Paid': return 'text-success bg-success-subtle';
-                                                case 'Confirmed': return 'text-success bg-success-subtle';
-                                                case 'Pending': return 'text-warning bg-warning-subtle';
-                                                case 'Partial': return 'text-primary bg-primary-subtle';
-                                                case 'Cancelled': return 'text-danger bg-danger-subtle';
-                                                default: return 'text-secondary bg-light';
-                                            }
-                                        };
+                                            // Status Colors
+                                            const getStatusColor = (status) => {
+                                                switch (status) {
+                                                    case 'Paid': return 'text-success bg-success-subtle';
+                                                    case 'Confirmed': return 'text-success bg-success-subtle';
+                                                    case 'Pending': return 'text-warning bg-warning-subtle';
+                                                    case 'Partial': return 'text-primary bg-primary-subtle';
+                                                    case 'Cancelled': return 'text-danger bg-danger-subtle';
+                                                    default: return 'text-secondary bg-light';
+                                                }
+                                            };
 
-                                        return (
-                                            <div key={bookingId} className="p-3 bg-white rounded-4 border shadow-sm mb-3 position-relative overflow-hidden hover-shadow transition-all">
-                                                {/* Left Status Strip */}
-                                                <div className={`position-absolute top-0 start-0 h-100`}
-                                                    style={{ width: '4px', backgroundColor: booking.shift === 'Morning' ? '#ffc107' : booking.shift === 'Evening' ? '#0dcaf0' : '#dc3545' }}>
-                                                </div>
-
-                                                <div className="d-flex justify-content-between align-items-start mb-3 ps-2">
-                                                    <div>
-                                                        <div className="d-flex align-items-center gap-2 mb-2">
-                                                            <span className={`badge rounded-pill ${booking.shift === 'Morning' ? 'bg-warning text-dark' : booking.shift === 'Evening' ? 'bg-info text-dark' : 'bg-danger text-white'}`}>
-                                                                <FaClock className="me-1 mb-1" />
-                                                                {booking.shift}
-                                                                {booking.isMultiDay && booking.endDate && (
-                                                                    <> to {new Date(booking.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} ({booking.endShift})</>
-                                                                )}
-                                                            </span>
-                                                            <span className="badge bg-light text-secondary border fw-normal">
-                                                                {booking.paymentMode}
-                                                            </span>
-                                                        </div>
-                                                        <h6 className="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                                                            <FaUser className="text-secondary small" />
-                                                            {booking.customerName || booking.customer}
-                                                        </h6>
-                                                        <small className="text-muted d-flex align-items-center gap-2">
-                                                            <FaPhone className="text-secondary small" />
-                                                            {booking.customerPhone || 'No Phone Provided'}
-                                                        </small>
-                                                        {booking.customerEmail && (
-                                                            <small className="text-muted d-flex align-items-center gap-2">
-                                                                <FaEnvelope className="text-secondary small" style={{ fontSize: '0.65rem' }} />
-                                                                {booking.customerEmail}
-                                                            </small>
-                                                        )}
+                                            return (
+                                                <div key={bookingId} className="p-3 bg-white rounded-4 border shadow-sm mb-3 position-relative overflow-hidden hover-shadow transition-all">
+                                                    {/* Left Status Strip */}
+                                                    <div className={`position-absolute top-0 start-0 h-100`}
+                                                        style={{ width: '4px', backgroundColor: booking.shift === 'Morning' ? '#ffc107' : booking.shift === 'Evening' ? '#0dcaf0' : '#dc3545' }}>
                                                     </div>
 
-                                                    {/* Total Amount & Facilities display */}
-                                                    <div className="text-end">
-                                                        <div style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Total Amount</div>
-                                                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#e63946' }}>₹{Number(booking.totalAmount || booking.price || 0).toLocaleString('en-IN')}</div>
-                                                        
-                                                        {booking.extraFacilities && (
-                                                            <div className="d-flex flex-wrap gap-1 justify-content-end mt-1" style={{ maxWidth: '200px' }}>
-                                                                {Object.entries(booking.extraFacilities).map(([key, f]) => f.selected && (
-                                                                    <span key={key} className="badge bg-light text-secondary border px-1" style={{ fontSize: '0.52rem', textTransform: 'uppercase' }}>
-                                                                        {key === 'drinkingWater' ? 'Water' : 
-                                                                         key === 'soundSystem' ? 'Sound' : 
-                                                                         key === 'decoration' ? 'Decor' : 
-                                                                         key === 'utensils' ? 'Utensil' : 
-                                                                         key === 'catering' ? 'Food' : 
-                                                                         key}
-                                                                    </span>
-                                                                ))}
+                                                    <div className="d-flex justify-content-between align-items-start mb-3 ps-2">
+                                                        <div>
+                                                            <div className="d-flex align-items-center gap-2 mb-2">
+                                                                <span className={`badge rounded-pill ${booking.shift === 'Morning' ? 'bg-warning text-dark' : booking.shift === 'Evening' ? 'bg-info text-dark' : 'bg-danger text-white'}`}>
+                                                                    <FaClock className="me-1 mb-1" />
+                                                                    {booking.shift}
+                                                                    {booking.isMultiDay && booking.endDate && (
+                                                                        <> to {new Date(booking.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} ({booking.endShift})</>
+                                                                    )}
+                                                                </span>
+                                                                <span className="badge bg-light text-secondary border fw-normal">
+                                                                    {booking.paymentMode}
+                                                                </span>
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                </div>
+                                                            <h6 className="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                                                                <FaUser className="text-secondary small" />
+                                                                {booking.customerName || booking.customer}
+                                                            </h6>
+                                                            <small className="text-muted d-flex align-items-center gap-2">
+                                                                <FaPhone className="text-secondary small" />
+                                                                {booking.customerPhone || 'No Phone Provided'}
+                                                            </small>
+                                                            {booking.customerEmail && (
+                                                                <small className="text-muted d-flex align-items-center gap-2">
+                                                                    <FaEnvelope className="text-secondary small" style={{ fontSize: '0.65rem' }} />
+                                                                    {booking.customerEmail}
+                                                                </small>
+                                                            )}
+                                                        </div>
 
-                                                <div className="d-flex justify-content-between align-items-center mt-3 ps-2 pt-3 border-top border-light-subtle">
-                                                    <div className="d-flex gap-2">
-                                                        <div className="d-flex flex-column">
-                                                            <span style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Booking</span>
-                                                            <span className={`badge ${booking.bookingStatus === 'Confirmed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'} border-0 px-2 py-1 mt-1`} style={{ fontSize: '0.7rem' }}>
-                                                                {booking.bookingStatus}
-                                                            </span>
-                                                        </div>
-                                                        <div className="d-flex flex-column ms-3">
-                                                            <span style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Payment</span>
-                                                            <span className={`badge ${booking.paymentStatus === 'Paid' ? 'bg-success-subtle text-success' : booking.paymentStatus === 'Partial' ? 'bg-primary-subtle text-primary' : 'bg-warning-subtle text-warning'} border-0 px-2 py-1 mt-1`} style={{ fontSize: '0.7rem' }}>
-                                                                {booking.paymentStatus}
-                                                            </span>
+                                                        {/* Total Amount & Facilities display */}
+                                                        <div className="text-end">
+                                                            <div style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Total Amount</div>
+                                                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#e63946' }}>₹{Number(booking.totalAmount || booking.price || 0).toLocaleString('en-IN')}</div>
+
+                                                            {booking.extraFacilities && (
+                                                                <div className="d-flex flex-wrap gap-1 justify-content-end mt-1" style={{ maxWidth: '200px' }}>
+                                                                    {Object.entries(booking.extraFacilities).map(([key, f]) => f.selected && (
+                                                                        <span key={key} className="badge bg-light text-secondary border px-1" style={{ fontSize: '0.52rem', textTransform: 'uppercase' }}>
+                                                                            {key === 'drinkingWater' ? 'Water' :
+                                                                                key === 'soundSystem' ? 'Sound' :
+                                                                                    key === 'decoration' ? 'Decor' :
+                                                                                        key === 'utensils' ? 'Utensil' :
+                                                                                            key === 'catering' ? 'Food' :
+                                                                                                key}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
-                                                    
-                                                    <div className="text-end">
-                                                        <div style={{ fontSize: '0.55rem', color: '#94a3b8', textTransform: 'uppercase' }}>Applied Discount</div>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>{booking.appliedDiscount || 0}%</div>
+
+                                                    <div className="d-flex justify-content-between align-items-center mt-3 ps-2 pt-3 border-top border-light-subtle">
+                                                        <div className="d-flex gap-2">
+                                                            <div className="d-flex flex-column">
+                                                                <span style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Booking</span>
+                                                                <span className={`badge ${booking.bookingStatus === 'Confirmed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'} border-0 px-2 py-1 mt-1`} style={{ fontSize: '0.7rem' }}>
+                                                                    {booking.bookingStatus}
+                                                                </span>
+                                                            </div>
+                                                            <div className="d-flex flex-column ms-3">
+                                                                <span style={{ fontSize: '0.6rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Payment</span>
+                                                                <span className={`badge ${booking.paymentStatus === 'Paid' ? 'bg-success-subtle text-success' : booking.paymentStatus === 'Partial' ? 'bg-primary-subtle text-primary' : 'bg-warning-subtle text-warning'} border-0 px-2 py-1 mt-1`} style={{ fontSize: '0.7rem' }}>
+                                                                    {booking.paymentStatus}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="text-end">
+                                                            <div style={{ fontSize: '0.55rem', color: '#94a3b8', textTransform: 'uppercase' }}>Applied Discount</div>
+                                                            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>{booking.appliedDiscount || 0}%</div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
                                             );
                                         })}
                                     </div>
@@ -828,316 +842,316 @@ const VendorAvailability = () => {
 
                                 {!isDayFull && !isPastSelected && (
                                     <form onSubmit={handleSaveBooking}>
-                                    {/* ── Section Label ── */}
-                                    <div className="d-flex align-items-center gap-2 mb-3">
-                                        <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right,rgba(220,53,69,0.4),transparent)' }} />
-                                        <span style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '1.5px', color: '#e63946', textTransform: 'uppercase' }}>New Booking</span>
-                                        <div style={{ flex: 1, height: 1, background: 'linear-gradient(to left,rgba(220,53,69,0.4),transparent)' }} />
-                                    </div>
-
-                                    {/* ── Customer Details Row ── */}
-                                    <div className="row g-3 mb-3">
-                                        <div className="col-md-6">
-                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Customer Name</label>
-                                            <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor='#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor='#e9ecef'}>
-                                                <span style={{ padding: '0 12px', color: '#e63946' }}><FaUser style={{ fontSize: 13 }} /></span>
-                                                <input
-                                                    style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
-                                                    placeholder="Full name"
-                                                    required
-                                                    value={formData.customerName}
-                                                    onChange={e => setFormData({ ...formData, customerName: e.target.value })}
-                                                />
-                                            </div>
+                                        {/* ── Section Label ── */}
+                                        <div className="d-flex align-items-center gap-2 mb-3">
+                                            <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right,rgba(220,53,69,0.4),transparent)' }} />
+                                            <span style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '1.5px', color: '#e63946', textTransform: 'uppercase' }}>New Booking</span>
+                                            <div style={{ flex: 1, height: 1, background: 'linear-gradient(to left,rgba(220,53,69,0.4),transparent)' }} />
                                         </div>
-                                        <div className="col-md-6">
-                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Phone Number</label>
-                                            <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor='#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor='#e9ecef'}>
-                                                <span style={{ padding: '0 12px', color: '#e63946' }}><FaPhone style={{ fontSize: 13 }} /></span>
-                                                <input
-                                                    style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
-                                                    placeholder="Mobile number"
-                                                    required
-                                                    value={formData.customerPhone}
-                                                    onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    {/* ── Customer Email Row ── */}
-                                    <div className="row g-3 mb-3">
-                                        <div className="col-12">
-                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Customer Email (Optional)</label>
-                                            <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor='#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor='#e9ecef'}>
-                                                <span style={{ padding: '0 12px', color: '#e63946' }}><FaEnvelope style={{ fontSize: 13 }} /></span>
-                                                <input
-                                                    style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
-                                                    placeholder="customer@example.com (optional)"
-                                                    value={formData.customerEmail}
-                                                    onChange={e => setFormData({ ...formData, customerEmail: e.target.value })}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* ── Shift & Multi-day Selection ── */}
-                                    <div className="mb-4">
-                                        <div className="d-flex justify-content-between align-items-center mb-3">
-                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', margin: 0 }}>Event Duration</label>
-                                            <div 
-                                                onClick={() => setFormData({ ...formData, isMultiDay: !formData.isMultiDay })}
-                                                style={{ 
-                                                    display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-                                                    padding: '4px 10px', borderRadius: 20, background: formData.isMultiDay ? '#fff3f4' : '#f0f2f5',
-                                                    border: formData.isMultiDay ? '1px solid #e63946' : '1px solid #e9ecef',
-                                                    transition: '0.2s'
-                                                }}
-                                            >
-                                                <div style={{ width: 32, height: 16, background: formData.isMultiDay ? '#e63946' : '#cbd5e1', borderRadius: 10, position: 'relative', transition: '0.3s' }}>
-                                                    <div style={{ width: 12, height: 12, background: '#fff', borderRadius: '50%', position: 'absolute', top: 2, left: formData.isMultiDay ? 18 : 2, transition: '0.3s' }} />
+                                        {/* ── Customer Details Row ── */}
+                                        <div className="row g-3 mb-3">
+                                            <div className="col-md-6">
+                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Customer Name</label>
+                                                <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
+                                                    <span style={{ padding: '0 12px', color: '#e63946' }}><FaUser style={{ fontSize: 13 }} /></span>
+                                                    <input
+                                                        style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
+                                                        placeholder="Full name"
+                                                        required
+                                                        value={formData.customerName}
+                                                        onChange={e => setFormData({ ...formData, customerName: e.target.value })}
+                                                    />
                                                 </div>
-                                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: formData.isMultiDay ? '#e63946' : '#64748b' }}>MULTI-DAY</span>
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Phone Number</label>
+                                                <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
+                                                    <span style={{ padding: '0 12px', color: '#e63946' }}><FaPhone style={{ fontSize: 13 }} /></span>
+                                                    <input
+                                                        style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
+                                                        placeholder="Mobile number"
+                                                        required
+                                                        value={formData.customerPhone}
+                                                        onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div className="row g-3">
-                                            {formData.isMultiDay && (
-                                                <div className="col-12">
-                                                    <label className="small text-muted mb-1 d-block fw-bold" style={{ fontSize: '0.65rem' }}>Select End Date First</label>
-                                                    <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor='#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor='#e9ecef'}>
-                                                        <span style={{ padding: '0 12px', color: '#e63946' }}><FaCalendarAlt style={{ fontSize: 13 }} /></span>
-                                                        <input 
-                                                            type="date"
-                                                            value={formData.endDate}
-                                                            min={selectedDate}
-                                                            onChange={(e) => {
-                                                                const end = e.target.value;
-                                                                const start = new Date(selectedDate);
-                                                                const endDateObj = new Date(end);
-                                                                const newDayShifts = {};
-                                                                let curr = new Date(start);
-                                                                while (curr <= endDateObj) {
-                                                                    const dStr = `${curr.getFullYear()}-${String(curr.getMonth() + 1).padStart(2, '0')}-${String(curr.getDate()).padStart(2, '0')}`;
-                                                                    newDayShifts[dStr] = formData.dayShifts[dStr] || 'Full Day';
-                                                                    curr.setDate(curr.getDate() + 1);
-                                                                }
-                                                                setFormData(prev => ({ ...prev, endDate: end, dayShifts: newDayShifts }));
-                                                            }}
-                                                            onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                                                            style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500, cursor: 'pointer' }}
-                                                        />
+                                        {/* ── Customer Email Row ── */}
+                                        <div className="row g-3 mb-3">
+                                            <div className="col-12">
+                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Customer Email (Optional)</label>
+                                                <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
+                                                    <span style={{ padding: '0 12px', color: '#e63946' }}><FaEnvelope style={{ fontSize: 13 }} /></span>
+                                                    <input
+                                                        style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
+                                                        placeholder="customer@example.com (optional)"
+                                                        value={formData.customerEmail}
+                                                        onChange={e => setFormData({ ...formData, customerEmail: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* ── Shift & Multi-day Selection ── */}
+                                        <div className="mb-4">
+                                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', margin: 0 }}>Event Duration</label>
+                                                <div
+                                                    onClick={() => setFormData({ ...formData, isMultiDay: !formData.isMultiDay })}
+                                                    style={{
+                                                        display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+                                                        padding: '4px 10px', borderRadius: 20, background: formData.isMultiDay ? '#fff3f4' : '#f0f2f5',
+                                                        border: formData.isMultiDay ? '1px solid #e63946' : '1px solid #e9ecef',
+                                                        transition: '0.2s'
+                                                    }}
+                                                >
+                                                    <div style={{ width: 32, height: 16, background: formData.isMultiDay ? '#e63946' : '#cbd5e1', borderRadius: 10, position: 'relative', transition: '0.3s' }}>
+                                                        <div style={{ width: 12, height: 12, background: '#fff', borderRadius: '50%', position: 'absolute', top: 2, left: formData.isMultiDay ? 18 : 2, transition: '0.3s' }} />
                                                     </div>
+                                                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: formData.isMultiDay ? '#e63946' : '#64748b' }}>MULTI-DAY</span>
                                                 </div>
-                                            )}
+                                            </div>
 
-                                            {!formData.isMultiDay ? (
-                                                <div className="col-12">
-                                                    <label className="small text-muted mb-1 d-block fw-bold" style={{ fontSize: '0.65rem' }}>Booking Shift</label>
-                                                    <div style={{ display: 'flex', gap: 4, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
-                                                        {[
-                                                            { val: 'Morning', icon: <FaSun />, color: '#f59e0b', disabled: hasMorning },
-                                                            { val: 'Evening', icon: <FaMoon />, color: '#3b82f6', disabled: hasEvening },
-                                                            { val: 'Full Day', icon: <FaCalendarDay />, color: '#e63946', disabled: hasMorning || hasEvening }
-                                                        ].map((item) => (
-                                                            <button
-                                                                key={item.val} type="button"
-                                                                disabled={item.disabled}
-                                                                onClick={() => setFormData({ ...formData, shift: item.val })}
-                                                                style={{
-                                                                    flex: 1, padding: '8px 4px', borderRadius: 9, border: 'none',
-                                                                    background: formData.shift === item.val ? '#fff' : 'transparent',
-                                                                    color: formData.shift === item.val ? item.color : '#94a3b8',
-                                                                    fontWeight: formData.shift === item.val ? 700 : 500,
-                                                                    fontSize: '0.72rem', cursor: item.disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
-                                                                    opacity: item.disabled ? 0.4 : 1,
-                                                                    boxShadow: formData.shift === item.val ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
-                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                                            <div className="row g-3">
+                                                {formData.isMultiDay && (
+                                                    <div className="col-12">
+                                                        <label className="small text-muted mb-1 d-block fw-bold" style={{ fontSize: '0.65rem' }}>Select End Date First</label>
+                                                        <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
+                                                            <span style={{ padding: '0 12px', color: '#e63946' }}><FaCalendarAlt style={{ fontSize: 13 }} /></span>
+                                                            <input
+                                                                type="date"
+                                                                value={formData.endDate}
+                                                                min={selectedDate}
+                                                                onChange={(e) => {
+                                                                    const end = e.target.value;
+                                                                    const start = new Date(selectedDate);
+                                                                    const endDateObj = new Date(end);
+                                                                    const newDayShifts = {};
+                                                                    let curr = new Date(start);
+                                                                    while (curr <= endDateObj) {
+                                                                        const dStr = `${curr.getFullYear()}-${String(curr.getMonth() + 1).padStart(2, '0')}-${String(curr.getDate()).padStart(2, '0')}`;
+                                                                        newDayShifts[dStr] = formData.dayShifts[dStr] || 'Full Day';
+                                                                        curr.setDate(curr.getDate() + 1);
+                                                                    }
+                                                                    setFormData(prev => ({ ...prev, endDate: end, dayShifts: newDayShifts }));
                                                                 }}
-                                                            >
-                                                                {React.cloneElement(item.icon, { size: 10 })}
-                                                                <span>{item.val}</span>
-                                                            </button>
-                                                        ))}
+                                                                onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                                                                style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500, cursor: 'pointer' }}
+                                                            />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ) : (
-                                                formData.endDate && (
-                                                    <div className="col-12 mt-2">
-                                                        <label className="small text-muted mb-2 d-block fw-bold" style={{ fontSize: '0.65rem' }}>Select Shifts for Each Day</label>
-                                                        <div style={{ maxHeight: '350px', overflowY: 'auto', overflowX: 'hidden', padding: '5px' }}>
-                                                            <div className="row g-3">
-                                                                {Object.keys(formData.dayShifts).sort().map((dStr) => (
-                                                                    <div key={dStr} className="col-6">
-                                                                        <div className="p-3 rounded-4 border bg-white shadow-sm h-100 d-flex flex-column">
-                                                                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                                                                <div className="d-flex align-items-center gap-1">
-                                                                                    <FaCalendarDay className="text-danger" style={{ fontSize: '0.7rem' }} />
-                                                                                    <span className="fw-bold text-dark" style={{ fontSize: '0.75rem' }}>
-                                                                                        {new Date(dStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                                )}
+
+                                                {!formData.isMultiDay ? (
+                                                    <div className="col-12">
+                                                        <label className="small text-muted mb-1 d-block fw-bold" style={{ fontSize: '0.65rem' }}>Booking Shift</label>
+                                                        <div style={{ display: 'flex', gap: 4, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
+                                                            {[
+                                                                { val: 'Morning', icon: <FaSun />, color: '#f59e0b', disabled: hasMorning },
+                                                                { val: 'Evening', icon: <FaMoon />, color: '#3b82f6', disabled: hasEvening },
+                                                                { val: 'Full Day', icon: <FaCalendarDay />, color: '#e63946', disabled: hasMorning || hasEvening }
+                                                            ].map((item) => (
+                                                                <button
+                                                                    key={item.val} type="button"
+                                                                    disabled={item.disabled}
+                                                                    onClick={() => setFormData({ ...formData, shift: item.val })}
+                                                                    style={{
+                                                                        flex: 1, padding: '8px 4px', borderRadius: 9, border: 'none',
+                                                                        background: formData.shift === item.val ? '#fff' : 'transparent',
+                                                                        color: formData.shift === item.val ? item.color : '#94a3b8',
+                                                                        fontWeight: formData.shift === item.val ? 700 : 500,
+                                                                        fontSize: '0.72rem', cursor: item.disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                                                                        opacity: item.disabled ? 0.4 : 1,
+                                                                        boxShadow: formData.shift === item.val ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+                                                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                                                                    }}
+                                                                >
+                                                                    {React.cloneElement(item.icon, { size: 10 })}
+                                                                    <span>{item.val}</span>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    formData.endDate && (
+                                                        <div className="col-12 mt-2">
+                                                            <label className="small text-muted mb-2 d-block fw-bold" style={{ fontSize: '0.65rem' }}>Select Shifts for Each Day</label>
+                                                            <div style={{ maxHeight: '350px', overflowY: 'auto', overflowX: 'hidden', padding: '5px' }}>
+                                                                <div className="row g-3">
+                                                                    {Object.keys(formData.dayShifts).sort().map((dStr) => (
+                                                                        <div key={dStr} className="col-6">
+                                                                            <div className="p-3 rounded-4 border bg-white shadow-sm h-100 d-flex flex-column">
+                                                                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                                                                    <div className="d-flex align-items-center gap-1">
+                                                                                        <FaCalendarDay className="text-danger" style={{ fontSize: '0.7rem' }} />
+                                                                                        <span className="fw-bold text-dark" style={{ fontSize: '0.75rem' }}>
+                                                                                            {new Date(dStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <span className="text-muted" style={{ fontSize: '0.6rem', fontWeight: 600 }}>
+                                                                                        {new Date(dStr).toLocaleDateString('en-IN', { weekday: 'short' })}
                                                                                     </span>
                                                                                 </div>
-                                                                                <span className="text-muted" style={{ fontSize: '0.6rem', fontWeight: 600 }}>
-                                                                                    {new Date(dStr).toLocaleDateString('en-IN', { weekday: 'short' })}
-                                                                                </span>
-                                                                            </div>
-                                                                            
-                                                                            <div style={{ display: 'flex', gap: 3, background: '#f0f2f5', borderRadius: 10, padding: 3, marginTop: 'auto' }}>
-                                                                                {[
-                                                                                    { val: 'Morning', icon: <FaSun />, color: '#f59e0b' },
-                                                                                    { val: 'Evening', icon: <FaMoon />, color: '#3b82f6' },
-                                                                                    { val: 'Full Day', icon: <FaCalendarDay />, color: '#e63946' }
-                                                                                ].map((item) => (
-                                                                                    <button
-                                                                                        key={item.val} type="button"
-                                                                                        onClick={() => setFormData(prev => ({
-                                                                                            ...prev,
-                                                                                            dayShifts: { ...prev.dayShifts, [dStr]: item.val }
-                                                                                        }))}
-                                                                                        style={{
-                                                                                            flex: 1, padding: '6px 2px', borderRadius: 7, border: 'none',
-                                                                                            background: formData.dayShifts[dStr] === item.val ? '#fff' : 'transparent',
-                                                                                            color: formData.dayShifts[dStr] === item.val ? item.color : '#94a3b8',
-                                                                                            fontWeight: formData.dayShifts[dStr] === item.val ? 700 : 500,
-                                                                                            fontSize: '0.62rem', cursor: 'pointer', transition: 'all 0.2s',
-                                                                                            boxShadow: formData.dayShifts[dStr] === item.val ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                                                                                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2
-                                                                                        }}
-                                                                                    >
-                                                                                        {React.cloneElement(item.icon, { size: 9 })}
-                                                                                        <span style={{ fontSize: '0.55rem' }}>{item.val === 'Full Day' ? 'Full' : item.val[0]}</span>
-                                                                                    </button>
-                                                                                ))}
+
+                                                                                <div style={{ display: 'flex', gap: 3, background: '#f0f2f5', borderRadius: 10, padding: 3, marginTop: 'auto' }}>
+                                                                                    {[
+                                                                                        { val: 'Morning', icon: <FaSun />, color: '#f59e0b' },
+                                                                                        { val: 'Evening', icon: <FaMoon />, color: '#3b82f6' },
+                                                                                        { val: 'Full Day', icon: <FaCalendarDay />, color: '#e63946' }
+                                                                                    ].map((item) => (
+                                                                                        <button
+                                                                                            key={item.val} type="button"
+                                                                                            onClick={() => setFormData(prev => ({
+                                                                                                ...prev,
+                                                                                                dayShifts: { ...prev.dayShifts, [dStr]: item.val }
+                                                                                            }))}
+                                                                                            style={{
+                                                                                                flex: 1, padding: '6px 2px', borderRadius: 7, border: 'none',
+                                                                                                background: formData.dayShifts[dStr] === item.val ? '#fff' : 'transparent',
+                                                                                                color: formData.dayShifts[dStr] === item.val ? item.color : '#94a3b8',
+                                                                                                fontWeight: formData.dayShifts[dStr] === item.val ? 700 : 500,
+                                                                                                fontSize: '0.62rem', cursor: 'pointer', transition: 'all 0.2s',
+                                                                                                boxShadow: formData.dayShifts[dStr] === item.val ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                                                                                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2
+                                                                                            }}
+                                                                                        >
+                                                                                            {React.cloneElement(item.icon, { size: 9 })}
+                                                                                            <span style={{ fontSize: '0.55rem' }}>{item.val === 'Full Day' ? 'Full' : item.val[0]}</span>
+                                                                                        </button>
+                                                                                    ))}
+                                                                                </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-                                                                ))}
+                                                                    ))}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                )
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* ── Pricing Row ── */}
-                                    <div className="row g-3 mb-3">
-                                        <div className="col-md-5">
-                                            <div className="d-flex justify-content-between align-items-center mb-1">
-                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 0 }}>
-                                                    {formData.isMultiDay ? 'Multi-day Base Price' : 'Discount %'}
-                                                </label>
-                                                {formData.isMultiDay && (
-                                                    <span style={{ fontSize: '0.6rem', color: '#28a745', fontWeight: 700, background: '#eefcf1', padding: '1px 6px', borderRadius: 4 }}>Auto-Calculated</span>
-                                                )}
-                                                {!formData.isMultiDay && currentMahal && (currentMahal.discountMax > 0 || currentMahal.discountMin > 0) && (
-                                                    <span style={{ fontSize: '0.6rem', color: '#e63946', fontWeight: 700, background: '#fff3f4', padding: '1px 6px', borderRadius: 4 }}>Range: {currentMahal.discountMin || 0}% - {currentMahal.discountMax || 0}%</span>
+                                                    )
                                                 )}
                                             </div>
-                                            {!formData.isMultiDay ? (
-                                                <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', padding: '4px' }} onFocusCapture={e => e.currentTarget.style.borderColor='#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor='#e9ecef'}>
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const current = Number(formData.appliedDiscount) || 0;
-                                                            const minAllowed = currentMahal?.discountMin || 0;
-                                                            let val = current - 1;
-                                                            
-                                                            // Jump straight to 0 (no discount) if we hit or go below the minimum
-                                                            if (current <= minAllowed) val = 0;
-                                                            
-                                                            const maxAllowed = currentMahal?.discountMax || 100;
-                                                            const finalDiscount = val <= 0 ? '' : Math.min(val, maxAllowed);
-                                                            
-                                                            let defaultPrice = recommendedPrice;
-                                                            
-                                                            let newPrice = defaultPrice;
-                                                            if (finalDiscount !== '' && newPrice > 0) newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
-                                                            setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
-                                                        }}
-                                                        style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', border: 'none', borderRadius: 8, color: '#64748b', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
-                                                        onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
-                                                        onMouseOut={e => e.currentTarget.style.background = '#f8fafc'}
-                                                    >
-                                                        <FaMinus style={{ fontSize: '0.75rem' }} />
-                                                    </button>
-                                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                                                        <input 
-                                                            type="text" 
-                                                            readOnly 
-                                                            value={formData.appliedDiscount || '0'} 
-                                                            style={{ border: 'none', outline: 'none', width: '30px', textAlign: 'center', fontSize: '1rem', fontWeight: 800, color: '#e63946', background: 'transparent' }} 
-                                                        />
-                                                        <span style={{ color: '#e63946', fontWeight: 800, fontSize: '0.9rem' }}>%</span>
-                                                    </div>
-
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const current = Number(formData.appliedDiscount) || 0;
-                                                            const minAllowed = currentMahal?.discountMin || 0;
-                                                            let val = current + 1;
-                                                            
-                                                            // If starting from 0, jump immediately to the minimum allowed discount!
-                                                            if (current === 0 && minAllowed > 0) val = minAllowed;
-                                                            // If somehow below min Allowed, jump to minAllowed
-                                                            else if (current > 0 && current < minAllowed) val = minAllowed;
-                                                            
-                                                            const maxAllowed = currentMahal?.discountMax || 100;
-                                                            const finalDiscount = Math.min(val, maxAllowed);
-                                                            
-                                                            let defaultPrice = recommendedPrice;
-                                                            
-                                                            let newPrice = defaultPrice;
-                                                            if (finalDiscount > 0 && newPrice > 0) newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
-                                                            setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
-                                                        }}
-                                                        style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff3f4', border: 'none', borderRadius: 8, color: '#e63946', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
-                                                        onMouseOver={e => e.currentTarget.style.background = '#ffe4e6'}
-                                                        onMouseOut={e => e.currentTarget.style.background = '#fff3f4'}
-                                                    >
-                                                        <FaPlus style={{ fontSize: '0.75rem' }} />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="d-flex align-items-center" style={{ background: '#f8fafc', border: '1.5px solid #e9ecef', borderRadius: 10, padding: '10px 15px' }}>
-                                                    <FaRupeeSign className="text-muted small me-2" />
-                                                    <span style={{ fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>{recommendedPrice.toLocaleString('en-IN')}</span>
-                                                </div>
-                                            )}
                                         </div>
-                                        <div className="col-md-7">
-                                            {(() => {
-                                                let basePrice = recommendedPrice;
-                                                let appliedDiscountPercent = Number(formData.appliedDiscount) || 0;
-                                                let discountAmount = Math.round(basePrice * (appliedDiscountPercent / 100));
-                                                let finalPrice = formData.price || basePrice;
 
-                                                return (
-                                                    <div style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)', borderRadius: 12, padding: '12px 16px', color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                                        <div className="d-flex justify-content-between align-items-center mb-1">
-                                                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Base Price</span>
-                                                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{basePrice.toLocaleString('en-IN')}</span>
+                                        {/* ── Pricing Row ── */}
+                                        <div className="row g-3 mb-3">
+                                            <div className="col-md-5">
+                                                <div className="d-flex justify-content-between align-items-center mb-1">
+                                                    <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 0 }}>
+                                                        {formData.isMultiDay ? 'Multi-day Base Price' : 'Discount %'}
+                                                    </label>
+                                                    {formData.isMultiDay && (
+                                                        <span style={{ fontSize: '0.6rem', color: '#28a745', fontWeight: 700, background: '#eefcf1', padding: '1px 6px', borderRadius: 4 }}>Auto-Calculated</span>
+                                                    )}
+                                                    {!formData.isMultiDay && currentMahal && (currentMahal.discountMax > 0 || currentMahal.discountMin > 0) && (
+                                                        <span style={{ fontSize: '0.6rem', color: '#e63946', fontWeight: 700, background: '#fff3f4', padding: '1px 6px', borderRadius: 4 }}>Range: {currentMahal.discountMin || 0}% - {currentMahal.discountMax || 0}%</span>
+                                                    )}
+                                                </div>
+                                                {!formData.isMultiDay ? (
+                                                    <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', padding: '4px' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const current = Number(formData.appliedDiscount) || 0;
+                                                                const minAllowed = currentMahal?.discountMin || 0;
+                                                                let val = current - 1;
+
+                                                                // Jump straight to 0 (no discount) if we hit or go below the minimum
+                                                                if (current <= minAllowed) val = 0;
+
+                                                                const maxAllowed = currentMahal?.discountMax || 100;
+                                                                const finalDiscount = val <= 0 ? '' : Math.min(val, maxAllowed);
+
+                                                                let defaultPrice = recommendedPrice;
+
+                                                                let newPrice = defaultPrice;
+                                                                if (finalDiscount !== '' && newPrice > 0) newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
+                                                                setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
+                                                            }}
+                                                            style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', border: 'none', borderRadius: 8, color: '#64748b', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
+                                                            onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                                                            onMouseOut={e => e.currentTarget.style.background = '#f8fafc'}
+                                                        >
+                                                            <FaMinus style={{ fontSize: '0.75rem' }} />
+                                                        </button>
+                                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                                                            <input
+                                                                type="text"
+                                                                readOnly
+                                                                value={formData.appliedDiscount || '0'}
+                                                                style={{ border: 'none', outline: 'none', width: '30px', textAlign: 'center', fontSize: '1rem', fontWeight: 800, color: '#e63946', background: 'transparent' }}
+                                                            />
+                                                            <span style={{ color: '#e63946', fontWeight: 800, fontSize: '0.9rem' }}>%</span>
                                                         </div>
-                                                        <div className="d-flex justify-content-between align-items-center mb-2 pb-2" style={{ borderBottom: '1px dashed rgba(255,255,255,0.1)' }}>
-                                                            <span style={{ fontSize: '0.75rem', color: '#fca5a5' }}>Discount ({appliedDiscountPercent}%)</span>
-                                                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fca5a5' }}>- ₹{discountAmount.toLocaleString('en-IN')}</span>
-                                                        </div>
-                                                        <div className="d-flex justify-content-between align-items-end mt-auto">
-                                                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Agreed Price</span>
-                                                            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>₹{Number(finalPrice || 0).toLocaleString('en-IN')}</span>
-                                                        </div>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const current = Number(formData.appliedDiscount) || 0;
+                                                                const minAllowed = currentMahal?.discountMin || 0;
+                                                                let val = current + 1;
+
+                                                                // If starting from 0, jump immediately to the minimum allowed discount!
+                                                                if (current === 0 && minAllowed > 0) val = minAllowed;
+                                                                // If somehow below min Allowed, jump to minAllowed
+                                                                else if (current > 0 && current < minAllowed) val = minAllowed;
+
+                                                                const maxAllowed = currentMahal?.discountMax || 100;
+                                                                const finalDiscount = Math.min(val, maxAllowed);
+
+                                                                let defaultPrice = recommendedPrice;
+
+                                                                let newPrice = defaultPrice;
+                                                                if (finalDiscount > 0 && newPrice > 0) newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
+                                                                setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
+                                                            }}
+                                                            style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff3f4', border: 'none', borderRadius: 8, color: '#e63946', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
+                                                            onMouseOver={e => e.currentTarget.style.background = '#ffe4e6'}
+                                                            onMouseOut={e => e.currentTarget.style.background = '#fff3f4'}
+                                                        >
+                                                            <FaPlus style={{ fontSize: '0.75rem' }} />
+                                                        </button>
                                                     </div>
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
+                                                ) : (
+                                                    <div className="d-flex align-items-center" style={{ background: '#f8fafc', border: '1.5px solid #e9ecef', borderRadius: 10, padding: '10px 15px' }}>
+                                                        <FaRupeeSign className="text-muted small me-2" />
+                                                        <span style={{ fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>{recommendedPrice.toLocaleString('en-IN')}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="col-md-7">
+                                                {(() => {
+                                                    let basePrice = recommendedPrice;
+                                                    let appliedDiscountPercent = Number(formData.appliedDiscount) || 0;
+                                                    let discountAmount = Math.round(basePrice * (appliedDiscountPercent / 100));
+                                                    let finalPrice = formData.price || basePrice;
 
-                                    {/* ── Extra Facilities Selection ── */}
-                                    {Object.values(currentMahal?.facilities || {}).some(val => val === true) && (
-                                        <div className="mb-4">
-                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 10, display: 'block' }}>Optional Premium Facilities</label>
-                                            <div className="row g-2">
+                                                    return (
+                                                        <div style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)', borderRadius: 12, padding: '12px 16px', color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                                                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Base Price</span>
+                                                                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{basePrice.toLocaleString('en-IN')}</span>
+                                                            </div>
+                                                            <div className="d-flex justify-content-between align-items-center mb-2 pb-2" style={{ borderBottom: '1px dashed rgba(255,255,255,0.1)' }}>
+                                                                <span style={{ fontSize: '0.75rem', color: '#fca5a5' }}>Discount ({appliedDiscountPercent}%)</span>
+                                                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fca5a5' }}>- ₹{discountAmount.toLocaleString('en-IN')}</span>
+                                                            </div>
+                                                            <div className="d-flex justify-content-between align-items-end mt-auto">
+                                                                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Agreed Price</span>
+                                                                <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>₹{Number(finalPrice || 0).toLocaleString('en-IN')}</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+
+                                        {/* ── Extra Facilities Selection ── */}
+                                        {Object.values(currentMahal?.facilities || {}).some(val => val === true) && (
+                                            <div className="mb-4">
+                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 10, display: 'block' }}>Optional Premium Facilities</label>
+                                                <div className="row g-2">
                                                     {[
                                                         { key: 'ac', label: 'AC', icon: <FaSnowflake />, available: currentMahal?.facilities?.ac, price: currentMahal?.facilities?.acPrice },
                                                         { key: 'generator', label: 'Generator', icon: <FaBolt />, available: currentMahal?.facilities?.generator, price: currentMahal?.facilities?.generatorPrice },
@@ -1153,7 +1167,7 @@ const VendorAvailability = () => {
                                                         { key: 'catering', label: 'Food / Catering', icon: <FaUtensils />, available: currentMahal?.catering?.available, price: currentMahal?.catering?.startPrice }
                                                     ].map(facility => facility.available && (
                                                         <div className="col-4 col-md-3" key={facility.key}>
-                                                            <div 
+                                                            <div
                                                                 onClick={() => {
                                                                     setFormData(prev => ({
                                                                         ...prev,
@@ -1186,172 +1200,173 @@ const VendorAvailability = () => {
                                                             </div>
                                                         </div>
                                                     ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    {/* ── Total Summary Card ── */}
-                                    <div className="p-3 mb-4 rounded-4" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', boxShadow: '0 8px 24px rgba(26,26,46,0.15)' }}>
-                                        <div className="d-flex justify-content-between align-items-center mb-2">
-                                            <span className="text-white opacity-75 small fw-bold">Grand Total Amount</span>
-                                            <div className="badge bg-danger rounded-pill" style={{ fontSize: '0.6rem', letterSpacing: '0.5px' }}>OFFLINE PAYMENT</div>
-                                        </div>
-                                        <div className="d-flex align-items-baseline gap-2">
-                                            <span className="text-white" style={{ fontSize: '1.8rem', fontWeight: 800 }}>
-                                                ₹{(Number(formData.price || 0) + 
-                                                  Object.values(formData.extraFacilities).reduce((acc, f) => {
-                                                      if (!f.selected) return acc;
-                                                      const dayCount = formData.isMultiDay && formData.endDate 
-                                                          ? Math.max(1, Math.ceil((new Date(formData.endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24)) + 1)
-                                                          : 1;
-                                                      return acc + (Number(f.price) * dayCount);
-                                                  }, 0)).toLocaleString('en-IN')}
-                                            </span>
-                                            {Number(formData.price) > 0 && (
-                                                <span className="text-success small fw-bold d-flex align-items-center gap-1">
-                                                    <FaCheckCircle size={10} /> All Charges Incl.
+                                        {/* ── Total Summary Card ── */}
+                                        <div className="p-3 mb-4 rounded-4" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', boxShadow: '0 8px 24px rgba(26,26,46,0.15)' }}>
+                                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                                <span className="text-white opacity-75 small fw-bold">Grand Total Amount</span>
+                                                <div className="badge bg-danger rounded-pill" style={{ fontSize: '0.6rem', letterSpacing: '0.5px' }}>OFFLINE PAYMENT</div>
+                                            </div>
+                                            <div className="d-flex align-items-baseline gap-2">
+                                                <span className="text-white" style={{ fontSize: '1.8rem', fontWeight: 800 }}>
+                                                    ₹{(Number(formData.price || 0) +
+                                                        Object.values(formData.extraFacilities).reduce((acc, f) => {
+                                                            if (!f.selected) return acc;
+                                                            const dayCount = formData.isMultiDay && formData.endDate
+                                                                ? Math.max(1, Math.ceil((new Date(formData.endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24)) + 1)
+                                                                : 1;
+                                                            return acc + (Number(f.price) * dayCount);
+                                                        }, 0)).toLocaleString('en-IN')}
                                                 </span>
-                                            )}
+                                                {Number(formData.price) > 0 && (
+                                                    <span className="text-success small fw-bold d-flex align-items-center gap-1">
+                                                        <FaCheckCircle size={10} /> All Charges Incl.
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                    {/* ── Payment Mode ── */}
-                                    <div className="mb-3">
-                                        <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Payment Mode</label>
-                                        <div style={{ display: 'flex', gap: 0, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
-                                            {[
-                                                { val: 'Offline - Cash', label: 'Cash', icon: <FaWallet style={{ fontSize: 12 }} />, color: '#059669' },
-                                                { val: 'Offline - UPI', label: 'UPI', icon: <FaMobileAlt style={{ fontSize: 13 }} />, color: '#7c3aed' },
-                                                { val: 'Online', label: 'Online', icon: <FaCreditCard style={{ fontSize: 12 }} />, color: '#0369a1' }
-                                            ].map(({ val, label, icon, color }) => {
-                                                const isActive = formData.paymentMode === val;
-                                                return (
-                                                    <button
-                                                        key={val}
-                                                        type="button"
-                                                        onClick={() => setFormData({ ...formData, paymentMode: val })}
-                                                        style={{
-                                                            flex: 1,
-                                                            padding: '9px 10px',
-                                                            borderRadius: 9,
-                                                            border: 'none',
-                                                            background: isActive ? '#fff' : 'transparent',
-                                                            color: isActive ? color : '#94a3b8',
-                                                            fontWeight: isActive ? 700 : 500,
-                                                            fontSize: '0.82rem',
-                                                            cursor: 'pointer',
-                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                                            transition: 'all 0.18s',
-                                                            boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
-                                                            whiteSpace: 'nowrap'
-                                                        }}
-                                                    >
-                                                        {icon}
-                                                        <span>{label}</span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-
-                                    {/* ── Status Row ── */}
-                                    <div className="row g-3 mb-4">
-                                        <div className="col-md-6">
-                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Payment Status</label>
+                                        {/* ── Payment Mode ── */}
+                                        <div className="mb-3">
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Payment Mode</label>
                                             <div style={{ display: 'flex', gap: 0, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
                                                 {[
-                                                    { val: 'Pending', icon: <FaHourglassHalf style={{ fontSize: 11 }} />, color: '#d97706' },
-                                                    { val: 'Paid', icon: <FaCheckCircle style={{ fontSize: 11 }} />, color: '#059669' },
-                                                    { val: 'Partial', icon: <FaWallet style={{ fontSize: 11 }} />, color: '#2563eb' }
-                                                ].map(({ val, icon, color }) => {
-                                                    const isActive = formData.paymentStatus === val;
+                                                    { val: 'Offline - Cash', label: 'Cash', icon: <FaWallet style={{ fontSize: 12 }} />, color: '#059669' },
+                                                    { val: 'Offline - UPI', label: 'UPI', icon: <FaMobileAlt style={{ fontSize: 13 }} />, color: '#7c3aed' },
+                                                    { val: 'Online', label: 'Online', icon: <FaCreditCard style={{ fontSize: 12 }} />, color: '#0369a1' }
+                                                ].map(({ val, label, icon, color }) => {
+                                                    const isActive = formData.paymentMode === val;
                                                     return (
                                                         <button
                                                             key={val}
                                                             type="button"
-                                                            onClick={() => setFormData({ ...formData, paymentStatus: val })}
+                                                            onClick={() => setFormData({ ...formData, paymentMode: val })}
                                                             style={{
                                                                 flex: 1,
-                                                                padding: '8px 6px',
+                                                                padding: '9px 10px',
                                                                 borderRadius: 9,
                                                                 border: 'none',
                                                                 background: isActive ? '#fff' : 'transparent',
                                                                 color: isActive ? color : '#94a3b8',
                                                                 fontWeight: isActive ? 700 : 500,
-                                                                fontSize: '0.74rem',
+                                                                fontSize: '0.82rem',
                                                                 cursor: 'pointer',
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                                                                 transition: 'all 0.18s',
                                                                 boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
                                                                 whiteSpace: 'nowrap'
                                                             }}
                                                         >
-                                                            {icon}<span>{val}</span>
+                                                            {icon}
+                                                            <span>{label}</span>
                                                         </button>
                                                     );
                                                 })}
                                             </div>
                                         </div>
-                                        <div className="col-md-6">
-                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Booking Status</label>
-                                            <div style={{ display: 'flex', gap: 0, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
-                                                {[
-                                                    { val: 'Confirmed', icon: <FaCheckCircle style={{ fontSize: 11 }} />, color: '#059669' },
-                                                    { val: 'Pending', icon: <FaHourglassHalf style={{ fontSize: 11 }} />, color: '#d97706' },
-                                                    { val: 'Cancelled', icon: <FaBan style={{ fontSize: 11 }} />, color: '#dc2626' }
-                                                ].map(({ val, icon, color }) => {
-                                                    const isActive = formData.bookingStatus === val;
-                                                    return (
-                                                        <button
-                                                            key={val}
-                                                            type="button"
-                                                            onClick={() => setFormData({ ...formData, bookingStatus: val })}
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: '8px 6px',
-                                                                borderRadius: 9,
-                                                                border: 'none',
-                                                                background: isActive ? '#fff' : 'transparent',
-                                                                color: isActive ? color : '#94a3b8',
-                                                                fontWeight: isActive ? 700 : 500,
-                                                                fontSize: '0.74rem',
-                                                                cursor: 'pointer',
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                                                                transition: 'all 0.18s',
-                                                                boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
-                                                                whiteSpace: 'nowrap'
-                                                            }}
-                                                        >
-                                                            {icon}<span>{val}</span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    {/* ── Submit Button ── */}
-                                    <button
-                                        type="submit"
-                                        style={{
-                                            width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-                                            background: 'linear-gradient(135deg,#e63946 0%,#c1121f 100%)',
-                                            color: '#fff', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.5px',
-                                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                                            boxShadow: '0 6px 20px rgba(220,53,69,0.4)', transition: 'all 0.2s'
-                                        }}
-                                        onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
-                                        onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}
-                                    >
-                                        <FaCheckCircle style={{ fontSize: 16 }} />
-                                        Confirm Booking
-                                    </button>
-                                </form>
-                            )}
+                                        {/* ── Status Row ── */}
+                                        <div className="row g-3 mb-4">
+                                            <div className="col-md-6">
+                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Payment Status</label>
+                                                <div style={{ display: 'flex', gap: 0, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
+                                                    {[
+                                                        { val: 'Pending', icon: <FaHourglassHalf style={{ fontSize: 11 }} />, color: '#d97706' },
+                                                        { val: 'Paid', icon: <FaCheckCircle style={{ fontSize: 11 }} />, color: '#059669' },
+                                                        { val: 'Partial', icon: <FaWallet style={{ fontSize: 11 }} />, color: '#2563eb' }
+                                                    ].map(({ val, icon, color }) => {
+                                                        const isActive = formData.paymentStatus === val;
+                                                        return (
+                                                            <button
+                                                                key={val}
+                                                                type="button"
+                                                                onClick={() => setFormData({ ...formData, paymentStatus: val })}
+                                                                style={{
+                                                                    flex: 1,
+                                                                    padding: '8px 6px',
+                                                                    borderRadius: 9,
+                                                                    border: 'none',
+                                                                    background: isActive ? '#fff' : 'transparent',
+                                                                    color: isActive ? color : '#94a3b8',
+                                                                    fontWeight: isActive ? 700 : 500,
+                                                                    fontSize: '0.74rem',
+                                                                    cursor: 'pointer',
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                                                                    transition: 'all 0.18s',
+                                                                    boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}
+                                                            >
+                                                                {icon}<span>{val}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Booking Status</label>
+                                                <div style={{ display: 'flex', gap: 0, background: '#f0f2f5', borderRadius: 12, padding: 4 }}>
+                                                    {[
+                                                        { val: 'Confirmed', icon: <FaCheckCircle style={{ fontSize: 11 }} />, color: '#059669' },
+                                                        { val: 'Pending', icon: <FaHourglassHalf style={{ fontSize: 11 }} />, color: '#d97706' },
+                                                        { val: 'Cancelled', icon: <FaBan style={{ fontSize: 11 }} />, color: '#dc2626' }
+                                                    ].map(({ val, icon, color }) => {
+                                                        const isActive = formData.bookingStatus === val;
+                                                        return (
+                                                            <button
+                                                                key={val}
+                                                                type="button"
+                                                                onClick={() => setFormData({ ...formData, bookingStatus: val })}
+                                                                style={{
+                                                                    flex: 1,
+                                                                    padding: '8px 6px',
+                                                                    borderRadius: 9,
+                                                                    border: 'none',
+                                                                    background: isActive ? '#fff' : 'transparent',
+                                                                    color: isActive ? color : '#94a3b8',
+                                                                    fontWeight: isActive ? 700 : 500,
+                                                                    fontSize: '0.74rem',
+                                                                    cursor: 'pointer',
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                                                                    transition: 'all 0.18s',
+                                                                    boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}
+                                                            >
+                                                                {icon}<span>{val}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* ── Submit Button ── */}
+                                        <button
+                                            type="submit"
+                                            style={{
+                                                width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+                                                background: 'linear-gradient(135deg,#e63946 0%,#c1121f 100%)',
+                                                color: '#fff', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.5px',
+                                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                                                boxShadow: '0 6px 20px rgba(220,53,69,0.4)', transition: 'all 0.2s'
+                                            }}
+                                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                        >
+                                            <FaCheckCircle style={{ fontSize: 16 }} />
+                                            Confirm Booking
+                                        </button>
+                                    </form>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
             )}
+            <Toast toast={toast} />
         </div>
     );
 };

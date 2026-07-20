@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../../styles/superadmin/SuperAdminLogin.css'; // Reusing Login styles for consistency
+import { useToast } from '../../hooks/useToast';
+import Toast from '../../components/Toast';
 
 const SuperAdminRegistration = () => {
+    const { toast, showToast } = useToast();
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         fullName: '',
@@ -21,15 +24,16 @@ const SuperAdminRegistration = () => {
     const handleRegister = (e) => {
         e.preventDefault();
         // Dummy Registration Logic
-        alert('Registration Successful! Please Login.');
-        navigate('/superadmin/login');
+        showToast('Registration Successful! Please Login.', 'success');
+        setTimeout(() => navigate('/superadmin/login'), 1500);
     };
 
     return (
         <div className="sa-login-container">
+            <Toast toast={toast} />
             <div className="sa-login-card">
                 <div className="sa-login-brand">
-                    <i className="bi bi-shield-lock-fill"></i>
+                    <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', WebkitTextFillColor: 'initial', background: 'none' }} />
                     <span>SUPER ADMIN</span>
                 </div>
                 <h2 className="sa-login-title">Admin Sign Up</h2>

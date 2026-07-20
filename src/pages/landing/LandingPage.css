@@ -149,6 +149,25 @@ h1, h2, h3, h4 {
     box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.3);
 }
 
+/* Venue Cards Interactive Hover Effects */
+.venue-card-premium {
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.venue-card-premium:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(200, 16, 46, 0.05) !important;
+    border-color: rgba(200, 16, 46, 0.1) !important;
+}
+
+.venue-card-premium .venue-img {
+    transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.venue-card-premium:hover .venue-img {
+    transform: scale(1.08);
+}
+
 /* Mockup */
 .lp-hero-visual {
     flex: 1;

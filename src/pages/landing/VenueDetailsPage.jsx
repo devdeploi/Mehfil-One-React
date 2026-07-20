@@ -1,18 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../../utils/function';
+import { useToast } from '../../hooks/useToast';
+import Toast from '../../components/Toast';
 import OnlineBookingForm from './components/OnlineBookingForm';
-import { FiArrowLeft, FiCheckCircle, FiStar, FiCalendar, FiMapPin, FiUsers, FiInfo, FiMessageCircle, FiSend, FiClock, FiPhone, FiMail } from 'react-icons/fi';
+import { FiArrowLeft, FiCheckCircle, FiStar, FiCalendar, FiMapPin, FiUsers, FiInfo, FiMessageCircle, FiSend, FiClock, FiPhone, FiMail, FiHeart, FiMaximize } from 'react-icons/fi';
 import { FaRupeeSign, FaChevronRight, FaTags, FaUsers, FaUtensils, FaCar } from 'react-icons/fa';
 import Navbar from '../../components/Navbar';
 import Footer from './components/Footer';
 
+const format12Hour = (timeStr) => {
+    if (!timeStr) return '';
+    const [hoursStr, minutesStr] = timeStr.split(':');
+    let hours = parseInt(hoursStr, 10);
+    const minutes = minutesStr;
+    if (isNaN(hours)) return timeStr;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+};
+
 const VenueDetailsPage = () => {
     const { id } = useParams();
+    const { toast, showToast } = useToast();
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     const [venue, setVenue] = useState(null);
     const [activeTab, setActiveTab] = useState(location.state?.initialTab || 'details');
     const [reviews, setReviews] = useState([]);
@@ -38,6 +53,11 @@ const VenueDetailsPage = () => {
         guests: ''
     });
     const [bookingLoading, setBookingLoading] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [isWishlisted, setIsWishlisted] = useState(false);
+    const [wishlistLoading, setWishlistLoading] = useState(false);
+
+    const calendarRef = useRef(null);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -55,10 +75,46 @@ const VenueDetailsPage = () => {
             const res = await axios.get(`${API_URL}/mahals/${id}`);
             setVenue(res.data.mahal || res.data);
             fetchReviews();
+            if (user) {
+                checkWishlistStatus();
+            }
         } catch (error) {
             console.error("Error fetching venue details", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const checkWishlistStatus = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/users/${user.id || user._id}`);
+            if (res.data.wishlist && res.data.wishlist.some(item => (item._id || item) === id)) {
+                setIsWishlisted(true);
+            }
+        } catch (error) {
+            console.error("Error fetching user wishlist", error);
+        }
+    };
+
+    const handleToggleWishlist = async () => {
+        if (!user) {
+            setShowLoginPrompt(true);
+            return;
+        }
+
+        setWishlistLoading(true);
+        try {
+            const res = await axios.post(`${API_URL}/users/${user.id || user._id}/wishlist`, { mahalId: id });
+            // res.data should be the updated wishlist array
+            if (res.data.some(itemId => (itemId._id || itemId) === id)) {
+                setIsWishlisted(true);
+            } else {
+                setIsWishlisted(false);
+            }
+        } catch (error) {
+            console.error("Error toggling wishlist", error);
+        } finally {
+            setWishlistLoading(false);
         }
     };
 
@@ -76,22 +132,22 @@ const VenueDetailsPage = () => {
             const res = await axios.get(`${API_URL}/bookings`, {
                 params: { mahalId: id, all: 'true' }
             });
-            
+
             const bookingsMap = {};
             (res.data.bookings || []).forEach(booking => {
                 if (booking.isMultiDay && booking.endDate) {
                     // Multi-day expansion
                     let curr = new Date(booking.date);
-                    curr.setHours(0,0,0,0);
+                    curr.setHours(0, 0, 0, 0);
                     const end = new Date(booking.endDate);
-                    end.setHours(0,0,0,0);
+                    end.setHours(0, 0, 0, 0);
 
                     while (curr <= end) {
                         const dStr = `${curr.getFullYear()}-${String(curr.getMonth() + 1).padStart(2, '0')}-${String(curr.getDate()).padStart(2, '0')}`;
                         if (!bookingsMap[dStr]) bookingsMap[dStr] = [];
-                        
+
                         let dShift = 'Full Day';
-                        const isStartDay = curr.getTime() === new Date(booking.date).setHours(0,0,0,0);
+                        const isStartDay = curr.getTime() === new Date(booking.date).setHours(0, 0, 0, 0);
                         const isEndDay = curr.getTime() === end.getTime();
 
                         if (isStartDay) {
@@ -120,7 +176,7 @@ const VenueDetailsPage = () => {
     const handleAddReview = async (e) => {
         e.preventDefault();
         if (!user) {
-            alert("Please login to add a review");
+            showToast("Please login to add a review", "error");
             return;
         }
         if (!newReview.comment) return;
@@ -153,16 +209,16 @@ const VenueDetailsPage = () => {
 
         const dateStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
         const dayBookings = (bookings[dateStr] || []).filter(b => b.bookingStatus !== 'Cancelled');
-        
+
         if (dayBookings.length === 0) return { status: 'Available', color: 'text-success' };
-        
+
         const shifts = dayBookings.map(b => b.displayShift || b.shift);
         if (shifts.includes('Full Day')) return { status: 'Fully Booked', color: 'text-danger' };
         if (shifts.includes('Morning') && shifts.includes('Evening')) return { status: 'Fully Booked', color: 'text-danger' };
-        
+
         if (shifts.includes('Morning')) return { status: 'Evening Free', color: 'text-warning' };
         if (shifts.includes('Evening')) return { status: 'Morning Free', color: 'text-warning' };
-        
+
         return { status: 'Booked', color: 'text-danger' };
     };
 
@@ -185,11 +241,11 @@ const VenueDetailsPage = () => {
     };
     const handleDateClick = (date, status) => {
         if (status === 'Closed') {
-            alert("This date is in the past. Please select a future date for booking.");
+            showToast("This date is in the past. Please select a future date for booking.", "error");
             return;
         }
         if (status === 'Fully Booked') {
-            alert("This date is fully booked. Please select another date.");
+            showToast("This date is fully booked. Please select another date.", "error");
             return;
         }
 
@@ -210,7 +266,7 @@ const VenueDetailsPage = () => {
     const handleBookingSubmit = async (e) => {
         e.preventDefault();
         if (!bookingForm.shift || !bookingForm.guests) {
-            alert("Please select a shift and enter number of guests.");
+            showToast("Please select a shift and enter number of guests.", "error");
             return;
         }
 
@@ -225,12 +281,12 @@ const VenueDetailsPage = () => {
                 bookingType: 'Online',
                 guests: bookingForm.guests
             });
-            alert("Booking request submitted successfully! The manager will contact you soon.");
+            showToast("Booking request submitted successfully! The manager will contact you soon.", "success");
             setShowBookingModal(false);
             fetchBookings();
         } catch (error) {
             console.error("Error submitting booking", error);
-            alert(error.response?.data?.message || "Failed to submit booking. Please try again.");
+            showToast(error.response?.data?.message || "Failed to submit booking. Please try again.", "error");
         } finally {
             setBookingLoading(false);
         }
@@ -251,15 +307,15 @@ const VenueDetailsPage = () => {
     return (
         <div className="venue-details-page bg-white min-vh-100">
             <Navbar />
-            
+
             {/* Hero Header Section - Responsive Height */}
             <div className="venue-hero-section position-relative" style={{ overflow: 'hidden' }}>
                 <img src={`${API_URL.replace('/api', '')}/${venue.coverImage}`} alt="" className="w-100 h-100 object-fit-cover" />
                 <div className="position-absolute top-0 left-0 w-100 h-100" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.85))' }}></div>
-                
+
                 <div className="position-absolute top-0 start-0 w-100 p-3 p-md-5" style={{ zIndex: 10 }}>
                     <div className="container">
-                        <button 
+                        <button
                             onClick={() => navigate(-1)}
                             className="btn btn-link text-white text-decoration-none d-flex align-items-center gap-2 mb-0 p-0 animate-fade-in"
                             style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '80px' }}
@@ -268,13 +324,23 @@ const VenueDetailsPage = () => {
                         </button>
                     </div>
                 </div>
-                
+
                 <div className="position-absolute bottom-0 start-0 w-100 p-3 p-md-5">
                     <div className="container">
                         <div className="row align-items-end g-4">
                             <div className="col-lg-8">
-                                <h1 className="venue-title fw-bold text-white mb-2 animate-fade-in-up" style={{ letterSpacing: '-0.03em' }}>{venue.mahalName}</h1>
-                                
+                                <div className="d-flex align-items-center gap-3 mb-2 animate-fade-in-up">
+                                    <h1 className="venue-title fw-bold text-white mb-0" style={{ letterSpacing: '-0.03em' }}>{venue.mahalName}</h1>
+                                    <button
+                                        className="btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center p-0 transition-all hover-scale"
+                                        style={{ width: '48px', height: '48px', opacity: wishlistLoading ? 0.5 : 1 }}
+                                        onClick={handleToggleWishlist}
+                                        disabled={wishlistLoading}
+                                    >
+                                        <FiHeart size={24} fill={isWishlisted ? "#dc3545" : "none"} color={isWishlisted ? "#dc3545" : "#444"} className="transition-all" />
+                                    </button>
+                                </div>
+
                                 {/* Eligible Discount Highlight Chip */}
                                 {(venue.discountMin > 0 || venue.discountMax > 0) && (
                                     <div className="d-inline-flex align-items-center mb-3 animate-fade-in-up delay-100" style={{ background: 'linear-gradient(90deg, rgba(230,57,70,0.9) 0%, rgba(99,102,241,0.9) 100%)', borderRadius: '100px', padding: '6px 16px', gap: '8px', border: '1px solid rgba(255,255,255,0.4)', backdropFilter: 'blur(10px)', boxShadow: '0 4px 15px rgba(230,57,70,0.5)' }}>
@@ -291,14 +357,14 @@ const VenueDetailsPage = () => {
                                         <div className="d-flex gap-1 text-warning">
                                             {(() => {
                                                 const avg = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
-                                                return [1,2,3,4,5].map(s => (
+                                                return [1, 2, 3, 4, 5].map(s => (
                                                     <FiStar key={s} size={12} fill={s <= Math.round(avg) ? "currentColor" : "none"} />
                                                 ));
                                             })()}
                                         </div>
                                         <span className="text-white fw-bold">
-                                            {reviews.length > 0 
-                                                ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
+                                            {reviews.length > 0
+                                                ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
                                                 : "0.0"}
                                         </span>
                                         <span className="text-white-50">({reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'})</span>
@@ -337,7 +403,7 @@ const VenueDetailsPage = () => {
                         {/* Tab Headers - Scrollable on mobile */}
                         <div className="d-flex border-bottom mb-4 mb-md-5 overflow-auto hide-scrollbar" style={{ gap: '2rem', whiteSpace: 'nowrap' }}>
                             {['details', 'availability', 'reviews'].map(tab => (
-                                <div 
+                                <div
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`pb-3 fw-bold cursor-pointer transition-all text-uppercase tracking-widest ${activeTab === tab ? 'text-danger border-bottom border-danger border-3' : 'text-muted'}`}
@@ -349,15 +415,15 @@ const VenueDetailsPage = () => {
                         </div>
 
                         {/* Tab Content */}
-                        <div className="tab-content">
+                        <div className="tab-content" style={{ minHeight: '400px' }}>
                             {activeTab === 'details' && (
-                                <div className="animate-fade-in">
+                                <div className="animate-fade-in-up">
                                     <div className="d-flex align-items-center gap-3 mb-2">
                                         <div style={{ width: '4px', height: '28px', borderRadius: '2px', background: 'linear-gradient(180deg, #dc3545, #ff8a94)' }} />
                                         <h4 className="fw-bold mb-0" style={{ letterSpacing: '-0.01em' }}>About the Venue</h4>
                                     </div>
                                     <p className="text-muted lh-lg mb-5" style={{ textAlign: 'justify', fontSize: '0.95rem', paddingLeft: '16px', borderLeft: '2px solid #f0f0f0' }}>{venue.description}</p>
-                                    
+
                                     <div className="row g-4 mb-5">
                                         {[
                                             { label: 'Seating', value: venue.seatingCapacity, sub: 'Guests', icon: <FaUsers size={24} /> },
@@ -374,12 +440,12 @@ const VenueDetailsPage = () => {
                                                     textAlign: 'center',
                                                     transition: 'all 0.3s ease'
                                                 }} className="stat-detail-card">
-                                                    <div style={{ 
-                                                        width: '50px', height: '50px', 
-                                                        borderRadius: '12px', background: 'rgba(220,53,69,0.08)', 
-                                                        color: '#dc3545', display: 'flex', 
+                                                    <div style={{
+                                                        width: '50px', height: '50px',
+                                                        borderRadius: '12px', background: 'rgba(220,53,69,0.08)',
+                                                        color: '#dc3545', display: 'flex',
                                                         alignItems: 'center', justifyContent: 'center',
-                                                        margin: '0 auto 12px auto' 
+                                                        margin: '0 auto 12px auto'
                                                     }}>
                                                         {stat.icon}
                                                     </div>
@@ -439,7 +505,7 @@ const VenueDetailsPage = () => {
                                                         </div>
                                                         <div>
                                                             <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#dc3545', marginBottom: '2px' }}>Morning Shift</div>
-                                                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111' }}>{venue.morningTimeFrom} — {venue.morningTimeTo}</div>
+                                                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111' }}>{format12Hour(venue.morningTimeFrom)} — {format12Hour(venue.morningTimeTo)}</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -450,7 +516,7 @@ const VenueDetailsPage = () => {
                                                         </div>
                                                         <div>
                                                             <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#440a0e', marginBottom: '2px' }}>Evening Shift</div>
-                                                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111' }}>{venue.eveningTimeFrom} — {venue.eveningTimeTo}</div>
+                                                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111' }}>{format12Hour(venue.eveningTimeFrom)} — {format12Hour(venue.eveningTimeTo)}</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -494,8 +560,17 @@ const VenueDetailsPage = () => {
                                     <div className="row g-3">
                                         {venue.galleryImages?.map((img, i) => (
                                             <div key={i} className="col-md-6 col-12">
-                                                <div className="overflow-hidden rounded-4 shadow-sm" style={{ height: '240px' }}>
-                                                    <img src={`${API_URL.replace('/api', '')}/${img}`} className="w-100 h-100 object-fit-cover transition-all hover-scale" />
+                                                <div
+                                                    className="position-relative overflow-hidden rounded-4 shadow-sm hover-scale cursor-pointer"
+                                                    style={{ height: '300px' }}
+                                                    onClick={() => setSelectedImage(`${API_URL.replace('/api', '')}/${img}`)}
+                                                >
+                                                    <img src={`${API_URL.replace('/api', '')}/${img}`} alt="Gallery" className="w-100 h-100 object-fit-cover" />
+                                                    <div className="position-absolute bottom-0 end-0 m-3">
+                                                        <div className="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm hover-scale-sm" style={{ width: '40px', height: '40px', background: 'rgba(255,255,255,0.9)' }}>
+                                                            <FiMaximize className="text-danger" size={20} />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
@@ -504,7 +579,7 @@ const VenueDetailsPage = () => {
                             )}
 
                             {activeTab === 'availability' && (
-                                <div className="animate-fade-in">
+                                <div className="animate-fade-in-up">
                                     <div className="mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
                                         <div className="d-flex align-items-center gap-3">
                                             <h5 className="fw-bold mb-0">Booking Calendar</h5>
@@ -521,7 +596,7 @@ const VenueDetailsPage = () => {
                                         <div className="d-flex gap-3">
                                             <div className="d-flex align-items-center gap-2 small fw-bold" style={{ fontSize: '0.75rem', color: '#888' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#e5e7eb' }}></div> Closed</div>
                                             <div className="d-flex align-items-center gap-2 small fw-bold" style={{ fontSize: '0.75rem', color: '#065f46' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10b981' }}></div> Available</div>
-                                            <div className="d-flex align-items-center gap-2 small fw-bold" style={{ fontSize: '0.75rem', color: '#92400e' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }}></div> Fast Filling</div>
+                                            <div className="d-flex align-items-center gap-2 small fw-bold" style={{ fontSize: '0.75rem', color: '#92400e' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }}></div> Partially Booked</div>
                                             <div className="d-flex align-items-center gap-2 small fw-bold" style={{ fontSize: '0.75rem', color: '#991b1b' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#dc3545' }}></div> Booked</div>
                                         </div>
                                     </div>
@@ -533,25 +608,25 @@ const VenueDetailsPage = () => {
                                                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
                                                         <div key={`${day}-${idx}`} className="text-center small fw-bold text-muted pb-2" style={{ fontSize: '0.7rem' }}>{day}</div>
                                                     ))}
-                                                    
+
                                                     {(() => {
                                                         const firstDay = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
                                                         const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
                                                         const prevDays = Array.from({ length: firstDay });
                                                         const currentDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-                                                        
+
                                                         return (
                                                             <>
                                                                 {prevDays.map((_, i) => <div key={`empty-${i}`} />)}
                                                                 {currentDays.map(day => {
                                                                     const dateObj = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
                                                                     const { status } = getBookingStatus(dateObj);
-                                                                    
+
                                                                     let bgColor = 'white';
                                                                     let textColor = '#666';
                                                                     let borderColor = 'rgba(0,0,0,0.05)';
                                                                     let cursorStyle = 'pointer';
-                                                                    
+
                                                                     if (status === 'Closed') {
                                                                         bgColor = '#f9fafb';
                                                                         textColor = '#9ca3af';
@@ -572,8 +647,8 @@ const VenueDetailsPage = () => {
                                                                     }
 
                                                                     return (
-                                                                        <div 
-                                                                            key={day} 
+                                                                        <div
+                                                                            key={day}
                                                                             className="calendar-day-box shadow-sm transition-all"
                                                                             onClick={() => handleDateClick(dateObj, status)}
                                                                             style={{
@@ -589,7 +664,8 @@ const VenueDetailsPage = () => {
                                                                                 border: `1px solid ${borderColor}`,
                                                                                 boxShadow: bgColor !== 'white' && status !== 'Closed' ? '0 2px 8px rgba(0,0,0,0.02)' : 'none',
                                                                                 position: 'relative',
-                                                                                opacity: status === 'Closed' ? 0.7 : 1
+                                                                                opacity: status === 'Closed' || status.includes('Booked') ? 0.6 : 1,
+                                                                                textDecoration: status === 'Closed' || status.includes('Booked') ? 'line-through' : 'none'
                                                                             }}
                                                                         >
                                                                             <div className="fw-bold" style={{ fontSize: '0.75rem' }}>{day}</div>
@@ -611,7 +687,7 @@ const VenueDetailsPage = () => {
                                                 <div className="row g-3">
                                                     {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, idx) => (
                                                         <div key={month} className="col-4 col-md-3">
-                                                            <div 
+                                                            <div
                                                                 onClick={() => { setCalendarDate(new Date(calendarDate.getFullYear(), idx, 1)); setCalendarView('calendar'); }}
                                                                 className={`p-3 rounded-4 border text-center fw-bold transition-all hover-scale-sm cursor-pointer ${calendarDate.getMonth() === idx ? 'bg-danger text-white shadow-lg border-0' : 'bg-white shadow-sm'}`}
                                                             >
@@ -628,7 +704,7 @@ const VenueDetailsPage = () => {
                                                 <div className="row g-3">
                                                     {Array.from({ length: 12 }, (_, i) => yearRangeStart + i).map((year) => (
                                                         <div key={year} className="col-4 col-md-3">
-                                                            <div 
+                                                            <div
                                                                 onClick={() => { setCalendarDate(new Date(year, calendarDate.getMonth(), 1)); setCalendarView('month'); }}
                                                                 className={`p-3 rounded-4 border text-center fw-bold transition-all hover-scale-sm cursor-pointer ${calendarDate.getFullYear() === year ? 'bg-danger text-white shadow-lg border-0' : 'bg-white shadow-sm'}`}
                                                             >
@@ -650,13 +726,13 @@ const VenueDetailsPage = () => {
                                             <div className="col-6">
                                                 <div className="p-2 border rounded-3 text-center">
                                                     <div className="text-muted fw-bold" style={{ fontSize: '0.55rem' }}>MORNING</div>
-                                                    <div className="fw-bold small">{venue.morningTimeFrom} - {venue.morningTimeTo}</div>
+                                                    <div className="fw-bold small">{format12Hour(venue.morningTimeFrom)} - {format12Hour(venue.morningTimeTo)}</div>
                                                 </div>
                                             </div>
                                             <div className="col-6">
                                                 <div className="p-2 border rounded-3 text-center">
                                                     <div className="text-muted fw-bold" style={{ fontSize: '0.55rem' }}>EVENING</div>
-                                                    <div className="fw-bold small">{venue.eveningTimeFrom} - {venue.eveningTimeTo}</div>
+                                                    <div className="fw-bold small">{format12Hour(venue.eveningTimeFrom)} - {format12Hour(venue.eveningTimeTo)}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -665,16 +741,16 @@ const VenueDetailsPage = () => {
                             )}
 
                             {activeTab === 'reviews' && (
-                                <div className="animate-fade-in">
+                                <div className="animate-fade-in-up">
                                     {user ? (
                                         <div className="p-4 p-md-5 rounded-4 border bg-light mb-4 mb-md-5">
                                             <h5 className="fw-bold mb-4">Share Feedback</h5>
                                             <form onSubmit={handleAddReview}>
                                                 <div className="mb-4 d-flex gap-2">
-                                                    {[1,2,3,4,5].map(s => (
-                                                        <FiStar 
-                                                            key={s} 
-                                                            size={24} 
+                                                    {[1, 2, 3, 4, 5].map(s => (
+                                                        <FiStar
+                                                            key={s}
+                                                            size={24}
                                                             className="cursor-pointer"
                                                             fill={s <= newReview.rating ? '#ffc107' : 'none'}
                                                             color={s <= newReview.rating ? '#ffc107' : '#ddd'}
@@ -682,9 +758,9 @@ const VenueDetailsPage = () => {
                                                         />
                                                     ))}
                                                 </div>
-                                                <textarea 
-                                                    className="form-control rounded-4 p-3 border-0 shadow-sm mb-4" 
-                                                    rows="3" 
+                                                <textarea
+                                                    className="form-control rounded-4 p-3 border-0 shadow-sm mb-4"
+                                                    rows="3"
                                                     placeholder="Tell others about your experience..."
                                                     value={newReview.comment}
                                                     onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
@@ -714,7 +790,7 @@ const VenueDetailsPage = () => {
                                                         </div>
                                                     </div>
                                                     <div className="d-flex gap-1">
-                                                        {[1,2,3,4,5].map(s => <FiStar key={s} size={10} fill={s <= review.rating ? '#ffc107' : 'none'} color={s <= review.rating ? '#ffc107' : '#ddd'} />)}
+                                                        {[1, 2, 3, 4, 5].map(s => <FiStar key={s} size={10} fill={s <= review.rating ? '#ffc107' : 'none'} color={s <= review.rating ? '#ffc107' : '#ddd'} />)}
                                                     </div>
                                                 </div>
                                                 <p className="text-muted mb-0 small lh-base">{review.comment}</p>
@@ -740,17 +816,17 @@ const VenueDetailsPage = () => {
                                 <div className="p-4">
                                     <div className="mb-4">
                                         <div className="text-muted small fw-bold text-uppercase mb-3" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>Pricing Options</div>
-                                        
+
                                         <div className="p-3 rounded-4 mb-2 d-flex justify-content-between align-items-center transition-all hover-bg-light" style={{ border: '1px solid #f0f0f0' }}>
                                             <div className="d-flex align-items-center gap-3">
                                                 <div className="p-2 bg-light rounded-3 text-danger"><FiClock size={16} /></div>
                                                 <div>
                                                     <div className="fw-bold small">Morning Slot</div>
-                                                    <div className="text-muted" style={{ fontSize: '0.65rem' }}>{venue.morningTimeFrom} - {venue.morningTimeTo}</div>
+                                                    <div className="text-muted" style={{ fontSize: '0.65rem' }}>{format12Hour(venue.morningTimeFrom)} - {format12Hour(venue.morningTimeTo)}</div>
                                                 </div>
                                             </div>
                                             <div className="text-end">
-                                                <div className="fw-bold text-dark"><FaRupeeSign size={12} /> {(venue.morningPrice || venue.fullDayPrice/2).toLocaleString()}</div>
+                                                <div className="fw-bold text-dark"><FaRupeeSign size={12} /> {(venue.morningPrice || venue.fullDayPrice / 2).toLocaleString()}</div>
                                             </div>
                                         </div>
 
@@ -759,11 +835,11 @@ const VenueDetailsPage = () => {
                                                 <div className="p-2 bg-light rounded-3 text-danger"><FiClock size={16} /></div>
                                                 <div>
                                                     <div className="fw-bold small">Evening Slot</div>
-                                                    <div className="text-muted" style={{ fontSize: '0.65rem' }}>{venue.eveningTimeFrom} - {venue.eveningTimeTo}</div>
+                                                    <div className="text-muted" style={{ fontSize: '0.65rem' }}>{format12Hour(venue.eveningTimeFrom)} - {format12Hour(venue.eveningTimeTo)}</div>
                                                 </div>
                                             </div>
                                             <div className="text-end">
-                                                <div className="fw-bold text-dark"><FaRupeeSign size={12} /> {(venue.eveningPrice || venue.fullDayPrice/2).toLocaleString()}</div>
+                                                <div className="fw-bold text-dark"><FaRupeeSign size={12} /> {(venue.eveningPrice || venue.fullDayPrice / 2).toLocaleString()}</div>
                                             </div>
                                         </div>
                                         <div className="p-3 rounded-4 bg-dark text-white d-flex justify-content-between align-items-center shadow-sm">
@@ -786,16 +862,22 @@ const VenueDetailsPage = () => {
                                         </div>
                                     </div>
 
-                                    <button 
+                                    <button
                                         className="btn btn-dark w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg transform-active"
                                         style={{ background: 'linear-gradient(135deg, #111, #333)', border: 'none' }}
-                                        onClick={() => navigate('/user/register')}
+                                        onClick={() => {
+                                            if(!user) {
+                                                setShowLoginPrompt(true);
+                                                return;
+                                            }
+                                            navigate(`/user/profile?tab=messages&contactVendor=${venue.vendorId?._id}&autoMessage=${encodeURIComponent(`Hi, I am interested in booking "${venue.mahalName}". Could you please share more details regarding availability, pricing, and services?`)}`);
+                                        }}
                                     >
-                                        Contact Manager to Book <FaChevronRight size={12} />
+                                        <FiMessageCircle size={18} /> Contact Manager to Book <FaChevronRight size={12} />
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div className="p-4 rounded-4 border bg-white shadow-sm">
                                 <h6 className="fw-bold mb-3">Quick Support</h6>
                                 <div className="d-flex flex-column gap-3">
@@ -834,9 +916,9 @@ const VenueDetailsPage = () => {
                             <button onClick={() => setShowBookingModal(false)} className="btn btn-link text-white p-0 text-decoration-none h4 mb-0">&times;</button>
                         </div>
                         <div className="p-4">
-                            <OnlineBookingForm 
-                                venue={venue} 
-                                selectedDate={selectedDate} 
+                            <OnlineBookingForm
+                                venue={venue}
+                                selectedDate={selectedDate}
                                 bookings={bookings}
                                 onClose={() => setShowBookingModal(false)}
                                 onSuccess={() => {
@@ -863,6 +945,31 @@ const VenueDetailsPage = () => {
                             <button onClick={() => navigate('/user/register')} className="btn btn-light rounded-pill py-3 fw-bold border">Create Free Account</button>
                             <button onClick={() => setShowLoginPrompt(false)} className="btn btn-link text-muted text-decoration-none mt-2 small">Close</button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Image Fullscreen Modal */}
+            {selectedImage && (
+                <div
+                    className="modal-overlay d-flex align-items-center justify-content-center p-3 animate-fade-in"
+                    style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(5px)', zIndex: 10000 }}
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <div className="position-relative d-flex justify-content-center align-items-center" style={{ width: '100%', height: '100%' }}>
+                        <button
+                            className="btn btn-dark rounded-circle position-absolute d-flex align-items-center justify-content-center shadow-lg"
+                            style={{ top: '20px', right: '20px', zIndex: 10001, width: '40px', height: '40px', border: '1px solid rgba(255,255,255,0.2)' }}
+                            onClick={() => setSelectedImage(null)}
+                        >
+                            <span className="fw-bold" style={{ fontSize: '1.2rem', lineHeight: 1 }}>&times;</span>
+                        </button>
+                        <img
+                            src={selectedImage}
+                            alt="Fullscreen showcase"
+                            style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: '8px' }}
+                            onClick={(e) => e.stopPropagation()}
+                        />
                     </div>
                 </div>
             )}
@@ -903,7 +1010,12 @@ const VenueDetailsPage = () => {
                 .transform-active:active { transform: scale(0.98); }
                 .border-transparent { border: 2px solid transparent; }
                 .hover-scale-sm:hover { transform: scale(1.02); }
+                .hover-opacity-100 { opacity: 1 !important; }
+                .opacity-0 { opacity: 0; }
+                .transition-all { transition: all 0.3s ease; }
+                .group:hover .hover-opacity-100 { opacity: 1 !important; }
             `}</style>
+            <Toast toast={toast} />
         </div>
     );
 };

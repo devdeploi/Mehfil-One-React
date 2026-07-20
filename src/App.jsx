@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/landing/LandingPage';
+import { API_URL } from './utils/function';
+import { io } from 'socket.io-client';
 import VenueDetailsPage from './pages/landing/VenueDetailsPage';
 import SuperAdminLogin from './pages/superadmin/SuperAdminLogin';
 import SuperAdminLayout from './pages/superadmin/SuperAdminLayout';
@@ -23,6 +26,7 @@ import VendorAvailability from './pages/vendor/VendorAvailability';
 import BookingList from './pages/vendor/BookingList';
 import MahalProfile from './pages/vendor/MahalProfile';
 import VendorLogin from './pages/vendor/VendorLogin';
+import VendorMessages from './pages/vendor/VendorMessages';
 import InstallPrompt from './components/InstallPrompt';
 
 
@@ -30,6 +34,43 @@ import InstallPrompt from './components/InstallPrompt';
 import AllVenuesPage from './pages/landing/AllVenuesPage';
 
 function App() {
+  const [currentSocket, setCurrentSocket] = useState(null);
+
+  useEffect(() => {
+    let activeUserId = null;
+    let socketInstance = null;
+
+    const interval = setInterval(() => {
+      const storedUser = localStorage.getItem('user') || localStorage.getItem('vendor_user');
+      let userId = null;
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          userId = parsed.id || parsed._id;
+        } catch(e) {}
+      }
+
+      if (userId !== activeUserId) {
+        activeUserId = userId;
+        if (socketInstance) {
+          socketInstance.close();
+          socketInstance = null;
+        }
+        if (userId) {
+          socketInstance = io(API_URL.replace('/api', ''));
+          socketInstance.on('connect', () => {
+            socketInstance.emit('join', userId);
+          });
+        }
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      if (socketInstance) socketInstance.close();
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <InstallPrompt />
@@ -65,6 +106,7 @@ function App() {
             <Route path="mahal-profile" element={<MahalProfile />} />
             <Route path="availability" element={<VendorAvailability />} />
             <Route path="bookings" element={<BookingList />} />
+            <Route path="messages" element={<VendorMessages />} />
           </Route>
         </Route>
       </Routes>

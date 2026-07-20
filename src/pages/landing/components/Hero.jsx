@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaStar, FaArrowRight, FaRocket, FaShieldAlt, FaCheckCircle, FaPlay } from 'react-icons/fa';
+import { FaStar, FaArrowRight, FaRocket, FaShieldAlt, FaCheckCircle, FaPlay, FaBuilding } from 'react-icons/fa';
 import Lanyard from './Lanyard';
 
 const STATS = [
@@ -15,7 +15,7 @@ const TRUST_ITEMS = [
     'Cancel anytime',
 ];
 
-const Hero = ({ homeRef, activeTab, setActiveTab }) => {
+const Hero = ({ homeRef, activeTab, setActiveTab, venuesRef }) => {
     const navigate = useNavigate();
     const blobRef = useRef(null);
 
@@ -97,12 +97,12 @@ const Hero = ({ homeRef, activeTab, setActiveTab }) => {
                         {/* CTAs */}
                         <div className="hero-ctas">
                             <button className="hero-btn-primary" onClick={() => navigate('/vendor/register')}>
-                                Get Started Free
+                                Get Started
                                 <FaArrowRight className="hero-btn-arrow" />
                             </button>
-                            <button className="hero-btn-secondary">
-                                <span className="hero-play-icon"><FaPlay style={{ fontSize: '0.65rem' }} /></span>
-                                See How It Works
+                            <button className="hero-btn-secondary" onClick={() => venuesRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+                                <span className="hero-play-icon"><FaBuilding style={{ fontSize: '0.65rem' }} /></span>
+                                Explore Venues
                             </button>
                         </div>
 

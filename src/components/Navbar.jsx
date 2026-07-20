@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FiMenu, FiX, FiUser, FiHome, FiLayers, FiArrowRight, FiShield, FiActivity, FiTag, FiLogIn, FiBriefcase, FiMap } from 'react-icons/fi';
+import axios from 'axios';
+import { io } from 'socket.io-client';
+import { API_URL } from '../utils/function';
 import GooeyNav from './GooeyNav';
 
 const Navbar = ({ scrollToSection, refs }) => {
@@ -9,14 +12,52 @@ const Navbar = ({ scrollToSection, refs }) => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [user, setUser] = useState(null);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const fetchUnread = async (userId) => {
+        try {
+            const res = await axios.get(`${API_URL}/messages/conversations/User/${userId}`);
+            const total = res.data.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+            setUnreadCount(total);
+        } catch(e) {
+            console.error(e);
+        }
+    };
 
     useEffect(() => {
+        let sock = null;
+
         const checkUser = () => {
             const storedUser = localStorage.getItem('user') || localStorage.getItem('vendor_user');
             if (storedUser) {
-                setUser(JSON.parse(storedUser));
+                const parsed = JSON.parse(storedUser);
+                setUser(parsed);
+
+                // Setup socket & fetch for regular user
+                const isVendor = !!localStorage.getItem('vendor_user');
+                if (!isVendor) {
+                    fetchUnread(parsed.id || parsed._id);
+
+                    const socketUrl = API_URL.replace('/api', '');
+                    sock = io(socketUrl);
+                    sock.on('connect', () => {
+                        sock.emit('join', parsed.id || parsed._id);
+                    });
+                    sock.on('newMessage', (msg) => {
+                        if (msg.receiver === (parsed.id || parsed._id)) {
+                            fetchUnread(parsed.id || parsed._id);
+                        }
+                    });
+                    sock.on('allMessagesRead', () => {
+                        fetchUnread(parsed.id || parsed._id);
+                    });
+                    sock.on('messageStatusUpdate', () => {
+                        fetchUnread(parsed.id || parsed._id);
+                    });
+                }
             } else {
                 setUser(null);
+                setUnreadCount(0);
             }
         };
 
@@ -31,6 +72,7 @@ const Navbar = ({ scrollToSection, refs }) => {
         return () => {
             window.removeEventListener('storage', checkUser);
             window.removeEventListener('scroll', handleScroll);
+            if (sock) sock.close();
         };
     }, []);
 
@@ -152,8 +194,8 @@ const Navbar = ({ scrollToSection, refs }) => {
                 <div className="container" style={styles.container}>
                     {/* Brand Logo - Enhanced with Light Sweep */}
                     <div onClick={() => navigate('/')} style={styles.brand} className="group">
-                        <div style={styles.brandIcon} className="brand-icon-sweep">
-                            <FiShield size={20} />
+                        <div style={{ ...styles.brandIcon, background: 'transparent', boxShadow: 'none' }} className="brand-icon-sweep">
+                            <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         </div>
                         <div className="d-flex flex-column">
                             <span style={styles.brandText}>Mehfil One</span>
@@ -193,11 +235,34 @@ const Navbar = ({ scrollToSection, refs }) => {
                                     background: isScrolled ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                                     color: isScrolled ? 'white' : '#111',
                                     border: isScrolled ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(0,0,0,0.1)',
-                                    backdropFilter: 'blur(10px)'
+                                    backdropFilter: 'blur(10px)',
+                                    position: 'relative'
                                 }}
                             >
                                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', marginRight: '4px' }}></div>
                                 { (user.name || user.fullName || 'User').split(' ')[0] }
+                                {unreadCount > 0 && (
+                                    <span style={{
+                                        position: 'absolute',
+                                        top: '-6px',
+                                        right: '-6px',
+                                        background: '#dc3545',
+                                        color: '#fff',
+                                        borderRadius: '50%',
+                                        minWidth: '16px',
+                                        height: '16px',
+                                        fontSize: '0.58rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: 700,
+                                        padding: '0 4px',
+                                        border: '1.5px solid #fff',
+                                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                    }}>
+                                        {unreadCount}
+                                    </span>
+                                )}
                             </button>
                         ) : (
                             <button
@@ -263,7 +328,9 @@ const Navbar = ({ scrollToSection, refs }) => {
                 {/* Header Area */}
                 <div className="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom border-white-50">
                     <div style={styles.brand}>
-                        <div style={{ ...styles.brandIcon, width: '32px', height: '32px', background: 'white', color: '#111' }}><FiShield size={18} /></div>
+                        <div style={{ ...styles.brandIcon, width: '32px', height: '32px', background: 'transparent', boxShadow: 'none' }}>
+                            <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        </div>
                         <span style={{ ...styles.brandText, fontSize: '1rem', color: 'white' }}>Mehfil One</span>
                     </div>
                     <button

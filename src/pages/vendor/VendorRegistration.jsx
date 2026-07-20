@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { API_URL } from '../../utils/function';
 import { SUBSCRIPTION_PLANS } from '../../utils/constants';
 import { FaCheck, FaLock, FaCreditCard, FaArrowLeft } from 'react-icons/fa';
@@ -29,6 +29,7 @@ const VendorRegistration = () => {
     const isTestMode = RAZORPAY_KEY_ID.startsWith('rzp_test_');
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const loadScript = (src) => {
         return new Promise((resolve) => {
@@ -77,9 +78,12 @@ const VendorRegistration = () => {
         }
     };
 
-    // Load initial state lazily
-    const [step, setStep] = useState(() => getSavedData()?.step || 1);
-    const [selectedPlan, setSelectedPlan] = useState(() => getSavedData()?.selectedPlan || null);
+    // Load initial state lazily — nav state takes priority over sessionStorage
+    const planFromNav = location.state?.selectedPlan || null;
+    const [step, setStep] = useState(() => planFromNav ? 2 : (getSavedData()?.step || 1));
+    const [selectedPlan, setSelectedPlan] = useState(
+        () => planFromNav || getSavedData()?.selectedPlan || null
+    );
     const [formData, setFormData] = useState(() => {
         const saved = getSavedData();
         return {
@@ -443,8 +447,11 @@ const VendorRegistration = () => {
             <style>{toastStyles}</style>
 
             {/* Navbar */}
-            <nav className="vr-navbar">
-                <div className="vr-nav-brand">MEHFIL ONE</div>
+            <nav className="vr-navbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 5%' }}>
+                <div className="d-flex align-items-center gap-2" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+                    <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+                    <span className="vr-nav-brand">MEHFIL ONE</span>
+                </div>
                 <button onClick={() => navigate('/')} className="vr-nav-btn">
                     Home
                 </button>
@@ -911,6 +918,62 @@ const VendorRegistration = () => {
                 </div>
             </div>
 
+            {/* Footer */}
+            <footer style={{
+                background: '#0f172a',
+                color: '#94a3b8',
+                padding: '32px 24px 20px',
+                marginTop: 'auto',
+                fontFamily: "'Outfit', sans-serif"
+            }}>
+                <div style={{ maxWidth: 900, margin: '0 auto' }}>
+                    {/* Top row */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 16, paddingBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 16 }}>
+                        {/* Brand */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: 34, height: 'auto', objectFit: 'contain', flexShrink: 0 }} />
+                            <span style={{ fontWeight: 700, fontSize: '1rem', color: '#f1f5f9', letterSpacing: '-0.01em' }}>
+                                Mehfil <span style={{ color: '#dc3545' }}>One</span>
+                            </span>
+                        </div>
+
+                        {/* Nav links */}
+                        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                            {[
+                                { label: 'Home', to: '/' },
+                                { label: 'Privacy Policy', to: '/policy' },
+                                { label: 'Terms of Service', to: '/terms' },
+                                { label: 'Sign In', to: '/vendor/login' },
+                            ].map(({ label, to }) => (
+                                <Link
+                                    key={label}
+                                    to={to}
+                                    style={{
+                                        color: '#94a3b8',
+                                        textDecoration: 'none',
+                                        fontSize: '0.82rem',
+                                        fontWeight: 500,
+                                        transition: 'color 0.2s'
+                                    }}
+                                    onMouseEnter={e => e.target.style.color = '#f1f5f9'}
+                                    onMouseLeave={e => e.target.style.color = '#94a3b8'}
+                                >
+                                    {label}
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Bottom row */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: '0.78rem' }}>
+                        <span>© {new Date().getFullYear()} Mehfil One. All rights reserved.</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }}></span>
+                            Secure &amp; Encrypted Registration
+                        </span>
+                    </div>
+                </div>
+            </footer>
 
         </div>
     );

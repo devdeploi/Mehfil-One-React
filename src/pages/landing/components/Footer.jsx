@@ -30,8 +30,8 @@ const Footer = ({ scrollToSection, refs }) => {
                     {/* Brand col */}
                     <div className="ft-brand-col">
                         <div className="ft-logo">
-                            <div className="ft-logo-icon">
-                                <HiCalendar size={22} />
+                            <div className="ft-logo-icon" style={{ background: 'transparent', boxShadow: 'none' }}>
+                                <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             </div>
                             <span className="ft-logo-text">MEHFIL ONE</span>
                         </div>

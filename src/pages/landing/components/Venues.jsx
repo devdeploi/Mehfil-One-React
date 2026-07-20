@@ -40,10 +40,27 @@ const Venues = ({ venuesRef }) => {
                 </div>
 
                 {loading ? (
-                    <div className="d-flex justify-content-center py-5">
-                        <div className="spinner-border text-danger" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
+                    <div className="row g-4">
+                        {[1, 2, 3].map((item) => (
+                            <div key={item} className="col-lg-4 col-md-6">
+                                <div className="venue-card-premium h-100 shadow-sm" style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.04)' }}>
+                                    <div className="placeholder-glow">
+                                        <div className="placeholder w-100" style={{ height: '260px' }}></div>
+                                    </div>
+                                    <div className="p-4 placeholder-glow">
+                                        <div className="d-flex justify-content-between align-items-start mb-3">
+                                            <h4 className="placeholder col-8 rounded" style={{ height: '28px' }}></h4>
+                                        </div>
+                                        <p className="placeholder col-12 rounded mb-2"></p>
+                                        <p className="placeholder col-10 rounded mb-4"></p>
+                                        <div className="d-flex justify-content-between pt-3 border-top border-light">
+                                            <div className="placeholder col-4 rounded" style={{ height: '20px' }}></div>
+                                            <div className="placeholder col-3 rounded" style={{ height: '20px' }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : (
                     <div className="row g-4">

@@ -7,6 +7,10 @@ const Pricing = ({ plansRef }) => {
     const navigate = useNavigate();
     const [hoveredId, setHoveredId] = useState(null);
 
+    const handleGetPlan = (plan) => {
+        navigate('/vendor/register', { state: { selectedPlan: plan } });
+    };
+
     return (
         <section ref={plansRef} className="pr-section">
             {/* Background blobs */}
@@ -97,7 +101,7 @@ const Pricing = ({ plansRef }) => {
                                 {/* CTA */}
                                 <button
                                     className={`pr-btn${isRec ? ' pr-btn--featured' : ''}`}
-                                    onClick={() => navigate('/vendor/register')}
+                                    onClick={() => handleGetPlan(plan)}
                                 >
                                     Get {plan.name}
                                     <FaArrowRight className="pr-btn-arrow" />

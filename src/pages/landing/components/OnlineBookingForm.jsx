@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { 
-    FaCalendarAlt, FaUser, FaPhone, FaCheckCircle, FaClock, FaRupeeSign, 
-    FaSnowflake, FaBolt, FaMicrophone, FaParking, FaChevronCircleUp, 
+import {
+    FaCalendarAlt, FaUser, FaPhone, FaCheckCircle, FaClock, FaRupeeSign,
+    FaSnowflake, FaBolt, FaMicrophone, FaParking, FaChevronCircleUp,
     FaTint, FaLayerGroup, FaBed, FaPaintBrush, FaStore, FaUtensils,
     FaPlus, FaMinus, FaTags, FaInfoCircle, FaUsers
 } from 'react-icons/fa';
 import { API_URL } from '../../../utils/function';
+import { useToast } from '../../../hooks/useToast';
+import Toast from '../../../components/Toast';
 
 const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSuccess }) => {
+    const { toast, showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [multiDayWarning, setMultiDayWarning] = useState(false);
 
@@ -18,7 +21,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
         const d = new Date(date);
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
-    
+
     // Get booked shifts for the selected date
     const bookedShifts = useMemo(() => {
         if (!selectedDate) return [];
@@ -98,7 +101,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
         start.setHours(0, 0, 0, 0);
         const end = formData.endDate ? new Date(formData.endDate) : start;
         end.setHours(0, 0, 0, 0);
-        
+
         let curr = new Date(start);
         while (curr <= end) {
             const dStr = formatDate(curr);
@@ -117,7 +120,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
         start.setHours(0, 0, 0, 0);
         const end = new Date(formData.endDate);
         end.setHours(0, 0, 0, 0);
-        
+
         const diffTime = Math.abs(end - start);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
         return Math.max(1, diffDays);
@@ -132,7 +135,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // Multi-day warning check: if any of the spanned dates are booked
         if (formData.isMultiDay && formData.endDate) {
             let curr = new Date(selectedDate);
@@ -144,9 +147,9 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                 if (dayBookings.length > 0) {
                     const isMorningTaken = dayBookings.some(b => (b.displayShift || b.shift) === 'Morning' || (b.displayShift || b.shift) === 'Full Day');
                     const isEveningTaken = dayBookings.some(b => (b.displayShift || b.shift) === 'Evening' || (b.displayShift || b.shift) === 'Full Day');
-                    
+
                     if (isMorningTaken || isEveningTaken) {
-                        alert(`Warning: ${curr.toLocaleDateString()} already has a booking. This multi-day request might overlap with existing reservations.`);
+                        showToast(`Warning: ${curr.toLocaleDateString()} already has a booking. This multi-day request might overlap with existing reservations.`, "error");
                         return;
                     }
                 }
@@ -174,7 +177,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                 price: recommendedPrice,
                 extraFacilities: Object.fromEntries(
                     Object.entries(formData.extraFacilities).map(([key, f]) => [
-                        key, 
+                        key,
                         { ...f, price: f.selected ? Number(f.price || 0) * numDays : f.price }
                     ])
                 ),
@@ -185,10 +188,10 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
             };
 
             await axios.post(`${API_URL}/bookings`, payload);
-            alert("Booking Request Submitted Successfully!");
+            showToast("Booking Request Submitted Successfully!", "success");
             onSuccess();
         } catch (error) {
-            alert(error.response?.data?.msg || "Booking failed.");
+            showToast(error.response?.data?.msg || "Booking failed.", "error");
         } finally {
             setLoading(false);
         }
@@ -209,14 +212,14 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
         const vendorName = venue.vendorId?.fullName || venue.mahalName;
         const amount = totalAdvance;
         const note = `Booking Advance for ${venue.mahalName} (${numDays} Days) starting ${formatDate(selectedDate)}`;
-        
+
         if (!upiId) {
-            alert("Vendor payment details are currently unavailable. Please try again later or contact support.");
+            showToast("Vendor payment details are currently unavailable. Please try again later or contact support.", "error");
             return;
         }
 
         if (amount <= 0) {
-            alert("Advance amount is not set. Please contact the venue.");
+            showToast("Advance amount is not set. Please contact the venue.", "error");
             return;
         }
 
@@ -226,7 +229,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
 
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
-        alert("UPI ID copied to clipboard!");
+        showToast("UPI ID copied to clipboard!", "success");
     };
 
     const isShiftDisabled = (s) => {
@@ -239,6 +242,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
 
     return (
         <form onSubmit={handleSubmit} className="online-booking-form animate-fade-in" style={{ overflowX: 'hidden' }}>
+            <Toast toast={toast} />
             <div className="row g-4">
                 {/* Left Column: Form Inputs */}
                 <div className="col-lg-7">
@@ -252,12 +256,12 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                     <label className="form-label small fw-bold text-muted text-uppercase tracking-wider">Full Name</label>
                                     <div className="input-group shadow-sm rounded-4 overflow-hidden border">
                                         <span className="input-group-text bg-white border-0"><FaUser className="text-danger-light" size={12} /></span>
-                                        <input 
-                                            type="text" 
-                                            className="form-control border-0 p-3" 
+                                        <input
+                                            type="text"
+                                            className="form-control border-0 p-3"
                                             placeholder="Enter your name"
                                             value={formData.customerName}
-                                            onChange={e => setFormData({...formData, customerName: e.target.value})}
+                                            onChange={e => setFormData({ ...formData, customerName: e.target.value })}
                                             required
                                         />
                                     </div>
@@ -266,12 +270,12 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                     <label className="form-label small fw-bold text-muted text-uppercase tracking-wider">Contact Number</label>
                                     <div className="input-group shadow-sm rounded-4 overflow-hidden border">
                                         <span className="input-group-text bg-white border-0"><FaPhone className="text-danger-light" size={12} /></span>
-                                        <input 
-                                            type="text" 
-                                            className="form-control border-0 p-3" 
+                                        <input
+                                            type="text"
+                                            className="form-control border-0 p-3"
                                             placeholder="Phone number"
                                             value={formData.customerPhone}
-                                            onChange={e => setFormData({...formData, customerPhone: e.target.value})}
+                                            onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
                                             required
                                         />
                                     </div>
@@ -280,12 +284,12 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                     <label className="form-label small fw-bold text-muted text-uppercase tracking-wider">Estimated Guests</label>
                                     <div className="input-group shadow-sm rounded-4 overflow-hidden border">
                                         <span className="input-group-text bg-white border-0"><FaUsers className="text-danger-light" size={12} /></span>
-                                        <input 
-                                            type="number" 
-                                            className="form-control border-0 p-3" 
+                                        <input
+                                            type="number"
+                                            className="form-control border-0 p-3"
                                             placeholder={`Max ${venue.seatingCapacity}`}
                                             value={formData.guests}
-                                            onChange={e => setFormData({...formData, guests: e.target.value})}
+                                            onChange={e => setFormData({ ...formData, guests: e.target.value })}
                                             required
                                         />
                                     </div>
@@ -297,20 +301,20 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                             {formData.isMultiDay ? 'Select End Date First' : 'Booking Shift'}
                                         </label>
                                         <div className="form-check form-switch d-flex align-items-center gap-2">
-                                            <input 
-                                                className="form-check-input custom-switch" 
-                                                type="checkbox" 
+                                            <input
+                                                className="form-check-input custom-switch"
+                                                type="checkbox"
                                                 id="multiDaySwitch"
                                                 checked={formData.isMultiDay}
                                                 onChange={e => {
                                                     const checked = e.target.checked;
                                                     const dStr = formatDate(selectedDate);
                                                     setFormData(prev => ({
-                                                        ...prev, 
+                                                        ...prev,
                                                         isMultiDay: checked,
                                                         dayShifts: checked ? { [dStr]: prev.shift } : {}
                                                     }));
-                                                    if(checked) setMultiDayWarning(true);
+                                                    if (checked) setMultiDayWarning(true);
                                                 }}
                                             />
                                             <label className="form-check-label small fw-bold text-danger" htmlFor="multiDaySwitch" style={{ cursor: 'pointer' }}>Multi-day Booking</label>
@@ -321,9 +325,9 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                         <div className="animate-fade-in">
                                             <div className="input-group shadow-sm rounded-4 overflow-hidden border mb-3">
                                                 <span className="input-group-text bg-white border-0"><FaCalendarAlt className="text-danger-light" size={12} /></span>
-                                                <input 
-                                                    type="date" 
-                                                    className="form-control border-0 p-3" 
+                                                <input
+                                                    type="date"
+                                                    className="form-control border-0 p-3"
                                                     value={formData.endDate}
                                                     onChange={e => {
                                                         const end = e.target.value;
@@ -398,10 +402,10 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                             {['Morning', 'Evening', 'Full Day'].map(s => {
                                                 const disabled = isShiftDisabled(s);
                                                 return (
-                                                    <button 
+                                                    <button
                                                         key={s} type="button"
                                                         disabled={disabled}
-                                                        onClick={() => setFormData({...formData, shift: s})}
+                                                        onClick={() => setFormData({ ...formData, shift: s })}
                                                         className={`btn flex-fill rounded-3 py-2 fw-bold transition-all ${formData.shift === s ? 'bg-danger text-white shadow-sm' : 'text-muted border-0'} ${disabled ? 'opacity-25' : ''}`}
                                                         style={{ fontSize: '0.75rem', position: 'relative' }}
                                                     >
@@ -437,7 +441,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                     { key: 'catering', label: 'Catering', icon: <FaUtensils />, available: venue?.catering?.available }
                                 ].map(f => f.available && (
                                     <div key={f.key} className="col-md-3 col-4">
-                                        <div 
+                                        <div
                                             onClick={() => toggleFacility(f.key)}
                                             className={`p-2 rounded-3 border transition-all cursor-pointer d-flex flex-column align-items-center gap-1 position-relative ${formData.extraFacilities[f.key].selected ? 'border-danger bg-danger-soft' : 'border-light bg-white opacity-75'}`}
                                             title={`₹${formData.extraFacilities[f.key].price || 0}`}
@@ -467,18 +471,30 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                 </h6>
                                 <span className="badge bg-white-10 text-white-50 x-small rounded-pill px-2">Estimate</span>
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <div className="d-flex justify-content-between align-items-center" style={{ fontSize: '0.75rem' }}>
                                     <span className="text-white-50">Venue Rent</span>
                                     <span className="fw-bold text-white">₹{recommendedPrice.toLocaleString()}</span>
                                 </div>
-                                
+
                                 {totalFacilitiesPrice > 0 && (
-                                    <div className="d-flex justify-content-between align-items-center" style={{ fontSize: '0.75rem' }}>
-                                        <span className="text-white-50">Facilities Add-ons</span>
-                                        <span className="text-success fw-bold">+ ₹{totalFacilitiesPrice.toLocaleString()}</span>
-                                    </div>
+                                    <>
+                                        <div className="d-flex justify-content-between align-items-center mt-2" style={{ fontSize: '0.75rem' }}>
+                                            <span className="text-white-50">Facilities Add-ons:</span>
+                                            <span className="text-success fw-bold">+ ₹{totalFacilitiesPrice.toLocaleString()}</span>
+                                        </div>
+                                        <div className="ps-2 mt-1 border-start border-white-10 ms-1">
+                                            {Object.entries(formData.extraFacilities).map(([key, f]) =>
+                                                f.selected && (
+                                                    <div key={key} className="d-flex justify-content-between align-items-center mb-1" style={{ fontSize: '0.65rem' }}>
+                                                        <span className="text-white-50 text-capitalize">- {key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                                        <span className="text-white-50">₹{(Number(f.price || 0) * numDays).toLocaleString()}</span>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                    </>
                                 )}
 
                                 <div className="border-top border-white-10 pt-3 mt-3 d-flex justify-content-between align-items-end">
@@ -501,16 +517,16 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                 </h6>
                                 <span className="badge bg-danger rounded-pill x-small">Required</span>
                             </div>
-                            
+
                             <div className="p-3 bg-white rounded-4 border border-danger-subtle mb-3 text-center">
                                 <div className="text-muted small fw-bold text-uppercase mb-1" style={{ fontSize: '0.6rem' }}>Advance Amount ({numDays} {numDays > 1 ? 'Days' : 'Day'})</div>
                                 <div className="h4 fw-bold text-dark mb-3">₹{totalAdvance.toLocaleString()}</div>
-                                
+
                                 {/* QR Code for Desktop/Mobile Scans */}
                                 {venue.vendorId?.upiId && (
                                     <div className="mb-3 p-2 bg-light rounded-3 d-inline-block border">
-                                        <img 
-                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=${venue.vendorId.upiId}&pn=${venue.vendorId.fullName || venue.mahalName}&am=${totalAdvance}&cu=INR`)}`} 
+                                        <img
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=${venue.vendorId.upiId}&pn=${venue.vendorId.fullName || venue.mahalName}&am=${totalAdvance}&cu=INR`)}`}
                                             alt="Scan to Pay"
                                             style={{ width: '120px', height: '120px' }}
                                         />
@@ -519,7 +535,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                 )}
 
                                 <div className="d-flex flex-column gap-2">
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={handleUpiPay}
                                         className="btn btn-danger w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2"
@@ -534,12 +550,12 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                 <label className="form-label small fw-bold text-danger text-uppercase tracking-wider" style={{ fontSize: '0.65rem' }}>Transaction ID (after payment)</label>
                                 <div className="input-group shadow-sm rounded-4 overflow-hidden border border-danger-subtle">
                                     <span className="input-group-text bg-white border-0"><i className="bi bi-hash text-danger"></i></span>
-                                    <input 
-                                        type="text" 
-                                        className="form-control border-0 p-3" 
+                                    <input
+                                        type="text"
+                                        className="form-control border-0 p-3"
                                         placeholder="Enter 12-digit UPI Transaction ID"
                                         value={formData.transactionId}
-                                        onChange={e => setFormData({...formData, transactionId: e.target.value.replace(/[^a-zA-Z0-9]/g, '')})}
+                                        onChange={e => setFormData({ ...formData, transactionId: e.target.value.replace(/[^a-zA-Z0-9]/g, '') })}
                                         required
                                         minLength={12}
                                         maxLength={22}
@@ -553,11 +569,11 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                         </div>
                     </div>
                 </div>
- 
+
                 {/* Footer Actions */}
                 <div className="col-12 mt-2">
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         disabled={loading || formData.transactionId.length < 12}
                         className={`btn btn-dark w-100 rounded-pill py-3 fw-bold shadow-lg transform-active d-flex align-items-center justify-content-center gap-3 ${formData.transactionId.length < 12 ? 'opacity-50 cursor-not-allowed' : ''}`}
                         style={{ background: 'linear-gradient(135deg, #111, #333)', border: 'none' }}

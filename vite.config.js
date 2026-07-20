@@ -12,7 +12,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['Mehfil_One.png', 'mask-icon.svg'],
       manifest: {
         name: 'MEHFIL-ONE',
         short_name: 'MEHFIL',
@@ -22,17 +22,17 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: '/Mehfil_One.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/Mehfil_One.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/Mehfil_One.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
@@ -45,6 +45,9 @@ export default defineConfig({
       }
     })
   ],
+  optimizeDeps: {
+    include: ['socket.io-client', 'engine.io-client']
+  },
   server: {
     open: true
   }

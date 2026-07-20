@@ -753,6 +753,12 @@ body {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
+    
+    .p-tab-btn {
+        padding: 0.6rem 0.2rem;
+        font-size: 0.7rem;
+        gap: 0.3rem;
+    }
 }
 
 /* Buttons */

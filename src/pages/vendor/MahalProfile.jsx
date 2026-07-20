@@ -2,16 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import MahalView from './MahalView';
 import axios from 'axios';
 import { API_URL } from '../../utils/function';
-import { FaBuilding, FaMapMarkerAlt, FaUsers, FaSave, FaImage, FaTrash, FaPlusCircle, FaEdit, FaArrowLeft, FaRupeeSign, FaFilePdf, FaCamera, FaClock, FaCheckCircle, FaExclamationCircle, FaEye, FaEllipsisV, FaTags, FaSnowflake, FaMusic, FaParking, FaChevronCircleUp, FaTint, FaBroom, FaLayerGroup, FaVideo, FaBed, FaUtensils, FaStore, FaPaintBrush } from 'react-icons/fa';
+import { SUBSCRIPTION_PLANS } from '../../utils/constants';
+import { FaBuilding, FaMapMarkerAlt, FaUsers, FaSave, FaImage, FaTrash, FaPlusCircle, FaEdit, FaArrowLeft, FaRupeeSign, FaFilePdf, FaCamera, FaClock, FaCheckCircle, FaExclamationCircle, FaEye, FaEllipsisV, FaTags, FaSnowflake, FaMusic, FaParking, FaChevronCircleUp, FaTint, FaBroom, FaLayerGroup, FaVideo, FaBed, FaUtensils, FaStore, FaPaintBrush, FaCrown } from 'react-icons/fa';
 import '../../styles/superadmin/Dashboard.css';
 
 
 const MahalProfile = () => {
+    const premiumPlan = SUBSCRIPTION_PLANS.find(p => p.name === 'Premium');
+    const premiumPrice = premiumPlan ? premiumPlan.price : 24999;
+
     // View State: 'list' | 'form'
     const [view, setView] = useState('list');
     const [halls, setHalls] = useState([]);
     const [currentHall, setCurrentHall] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [imageLoading, setImageLoading] = useState(false);
     const [isViewMode, setIsViewMode] = useState(false);
 
     // Toast State
@@ -25,6 +30,13 @@ const MahalProfile = () => {
     // Delete Modal State
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [mahalToDelete, setMahalToDelete] = useState(null);
+
+    // Premium Upgrade Modal State
+    const [showPremiumModal, setShowPremiumModal] = useState(false);
+    
+    // Payment Modal State
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
     // References for file inputs
     const coverImageRef = useRef(null);
@@ -193,6 +205,17 @@ const MahalProfile = () => {
     };
 
     const handleAddClick = () => {
+        if (!vendorData?.upiId || vendorData.upiId.trim() === '') {
+            showToast('Please add your UPI ID in your profile before creating a Mahal.', 'error');
+            return;
+        }
+
+        const plan = vendorData?.plan || 'Standard';
+        if (plan === 'Standard' && halls.length >= 2) {
+            setShowPremiumModal(true);
+            return;
+        }
+
         // Auto-fill vendor data
         const autoFilledState = {
             ...initialHallState,
@@ -362,41 +385,54 @@ const MahalProfile = () => {
     // Note: We store the ACTUAL File object for upload, and a URL for preview.
     // To distinguish, we might check if 'file' property exists or if it's string.
 
-    const handleFileChange = (e, field, section = null) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const previewUrl = reader.result;
-                const fileObj = Object.assign(file, { preview: previewUrl }); // Attach preview to file object
+    const handleFileChange = async (e, field, section = null) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            setImageLoading(true);
+            
+            const processedFiles = [];
+            
+            await Promise.all(files.map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const fileObj = Object.assign(file, { preview: reader.result });
+                        processedFiles.push(fileObj);
+                        resolve();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }));
 
-                if (section) {
-                    if (Array.isArray(currentHall[section][field])) {
-                        setCurrentHall(prev => ({
-                            ...prev,
-                            [section]: {
-                                ...prev[section],
-                                [field]: [...prev[section][field], fileObj]
-                            }
-                        }));
-                    } else {
-                        setCurrentHall(prev => ({
-                            ...prev,
-                            [section]: {
-                                ...prev[section],
-                                [field]: fileObj
-                            }
-                        }));
-                    }
+            if (section) {
+                if (Array.isArray(currentHall[section][field])) {
+                    setCurrentHall(prev => ({
+                        ...prev,
+                        [section]: {
+                            ...prev[section],
+                            [field]: [...prev[section][field], ...processedFiles]
+                        }
+                    }));
                 } else {
-                    if (Array.isArray(currentHall[field])) {
-                        setCurrentHall(prev => ({ ...prev, [field]: [...prev[field], fileObj] }));
-                    } else {
-                        setCurrentHall(prev => ({ ...prev, [field]: fileObj }));
-                    }
+                    setCurrentHall(prev => ({
+                        ...prev,
+                        [section]: {
+                            ...prev[section],
+                            [field]: processedFiles[0]
+                        }
+                    }));
                 }
-            };
-            reader.readAsDataURL(file);
+            } else {
+                if (Array.isArray(currentHall[field])) {
+                    setCurrentHall(prev => ({ ...prev, [field]: [...prev[field], ...processedFiles] }));
+                } else {
+                    setCurrentHall(prev => ({ ...prev, [field]: processedFiles[0] }));
+                }
+            }
+            
+            // Reset input value so same files can be selected again if needed
+            e.target.value = null;
+            setImageLoading(false);
         }
     };
 
@@ -598,6 +634,86 @@ const MahalProfile = () => {
             showToast('Failed to save: ' + (error.response?.data?.msg || error.message), 'error');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUpgradePlan = async () => {
+        setIsProcessingPayment(true);
+        try {
+            const storedUser = localStorage.getItem('vendor_user');
+            if (!storedUser) {
+                showToast('Please login first', 'error');
+                setIsProcessingPayment(false);
+                return;
+            }
+            const user = JSON.parse(storedUser);
+            const userId = user.id || user._id;
+
+            // 1. Fetch Razorpay Key
+            const keyRes = await axios.get(`${API_URL}/payment/key`);
+            const razorpayKey = keyRes.data.key;
+
+            // 2. Create Order from backend
+            const orderRes = await axios.post(`${API_URL}/payment/create-order`, {
+                amount: premiumPrice, // Amount in INR
+                currency: 'INR',
+                receipt: `premium_upgrade_${userId}`
+            });
+
+            const order = orderRes.data;
+
+            // 3. Open Razorpay Checkout
+            const options = {
+                key: razorpayKey, 
+                amount: order.amount,
+                currency: order.currency,
+                name: "Mehfil One",
+                description: "Premium Plan Upgrade",
+                order_id: order.id,
+                handler: async function (response) {
+                    try {
+                        // 3. Verify Payment
+                        await axios.post(`${API_URL}/payment/verify`, {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+
+                        // 4. Upgrade Vendor Plan and Save Payment Record
+                        await axios.put(`${API_URL}/vendors/${userId}/upgrade`, {
+                            paymentId: response.razorpay_payment_id,
+                            orderId: response.razorpay_order_id,
+                            amount: premiumPrice
+                        });
+                        showToast('Successfully upgraded to Premium Plan!', 'success');
+                        fetchVendorDetails(); // Refresh vendor data
+                        setShowPaymentModal(false);
+                    } catch (err) {
+                        console.error('Verification Error', err);
+                        showToast('Payment verification failed. If money was deducted, contact support.', 'error');
+                    }
+                },
+                prefill: {
+                    name: user.fullName || 'Vendor',
+                    email: user.email || '',
+                    contact: user.phone || ''
+                },
+                theme: {
+                    color: "#C8102E" // Application Primary Red Theme
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (response){
+                showToast('Payment failed: ' + response.error.description, 'error');
+            });
+            rzp.open();
+            
+        } catch (error) {
+            console.error("Upgrade Error", error);
+            showToast('Failed to initiate payment', 'error');
+        } finally {
+            setIsProcessingPayment(false);
         }
     };
 
@@ -1189,8 +1305,16 @@ const MahalProfile = () => {
                                         </div>
                                     </div>
 
-                                    {/* 7. Images (Updated logic for existing vs new) */}
-                                    <div className="col-12 col-xl-10"><div className="card border-0 shadow-sm rounded-4 p-4"><h4 style={sectionTitleStyle}>7. Images / Media</h4><div className="row g-4"><div className="col-md-4"><label className="form-label fw-bold small text-secondary mb-2">Main Cover Image <span className="text-danger">*</span></label><div className="position-relative rounded-3 bg-light border d-flex align-items-center justify-content-center" style={{ height: '200px', cursor: 'pointer' }} onClick={() => coverImageRef.current.click()}>{currentHall.coverImage ? (<img src={getPreview(currentHall.coverImage)} alt="Cover" className="w-100 h-100 object-fit-cover rounded-3" />) : (<div className="text-center text-muted"><FaCamera size={24} /><p className="small mb-0 mt-2">Upload Cover</p></div>)}</div><input type="file" ref={coverImageRef} accept="image/*" className="d-none" onChange={(e) => handleFileChange(e, 'coverImage')} /></div><div className="col-md-8"><div className="d-flex justify-content-between align-items-center mb-2"><label className="form-label fw-bold small text-secondary mb-0">Gallery Images (min 3) <span className="text-danger">*</span></label><button type="button" className="btn btn-sm btn-outline-danger" onClick={() => galleryImagesRef.current.click()}>+ Add Images</button></div><div className="d-flex gap-2 overflow-auto pb-2" style={{ whiteSpace: 'nowrap' }}>{currentHall.galleryImages.map((img, idx) => (<div key={idx} className="position-relative d-inline-block" style={{ width: '120px', height: '100px' }}><img src={getPreview(img)} alt="Gallery" className="w-100 h-100 object-fit-cover rounded shadow-sm border" /><button type="button" className="btn btn-danger btn-sm p-0 position-absolute top-0 end-0 m-1 rounded-circle" style={{ width: '20px', height: '20px' }} onClick={() => removeImage(idx, 'galleryImages')}><FaTrash size={10} /></button></div>))}</div><input type="file" ref={galleryImagesRef} accept="image/*" className="d-none" onChange={(e) => handleFileChange(e, 'galleryImages')} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Video URL (YouTube/Drive)</label><input type="url" className="form-control" style={inputStyle} name="videoUrl" value={currentHall.videoUrl} onChange={handleFormChange} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Brochure PDF (Optional)</label><input type="file" className="form-control" style={inputStyle} accept=".pdf" onChange={(e) => handleFileChange(e, 'brochureUrl')} /></div></div></div></div>
+                                    {/* 7. Images / Media (Mixing Valid URLs and File objects for upload) */}
+                                    <div className="col-12 col-xl-10"><div className="card border-0 shadow-sm rounded-4 p-4 position-relative">
+                                        {imageLoading && (
+                                            <div className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center rounded-4" style={{ backgroundColor: 'rgba(255,255,255,0.8)', zIndex: 10 }}>
+                                                <div className="spinner-border text-danger" role="status">
+                                                    <span className="visually-hidden">Loading images...</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <h4 style={sectionTitleStyle}>7. Images / Media</h4><div className="row g-4"><div className="col-md-4"><label className="form-label fw-bold small text-secondary mb-2">Main Cover Image <span className="text-danger">*</span></label><div className="position-relative rounded-3 bg-light border d-flex align-items-center justify-content-center" style={{ height: '200px', cursor: 'pointer' }} onClick={() => coverImageRef.current.click()}>{currentHall.coverImage ? (<img src={getPreview(currentHall.coverImage)} alt="Cover" className="w-100 h-100 object-fit-cover rounded-3" />) : (<div className="text-center text-muted"><FaCamera size={24} /><p className="small mb-0 mt-2">Upload Cover</p></div>)}</div><input type="file" ref={coverImageRef} accept="image/*" className="d-none" onChange={(e) => handleFileChange(e, 'coverImage')} /></div><div className="col-md-8"><div className="d-flex justify-content-between align-items-center mb-2"><label className="form-label fw-bold small text-secondary mb-0">Gallery Images (min 3) <span className="text-danger">*</span></label><button type="button" className="btn btn-sm btn-outline-danger" onClick={() => galleryImagesRef.current.click()}>+ Add Images</button></div><div className="d-flex gap-2 overflow-auto pb-2" style={{ whiteSpace: 'nowrap' }}>{currentHall.galleryImages.map((img, idx) => (<div key={idx} className="position-relative d-inline-block" style={{ width: '120px', height: '100px' }}><img src={getPreview(img)} alt="Gallery" className="w-100 h-100 object-fit-cover rounded shadow-sm border" /><button type="button" className="btn btn-danger btn-sm p-0 position-absolute top-0 end-0 m-1 rounded-circle" style={{ width: '20px', height: '20px' }} onClick={() => removeImage(idx, 'galleryImages')}><FaTrash size={10} /></button></div>))}</div><input type="file" ref={galleryImagesRef} accept="image/*" className="d-none" multiple onChange={(e) => handleFileChange(e, 'galleryImages')} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Video URL (YouTube/Drive)</label><input type="url" className="form-control" style={inputStyle} name="videoUrl" value={currentHall.videoUrl} onChange={handleFormChange} /></div><div className="col-md-6"><label className="form-label fw-bold small text-secondary">Brochure PDF (Optional)</label><input type="file" className="form-control" style={inputStyle} accept=".pdf" onChange={(e) => handleFileChange(e, 'brochureUrl')} /></div></div></div></div>
 
                                     {/* 8. Decoration Module (REFACTORED for Multiple Types) */}
                                     <div className="col-12 col-xl-10">
@@ -1374,6 +1498,120 @@ const MahalProfile = () => {
                                     <div className="modal-footer border-top-0 p-3 bg-light d-flex justify-content-center gap-2">
                                         <button type="button" className="btn btn-light rounded-pill px-4 fw-bold shadow-sm" onClick={() => setShowDeleteModal(false)}>Cancel</button>
                                         <button type="button" className="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" onClick={confirmDelete}>Delete Mahal</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )
+            }
+
+            {/* Premium Upgrade Modal */}
+            {
+                showPremiumModal && (
+                    <>
+                        <div className="modal-backdrop fade show"></div>
+                        <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ zIndex: 1055 }}>
+                            <div className="modal-dialog modal-dialog-centered">
+                                <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden position-relative">
+                                    <div className="position-absolute top-0 start-0 w-100 bg-warning" style={{ height: '6px' }}></div>
+                                    <div className="modal-header border-bottom-0 p-4 pb-0 justify-content-end">
+                                        <button type="button" className="btn-close" onClick={() => setShowPremiumModal(false)}></button>
+                                    </div>
+                                    <div className="modal-body p-4 pt-0 text-center">
+                                        <div className="mb-4">
+                                            <div className="d-inline-flex align-items-center justify-content-center bg-warning bg-opacity-10 text-warning rounded-circle p-4 mb-3" style={{ width: '80px', height: '80px', boxShadow: '0 0 20px rgba(255, 193, 7, 0.4)' }}>
+                                                <FaCrown size={40} />
+                                            </div>
+                                            <h3 className="fw-bold text-dark mb-2">Upgrade to Premium</h3>
+                                            <p className="text-secondary px-3" style={{ fontSize: '1rem', lineHeight: '1.6' }}>
+                                                You've reached the limit of <strong>2 Mahals</strong> on your Standard Plan. Unlock unlimited Mahals and premium features to grow your business!
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="bg-light rounded-4 p-3 mb-4 text-start">
+                                            <h6 className="fw-bold mb-3 text-dark"><FaCheckCircle className="text-success me-2"/> Premium Benefits</h6>
+                                            <ul className="list-unstyled mb-0 small text-secondary">
+                                                <li className="mb-2"><FaCheckCircle className="text-success me-2"/> Unlimited Mahal Listings</li>
+                                                <li className="mb-2"><FaCheckCircle className="text-success me-2"/> Priority Search Placement</li>
+                                                <li className="mb-2"><FaCheckCircle className="text-success me-2"/> Advanced Analytics Dashboard</li>
+                                                <li><FaCheckCircle className="text-success me-2"/> Dedicated Support</li>
+                                            </ul>
+                                        </div>
+
+                                        <button 
+                                            className="btn btn-warning w-100 rounded-pill py-3 fw-bold text-dark mb-2 shadow" 
+                                            style={{ fontSize: '1.1rem', background: 'linear-gradient(45deg, #ffc107, #ffeb3b)', border: 'none' }}
+                                            onClick={() => {
+                                                setShowPremiumModal(false);
+                                                setShowPaymentModal(true);
+                                            }}
+                                        >
+                                            <FaCrown className="me-2" /> View Premium Plans
+                                        </button>
+                                        <button 
+                                            className="btn btn-light w-100 rounded-pill py-2 fw-bold text-secondary" 
+                                            onClick={() => setShowPremiumModal(false)}
+                                        >
+                                            Maybe Later
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )
+            }
+
+            {/* Payment Modal */}
+            {
+                showPaymentModal && (
+                    <>
+                        <div className="modal-backdrop fade show"></div>
+                        <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ zIndex: 1055 }}>
+                            <div className="modal-dialog modal-dialog-centered">
+                                <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden position-relative">
+                                    <div className="position-absolute top-0 start-0 w-100 bg-success" style={{ height: '6px' }}></div>
+                                    <div className="modal-header border-bottom-0 p-4 pb-0 justify-content-between align-items-center">
+                                        <h5 className="modal-title fw-bold text-dark m-0"><FaRupeeSign className="text-success me-2"/> Secure Checkout</h5>
+                                        <button type="button" className="btn-close" onClick={() => !isProcessingPayment && setShowPaymentModal(false)}></button>
+                                    </div>
+                                    <div className="modal-body p-4 pt-3 text-center">
+                                        <div className="bg-light border border-success border-opacity-25 rounded-4 p-4 mb-4 text-center">
+                                            <h6 className="fw-bold text-secondary mb-1">Selected Plan</h6>
+                                            <h3 className="fw-bold text-dark mb-3"><FaCrown className="text-warning me-2"/>Premium</h3>
+                                            
+                                            <div className="d-flex justify-content-between align-items-center border-top border-bottom py-3 mb-3 text-start">
+                                                <div>
+                                                    <div className="fw-bold text-dark">Annual Subscription</div>
+                                                    <div className="small text-secondary">Unlimited listings & premium support</div>
+                                                </div>
+                                                <div className="fw-bold text-dark" style={{ fontSize: '1.2rem' }}>₹{premiumPrice.toLocaleString()}</div>
+                                            </div>
+                                            
+                                            <div className="d-flex justify-content-between align-items-center fw-bold text-success" style={{ fontSize: '1.1rem' }}>
+                                                <div>Total Amount to Pay</div>
+                                                <div>₹{premiumPrice.toLocaleString()}</div>
+                                            </div>
+                                        </div>
+
+                                        <button 
+                                            className="btn btn-success w-100 rounded-pill py-3 fw-bold text-white mb-3 shadow d-flex align-items-center justify-content-center" 
+                                            style={{ fontSize: '1.1rem' }}
+                                            onClick={handleUpgradePlan}
+                                            disabled={isProcessingPayment}
+                                        >
+                                            {isProcessingPayment ? (
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            ) : (
+                                                <FaRupeeSign className="me-1" />
+                                            )}
+                                            {isProcessingPayment ? 'Processing Payment...' : 'Proceed to Payment'}
+                                        </button>
+                                        
+                                        <div className="small text-secondary">
+                                            <FaCheckCircle className="text-success me-1"/> 100% Secure & Encrypted Payment
+                                        </div>
                                     </div>
                                 </div>
                             </div>

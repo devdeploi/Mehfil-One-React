@@ -36,6 +36,7 @@ const LandingPage = () => {
                 homeRef={homeRef} 
                 activeTab={activeTab} 
                 setActiveTab={setActiveTab} 
+                venuesRef={venuesRef}
             />
 
             <Venues venuesRef={venuesRef} />

@@ -109,8 +109,11 @@ const UserOtpVerificationPage = () => {
 
     return (
         <div className="vr-page-container">
-            <nav className="vr-navbar">
-                <div className="vr-nav-brand">MEHFIL ONE</div>
+            <nav className="vr-navbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 5%' }}>
+                <div className="d-flex align-items-center gap-2" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+                    <img src="/Mehfil_One.png" alt="Mehfil One Logo" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
+                    <span className="vr-nav-brand">MEHFIL ONE</span>
+                </div>
                 <button onClick={() => navigate('/')} className="vr-nav-btn">Home</button>
             </nav>
 
