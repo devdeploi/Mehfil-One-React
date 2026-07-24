@@ -26,6 +26,8 @@ const VendorProfile = () => {
     const [originalProfile, setOriginalProfile] = useState(null);
     const [showDowngradeModal, setShowDowngradeModal] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [showRenewModal, setShowRenewModal] = useState(false);
+    const [isYearlyBilling, setIsYearlyBilling] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: '' });
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
@@ -79,6 +81,18 @@ const VendorProfile = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        
+        if (name === 'phone') {
+            if (/\D/.test(value)) {
+                showToast('Please enter numbers only.', 'error');
+                return;
+            }
+            if (value.length > 10) {
+                showToast('Phone number limit is 10 digits.', 'error');
+                return;
+            }
+        }
+        
         setProfile(prev => ({ ...prev, [name]: value }));
     };
 
@@ -120,7 +134,7 @@ const VendorProfile = () => {
             const userId = user.id || user._id;
 
             const premiumPlan = SUBSCRIPTION_PLANS.find(p => p.name === 'Premium');
-            const premiumPrice = premiumPlan ? premiumPlan.price : 24999;
+            const premiumPrice = premiumPlan ? (isYearlyBilling ? premiumPlan.yearlyPrice : premiumPlan.monthlyPrice) : 24999;
 
             // 1. Fetch Razorpay Key
             const keyRes = await axios.get(`${API_URL}/payment/key`);
@@ -156,7 +170,8 @@ const VendorProfile = () => {
                         const upgradeRes = await axios.put(`${API_URL}/vendors/${userId}/upgrade`, {
                             paymentId: response.razorpay_payment_id,
                             orderId: response.razorpay_order_id,
-                            amount: premiumPrice
+                            amount: premiumPrice,
+                            billingCycle: isYearlyBilling ? 'yearly' : 'monthly'
                         });
                         showToast('Successfully upgraded to Premium Plan!', 'success');
                         
@@ -204,6 +219,7 @@ const VendorProfile = () => {
     };
 
     const handleRenew = async () => {
+        setShowRenewModal(false);
         setIsProcessingPayment(true);
         try {
             const storedUser = localStorage.getItem('vendor_user');
@@ -216,7 +232,7 @@ const VendorProfile = () => {
             const userId = user.id || user._id;
 
             const planDetails = SUBSCRIPTION_PLANS.find(p => p.name === profile.plan) || SUBSCRIPTION_PLANS[0];
-            const planPrice = planDetails.price;
+            const planPrice = isYearlyBilling ? planDetails.yearlyPrice : planDetails.monthlyPrice;
 
             // 1. Fetch Razorpay Key
             const keyRes = await axios.get(`${API_URL}/payment/key`);
@@ -253,7 +269,8 @@ const VendorProfile = () => {
                             paymentId: response.razorpay_payment_id,
                             orderId: response.razorpay_order_id,
                             amount: planPrice,
-                            planName: profile.plan
+                            planName: profile.plan,
+                            billingCycle: isYearlyBilling ? 'yearly' : 'monthly'
                         });
                         showToast(`Successfully renewed ${profile.plan} Plan!`, 'success');
                         
@@ -320,6 +337,12 @@ const VendorProfile = () => {
 
     const handleSave = async (e) => {
         e.preventDefault();
+
+        if (profile.phone && profile.phone.length !== 10) {
+            showToast('Phone number must be exactly 10 digits.', 'error');
+            return;
+        }
+
 
         const storedUser = localStorage.getItem('vendor_user');
         if (!storedUser) return;
@@ -448,16 +471,35 @@ const VendorProfile = () => {
                                 <h4 className="fw-bold text-dark mb-3 text-center">Unlock Premium Features</h4>
                                 {premiumPlanDetails ? (
                                     <>
+                                        <div className="d-flex justify-content-center mb-4">
+                                            <div className="bg-light p-1 rounded-pill border" style={{ display: 'inline-flex' }}>
+                                                <button
+                                                    className={`btn rounded-pill px-4 py-2 ${!isYearlyBilling ? 'btn-primary shadow-sm' : 'btn-light text-muted border-0'}`}
+                                                    onClick={() => setIsYearlyBilling(false)}
+                                                    style={{ fontSize: '0.9rem', fontWeight: 600, transition: 'all 0.3s' }}
+                                                >
+                                                    Monthly
+                                                </button>
+                                                <button
+                                                    className={`btn rounded-pill px-4 py-2 ${isYearlyBilling ? 'btn-primary shadow-sm' : 'btn-light text-muted border-0'}`}
+                                                    onClick={() => setIsYearlyBilling(true)}
+                                                    style={{ fontSize: '0.9rem', fontWeight: 600, transition: 'all 0.3s' }}
+                                                >
+                                                    Yearly
+                                                </button>
+                                            </div>
+                                        </div>
                                         <ul className="list-unstyled mb-4 mx-auto" style={{ maxWidth: '300px', lineHeight: '2' }}>
                                             {premiumPlanDetails.features.map((feature, idx) => (
                                                 <li key={idx}><i className="bi bi-check-circle-fill text-success me-2"></i>{feature}</li>
                                             ))}
                                         </ul>
                                         <div className="p-3 bg-light rounded-3 text-center mb-2 mx-4 border">
-                                            <span className="text-muted d-block mb-1 small text-uppercase fw-bold">One-time payment</span>
+                                            <span className="text-muted d-block mb-1 small text-uppercase fw-bold">Amount to pay</span>
                                             <h2 className="text-dark fw-bold mb-0">
-                                                {premiumPlanDetails.currency}{premiumPlanDetails.price.toLocaleString('en-IN')}
-                                                <span className="fs-6 text-muted fw-normal">{premiumPlanDetails.period}</span>
+                                                {premiumPlanDetails.currency}
+                                                {isYearlyBilling ? premiumPlanDetails.yearlyPrice.toLocaleString('en-IN') : premiumPlanDetails.monthlyPrice.toLocaleString('en-IN')}
+                                                <span className="fs-6 text-muted fw-normal">{isYearlyBilling ? '/yr' : '/mo'}</span>
                                             </h2>
                                         </div>
                                     </>
@@ -472,6 +514,63 @@ const VendorProfile = () => {
                                     style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
                                 >
                                     <FaCrown /> Pay & Upgrade
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Renew Confirm Modal */}
+            {showRenewModal && (
+                <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+                            <div className="modal-header text-white border-0" style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}>
+                                <h5 className="modal-title fw-bold d-flex align-items-center gap-2">
+                                    <FaCalendarCheck /> Renew {profile.plan} Plan
+                                </h5>
+                                <button type="button" className="btn-close btn-close-white" onClick={() => setShowRenewModal(false)}></button>
+                            </div>
+                            <div className="modal-body p-4 text-start">
+                                <h4 className="fw-bold text-dark mb-3 text-center">Select Billing Cycle</h4>
+                                <div className="d-flex justify-content-center mb-4">
+                                    <div className="bg-light p-1 rounded-pill border" style={{ display: 'inline-flex' }}>
+                                        <button
+                                            className={`btn rounded-pill px-4 py-2 ${!isYearlyBilling ? 'btn-primary shadow-sm' : 'btn-light text-muted border-0'}`}
+                                            onClick={() => setIsYearlyBilling(false)}
+                                            style={{ fontSize: '0.9rem', fontWeight: 600, transition: 'all 0.3s' }}
+                                        >
+                                            Monthly
+                                        </button>
+                                        <button
+                                            className={`btn rounded-pill px-4 py-2 ${isYearlyBilling ? 'btn-primary shadow-sm' : 'btn-light text-muted border-0'}`}
+                                            onClick={() => setIsYearlyBilling(true)}
+                                            style={{ fontSize: '0.9rem', fontWeight: 600, transition: 'all 0.3s' }}
+                                        >
+                                            Yearly
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="p-3 bg-light rounded-3 text-center mb-2 mx-4 border">
+                                    <span className="text-muted d-block mb-1 small text-uppercase fw-bold">Amount to pay</span>
+                                    <h2 className="text-dark fw-bold mb-0">
+                                        {SUBSCRIPTION_PLANS[0].currency}
+                                        {(() => {
+                                            const planDetails = SUBSCRIPTION_PLANS.find(p => p.name === profile.plan) || SUBSCRIPTION_PLANS[0];
+                                            return isYearlyBilling ? planDetails.yearlyPrice.toLocaleString('en-IN') : planDetails.monthlyPrice.toLocaleString('en-IN');
+                                        })()}
+                                        <span className="fs-6 text-muted fw-normal">{isYearlyBilling ? '/yr' : '/mo'}</span>
+                                    </h2>
+                                </div>
+                            </div>
+                            <div className="modal-footer border-0 justify-content-center pb-4 pt-0 gap-3">
+                                <button type="button" className="btn btn-light px-4 rounded-pill fw-bold text-muted border" onClick={() => setShowRenewModal(false)}>Cancel</button>
+                                <button type="button" className="btn px-4 rounded-pill fw-bold text-white shadow-sm d-flex align-items-center gap-2" 
+                                    onClick={handleRenew}
+                                    style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}
+                                >
+                                    <FaCalendarCheck /> Pay & Renew
                                 </button>
                             </div>
                         </div>
@@ -568,12 +667,18 @@ const VendorProfile = () => {
 
                                         const createdTime = profile.createdAt ? new Date(profile.createdAt).getTime() : 0;
                                         const startTime = profile.planStartDate ? new Date(profile.planStartDate).getTime() : 0;
+                                        
+                                        // Determine if it's monthly/offer or yearly
+                                        const isMonthly = (expiry.getTime() - startTime) < (1000 * 60 * 60 * 24 * 60);
+                                        const planDurationLabel = isMonthly ? "(Launch Offer / Monthly)" : "(Yearly)";
+
                                         const isRenewed = (startTime - createdTime) > (1000 * 60 * 60 * 24);
                                         const startDateFormatted = profile.planStartDate
                                             ? new Date(profile.planStartDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
                                             : 'N/A';
                                         const expiryFormatted = expiry.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
+                                        const userPlan = SUBSCRIPTION_PLANS.find(p => p.name === profile.plan) || SUBSCRIPTION_PLANS[0];
                                         const isPremium = profile.plan === 'Premium';
 
                                         // --- Status Config ---
@@ -615,10 +720,13 @@ const VendorProfile = () => {
                                                         </div>
                                                         <div>
                                                             <h5 className="fw-bold mb-0" style={{ fontSize: '1.1rem' }}>
-                                                                {profile.plan} Plan
+                                                                {profile.plan} Plan <span className="text-muted" style={{ fontSize: '0.8rem', fontWeight: 'normal' }}>{planDurationLabel}</span>
                                                             </h5>
                                                             <small className="text-secondary">
-                                                                {isPremium ? 'Unlimited listings & premium benefits' : 'Up to 2 Mahal listings'}
+                                                                {userPlan.limits?.mahals === -1 
+                                                                    ? 'Unlimited listings & premium benefits' 
+                                                                    : `Up to ${userPlan.limits?.mahals || 2} Mahal listings`
+                                                                }
                                                             </small>
                                                         </div>
                                                     </div>
@@ -651,36 +759,33 @@ const VendorProfile = () => {
                                                 </div>
 
                                                 {/* Days left progress bar (only when active) */}
-                                                {!isExpired && (
-                                                    <div className="mb-3">
-                                                        <div className="d-flex justify-content-between mb-1" style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                                                            <span>Plan usage</span>
-                                                            <span>{365 - daysLeft} / 365 days used</span>
+                                                {!isExpired && (() => {
+                                                    const totalPlanDays = Math.max(1, Math.ceil((expiry.getTime() - startTime) / (1000 * 60 * 60 * 24)));
+                                                    const usedDays = Math.max(0, totalPlanDays - Math.max(0, daysLeft));
+                                                    const progressPercent = Math.max(0, Math.min((usedDays / totalPlanDays) * 100, 100));
+                                                    const barColor = daysLeft > (totalPlanDays * 0.25) ? 'success' : daysLeft > (totalPlanDays * 0.1) ? 'warning' : 'danger';
+                                                    return (
+                                                        <div className="mb-3">
+                                                            <div className="d-flex justify-content-between mb-1" style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                                                <span>Plan usage</span>
+                                                                <span>{usedDays} / {totalPlanDays} days used</span>
+                                                            </div>
+                                                            <div className="progress rounded-pill" style={{ height: 8, background: '#e5e7eb' }}>
+                                                                <div
+                                                                    className={`progress-bar rounded-pill bg-${barColor}`}
+                                                                    style={{ width: `${progressPercent}%`, transition: 'width 0.6s ease' }}
+                                                                />
+                                                            </div>
                                                         </div>
-                                                        <div className="progress rounded-pill" style={{ height: 8, background: '#e5e7eb' }}>
-                                                            <div
-                                                                className={`progress-bar rounded-pill bg-${daysLeft > 90 ? 'success' : daysLeft > 30 ? 'warning' : 'danger'}`}
-                                                                style={{ width: `${Math.max(0, Math.min(((365 - daysLeft) / 365) * 100, 100))}%`, transition: 'width 0.6s ease' }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                    );
+                                                })()}
 
-                                                {/* Features row */}
                                                 <div className="d-flex flex-wrap gap-2 mb-4">
-                                                    {isPremium ? (
-                                                        <>
-                                                            <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: '#fef3c7', color: '#92400e', fontSize: '0.75rem' }}><FaInfinity /> Unlimited Mahal</span>
-                                                            <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: '#fef3c7', color: '#92400e', fontSize: '0.75rem' }}><FaStar /> Priority Support</span>
-                                                            <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: '#fef3c7', color: '#92400e', fontSize: '0.75rem' }}><FaShieldAlt /> Advanced Analytics</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '0.75rem' }}><FaCheckCircle /> Up to 2 Mahal</span>
-                                                            <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '0.75rem' }}><FaCheckCircle /> Basic Gallery</span>
-                                                            <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: '#dbeafe', color: '#1e40af', fontSize: '0.75rem' }}><FaCheckCircle /> Email Support</span>
-                                                        </>
-                                                    )}
+                                                    {userPlan.features.map((feature, idx) => (
+                                                        <span key={idx} className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: isPremium ? '#fef3c7' : '#dbeafe', color: isPremium ? '#92400e' : '#1e40af', fontSize: '0.75rem' }}>
+                                                            {isPremium && idx === 0 ? <FaInfinity /> : <FaCheckCircle />} {feature}
+                                                        </span>
+                                                    ))}
                                                 </div>
 
                                                 {/* Action Buttons */}
@@ -690,7 +795,7 @@ const VendorProfile = () => {
                                                             <button
                                                                 type="button"
                                                                 className="btn btn-sm fw-semibold d-flex align-items-center gap-2"
-                                                                onClick={handleRenew}
+                                                                onClick={() => setShowRenewModal(true)}
                                                                 disabled={isProcessingPayment}
                                                                 style={{
                                                                     background: 'linear-gradient(135deg, #16a34a, #15803d)',

@@ -5,12 +5,15 @@ import { HiCalendar } from 'react-icons/hi';
 
 const Footer = ({ scrollToSection, refs }) => {
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
-    const [subscribed, setSubscribed] = useState(false);
 
-    const handleSubscribe = (e) => {
-        e.preventDefault();
-        if (email) { setSubscribed(true); setEmail(''); }
+
+    const handleNavigation = (refKey) => {
+        if (scrollToSection && refs && refs[refKey]) {
+            scrollToSection(refs[refKey]);
+        } else {
+            navigate('/');
+            // After navigating to home, it will just load at the top, which is fine
+        }
     };
 
     const year = new Date().getFullYear();
@@ -36,20 +39,20 @@ const Footer = ({ scrollToSection, refs }) => {
                             <span className="ft-logo-text">MEHFIL ONE</span>
                         </div>
                         <p className="ft-tagline">
-                            The premium solution for venue management. Elevating events, one booking at a time.
+                            <strong>The Smart Platform for Modern Venue Management.</strong><br /><br />
+                            Whether you're managing a wedding hall, banquet, convention center, or event venue, Mehfil One empowers vendors to streamline operations while giving customers a seamless booking experience from inquiry to confirmation.
                         </p>
 
                         {/* Social icons */}
                         <div className="ft-socials">
                             {[
-                                { icon: <FaInstagram />, label: 'Instagram' },
-                                { icon: <FaTwitter />,   label: 'Twitter'   },
-                                { icon: <FaLinkedin />,  label: 'LinkedIn'  },
-                                { icon: <FaFacebook />,  label: 'Facebook'  },
-                            ].map(({ icon, label }) => (
-                                <button key={label} className="ft-social-btn" aria-label={label}>
+                                { icon: <FaFacebook />,  label: 'Facebook', url: 'https://www.facebook.com/profile.php?id=61575485918223' },
+                                { icon: <FaInstagram />, label: 'Instagram', url: 'https://www.instagram.com/safprotechnologysolutions' },
+                                { icon: <FaLinkedin />,  label: 'LinkedIn', url: 'https://www.linkedin.com/company/safpro-technology-solutions' },
+                            ].map(({ icon, label, url }) => (
+                                <a key={label} href={url} target="_blank" rel="noopener noreferrer" className="ft-social-btn" aria-label={label} style={{ textDecoration: 'none' }}>
                                     {icon}
-                                </button>
+                                </a>
                             ))}
                         </div>
                     </div>
@@ -58,9 +61,9 @@ const Footer = ({ scrollToSection, refs }) => {
                     <div className="ft-col">
                         <h4 className="ft-col-title">Quick Links</h4>
                         <ul className="ft-links">
-                            <li onClick={() => scrollToSection(refs.home)}>Home</li>
-                            <li onClick={() => scrollToSection(refs.about)}>Features</li>
-                            <li onClick={() => scrollToSection(refs.plans)}>Pricing</li>
+                            <li onClick={() => handleNavigation('home')}>Home</li>
+                            <li onClick={() => handleNavigation('about')}>Features</li>
+                            <li onClick={() => handleNavigation('plans')}>Pricing</li>
                             <li onClick={() => navigate('/vendor/register')}>Register</li>
                         </ul>
                     </div>
@@ -69,10 +72,10 @@ const Footer = ({ scrollToSection, refs }) => {
                     <div className="ft-col">
                         <h4 className="ft-col-title">Resources</h4>
                         <ul className="ft-links">
-                            <li>Help Center</li>
-                            <li>Privacy Policy</li>
-                            <li>Terms of Service</li>
-                            <li>Vendor Guidelines</li>
+                            <li onClick={() => navigate('/resources/help-center')}>Help Center</li>
+                            <li onClick={() => navigate('/resources/privacy')}>Privacy Policy</li>
+                            <li onClick={() => navigate('/resources/terms')}>Terms of Service</li>
+                            <li onClick={() => navigate('/resources/vendor-guidelines')}>Vendor Guidelines</li>
                         </ul>
                     </div>
 
@@ -80,33 +83,20 @@ const Footer = ({ scrollToSection, refs }) => {
                     <div className="ft-col">
                         <h4 className="ft-col-title">Get in Touch</h4>
                         <ul className="ft-contact-list">
-                            <li><span className="ft-contact-icon"><FaHeadset /></span>Support 24/7</li>
-                            <li><span className="ft-contact-icon"><FaBell /></span>+91 98765 43210</li>
+                            <li><span className="ft-contact-icon"><FaHeadset /></span>Email Support</li>
+                            <li><span className="ft-contact-icon"><FaBell /></span>+91 97896 21043</li>
                             <li><span className="ft-contact-icon"><FaEnvelope /></span>support@mehfilone.com</li>
-                            <li><span className="ft-contact-icon"><FaMapMarkerAlt /></span>Mumbai, Maharashtra</li>
+                            <li style={{ alignItems: 'flex-start' }}>
+                                <span className="ft-contact-icon" style={{ marginTop: '2px' }}><FaMapMarkerAlt /></span>
+                                <div style={{ lineHeight: '1.4' }}>
+                                    2nd Floor, VSB EDIFICE, 303,<br />
+                                    Bazaar St, Pernambut,<br />
+                                    Tamil Nadu 635810
+                                </div>
+                            </li>
                         </ul>
 
-                        {/* Newsletter */}
-                        <div className="ft-newsletter">
-                            <p className="ft-nl-label">Stay updated</p>
-                            {subscribed ? (
-                                <div className="ft-nl-success">✓ You're subscribed!</div>
-                            ) : (
-                                <form className="ft-nl-form" onSubmit={handleSubscribe}>
-                                    <input
-                                        type="email"
-                                        className="ft-nl-input"
-                                        placeholder="Enter your email"
-                                        value={email}
-                                        onChange={e => setEmail(e.target.value)}
-                                        required
-                                    />
-                                    <button type="submit" className="ft-nl-btn">
-                                        <FaArrowRight />
-                                    </button>
-                                </form>
-                            )}
-                        </div>
+
                     </div>
                 </div>
 
@@ -117,9 +107,9 @@ const Footer = ({ scrollToSection, refs }) => {
                 <div className="ft-bottom">
                     <p className="ft-copy">© {year} Mehfil One. All rights reserved.</p>
                     <div className="ft-bottom-links">
-                        <span>Privacy</span>
-                        <span>Terms</span>
-                        <span>Cookies</span>
+                        <span style={{ cursor: 'default' }}>
+                            Powered by <a href="https://safprotech.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#dc3545', textDecoration: 'none', fontWeight: 'bold' }}>SAFPRO TECHNOLOGY SOLUTIONS</a>
+                        </span>
                     </div>
                 </div>
             </div>

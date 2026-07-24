@@ -9,21 +9,23 @@ const VendorList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [totalVendors, setTotalVendors] = useState(0);
+    const [activeTab, setActiveTab] = useState('Pending');
 
     // UI States
     const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
     const [statusModal, setStatusModal] = useState({ show: false, id: null, currentStatus: '', targetStatus: '' });
     const [viewModal, setViewModal] = useState({ show: false, vendor: null });
     const [toast, setToast] = useState({ show: false, message: '', type: '' });
-    const [isProcessing, setIsProcessing] = useState(false); // New state for loader
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [rejectModal, setRejectModal] = useState({ show: false, id: null, reason: '' });
 
     useEffect(() => {
         fetchVendors();
-    }, [currentPage]);
+    }, [currentPage, activeTab]);
 
     const fetchVendors = async () => {
         try {
-            const response = await axios.get(`${API_URL}/vendors?page=${currentPage}`);
+            const response = await axios.get(`${API_URL}/vendors?page=${currentPage}&status=${activeTab}`);
             setVendors(response.data.vendors);
             setTotalPages(response.data.totalPages);
             setTotalVendors(response.data.totalVendors);
@@ -76,37 +78,43 @@ const VendorList = () => {
         setStatusModal({ show: true, id, currentStatus, targetStatus: target });
     };
 
-    const handleStatusToggle = async () => {
+    const handleStatusToggle = async (reason = '') => {
+        const actualReason = typeof reason === 'string' ? reason : '';
         if (!statusModal.id) return;
-        setIsProcessing(true); // Start processing
+        setIsProcessing(true);
 
         try {
             const newStatus = statusModal.targetStatus;
-            await axios.put(`${API_URL}/vendors/${statusModal.id}/status`, { status: newStatus });
+            await axios.put(`${API_URL}/vendors/${statusModal.id}/status`, { status: newStatus, reason: actualReason || undefined });
 
             showToast(`Vendor status updated to ${newStatus} successfully`, 'success');
-
-            // Close modals after success
             setStatusModal({ show: false, id: null, currentStatus: '', targetStatus: '' });
             setViewModal({ show: false, vendor: null });
+            setRejectModal({ show: false, id: null, reason: '' });
 
             fetchVendors();
         } catch (error) {
             console.error('Error updating status:', error);
             showToast('Failed to update status', 'error');
         } finally {
-            setIsProcessing(false); // Stop processing
+            setIsProcessing(false);
         }
     };
 
     const confirmModalAction = (targetStatus) => {
         if (!viewModal.vendor) return;
-        setStatusModal({
-            show: true,
-            id: viewModal.vendor._id,
-            currentStatus: viewModal.vendor.status,
-            targetStatus: targetStatus
-        });
+        if (targetStatus === 'Inactive') {
+            // Open reject reason modal instead
+            setRejectModal({ show: true, id: viewModal.vendor._id, reason: '' });
+            setStatusModal({ show: false, id: viewModal.vendor._id, currentStatus: viewModal.vendor.status, targetStatus: 'Inactive' });
+        } else {
+            setStatusModal({
+                show: true,
+                id: viewModal.vendor._id,
+                currentStatus: viewModal.vendor.status,
+                targetStatus: targetStatus
+            });
+        }
     };
 
     const confirmDelete = (id) => {
@@ -135,9 +143,66 @@ const VendorList = () => {
         }
     };
 
+    const isNew = (dateString) => {
+        if (!dateString) return false;
+        const diffTime = Math.abs(new Date() - new Date(dateString));
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        return diffDays <= 2;
+    };
+
     return (
         <div className="container-fluid">
-            <h1 className="sa-page-title">Vendor Management</h1>
+            <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+                <h1 className="sa-page-title mb-0">Vendor Management</h1>
+                <div 
+                    style={{
+                        display: 'flex', 
+                        background: '#f1f5f9', 
+                        padding: '4px', 
+                        borderRadius: '30px',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
+                    }}
+                >
+                    <button 
+                        type="button" 
+                        onClick={() => { setActiveTab('Pending'); setCurrentPage(1); }}
+                        style={{
+                            minWidth: '140px',
+                            border: 'none',
+                            padding: '10px 24px',
+                            borderRadius: '30px',
+                            background: activeTab === 'Pending' ? 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)' : 'transparent',
+                            color: activeTab === 'Pending' ? '#fff' : '#475569',
+                            fontWeight: '600',
+                            fontSize: '0.95rem',
+                            letterSpacing: '0.3px',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: activeTab === 'Pending' ? '0 4px 12px rgba(220, 38, 38, 0.35)' : 'none'
+                        }}
+                    >
+                        Pending
+                    </button>
+                    <button 
+                        type="button" 
+                        onClick={() => { setActiveTab('Active'); setCurrentPage(1); }}
+                        style={{
+                            minWidth: '140px',
+                            border: 'none',
+                            padding: '10px 24px',
+                            borderRadius: '30px',
+                            background: activeTab === 'Active' ? 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)' : 'transparent',
+                            color: activeTab === 'Active' ? '#fff' : '#475569',
+                            fontWeight: '600',
+                            fontSize: '0.95rem',
+                            letterSpacing: '0.3px',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: activeTab === 'Active' ? '0 4px 12px rgba(220, 38, 38, 0.35)' : 'none'
+                        }}
+                    >
+                        Active
+                    </button>
+                </div>
+            </div>
             <div className="sa-table-container">
                 <table className="table sa-table">
                     <thead>
@@ -154,7 +219,12 @@ const VendorList = () => {
                         {vendors.map((vendor, index) => (
                             <tr key={vendor._id}>
                                 <td>{index + 1}</td>
-                                <td>{vendor.fullName}</td>
+                                <td>
+                                    {vendor.fullName}
+                                    {activeTab === 'Pending' && isNew(vendor.createdAt) && (
+                                        <span className="badge bg-danger ms-2" style={{fontSize: '0.65rem', verticalAlign: 'middle'}}>New</span>
+                                    )}
+                                </td>
                                 <td>{vendor.email}</td>
                                 <td>{vendor.phone}</td>
                                 <td><span className={getStatusBadge(vendor.status)}>{vendor.status}</span></td>
@@ -236,6 +306,60 @@ const VendorList = () => {
                         <p className="mb-0 text-secondary" style={{ fontSize: '0.8rem' }}>{toast.message}</p>
                     </div>
                 </div>
+            )}
+
+            {/* Reject Reason Modal */}
+            {rejectModal.show && (
+                <>
+                    <div className="modal-backdrop fade show" style={{ zIndex: 1070, backdropFilter: 'blur(5px)' }}></div>
+                    <div className="modal fade show d-block" tabIndex="-1" style={{ zIndex: 1075 }}>
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content border-0 shadow rounded-4 overflow-hidden" style={{ borderRadius: '20px' }}>
+                                <div className="modal-body p-4">
+                                    <div
+                                        className="d-inline-flex align-items-center justify-content-center mb-4 rounded-circle"
+                                        style={{
+                                            width: '80px', height: '80px',
+                                            background: '#fef2f2', color: '#dc2626',
+                                            border: '4px solid #ffffff', boxShadow: '0 0 0 4px #fee2e2'
+                                        }}
+                                    >
+                                        <FaTimes size={30} />
+                                    </div>
+                                    <h4 className="fw-bold mb-1" style={{ color: '#0f172a' }}>Reject Vendor</h4>
+                                    <p className="text-secondary mb-3" style={{ fontSize: '0.9rem' }}>Please provide a reason. It will be sent to the vendor via email.</p>
+                                    <textarea
+                                        className="form-control rounded-3 mb-4"
+                                        rows={4}
+                                        placeholder="Enter rejection reason (e.g., Incomplete documentation, Invalid GST number)..."
+                                        value={rejectModal.reason}
+                                        onChange={(e) => setRejectModal(prev => ({ ...prev, reason: e.target.value }))}
+                                        style={{ border: '1.5px solid #e2e8f0', fontSize: '0.95rem', resize: 'none' }}
+                                    />
+                                    <div className="d-flex justify-content-end gap-3">
+                                        <button
+                                            type="button"
+                                            className="btn px-4 py-2 fw-semibold"
+                                            onClick={() => setRejectModal({ show: false, id: null, reason: '' })}
+                                            style={{ background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '12px' }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn px-4 py-2 fw-bold text-white"
+                                            disabled={!rejectModal.reason.trim() || isProcessing}
+                                            onClick={() => handleStatusToggle(rejectModal.reason)}
+                                            style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', border: 'none', borderRadius: '12px' }}
+                                        >
+                                            {isProcessing ? 'Rejecting...' : 'Confirm Rejection'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
             )}
 
             {/* Delete Confirmation Modal */}

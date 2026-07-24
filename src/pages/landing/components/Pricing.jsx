@@ -6,13 +6,25 @@ import { SUBSCRIPTION_PLANS } from '../../../utils/constants';
 const Pricing = ({ plansRef }) => {
     const navigate = useNavigate();
     const [hoveredId, setHoveredId] = useState(null);
+    const [isYearly, setIsYearly] = useState(false);
 
     const handleGetPlan = (plan) => {
-        navigate('/vendor/register', { state: { selectedPlan: plan } });
+        const planWithPricing = {
+            ...plan,
+            price: isYearly ? plan.yearlyPrice : 0, // Free trial for first month
+            period: isYearly ? '/yr' : '/mo',
+            isYearly
+        };
+        navigate('/vendor/register', { state: { selectedPlan: planWithPricing } });
     };
 
     return (
         <section ref={plansRef} className="pr-section">
+            {!isYearly && (
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', background: '#dc3545', color: '#fff', padding: '10px 0', zIndex: 10, fontSize: '1.1rem', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', boxShadow: '0 4px 12px rgba(220,53,69,0.3)' }}>
+                    <marquee scrollamount="12">🎉Launch Offers one month Free trial 🎉 Launch Offers one month Free trial 🎉 Launch Offers one month Free trial 🎉 Launch Offers one month Free trial </marquee>
+                </div>
+            )}
             {/* Background blobs */}
             <div className="pr-blob pr-blob-1" />
             <div className="pr-blob pr-blob-2" />
@@ -26,11 +38,27 @@ const Pricing = ({ plansRef }) => {
                         PRICING
                     </span>
                     <h2 className="pr-title">
-                        Simple, Transparent <span className="pr-accent">Pricing</span>
+                        Choose Your Perfect <span className="pr-accent">Plan</span>
                     </h2>
                     <p className="pr-subtitle">
                         Choose the plan that fits your venue business. No hidden charges, ever.
                     </p>
+                    <div className="pr-toggle-container">
+                        <div className="pr-toggle">
+                            <button 
+                                className={`pr-toggle-btn ${!isYearly ? 'active' : ''}`} 
+                                onClick={() => setIsYearly(false)}
+                            >
+                                Monthly
+                            </button>
+                            <button 
+                                className={`pr-toggle-btn ${isYearly ? 'active' : ''}`} 
+                                onClick={() => setIsYearly(true)}
+                            >
+                                Yearly <span className="pr-toggle-badge">Save ~20%</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Cards */}
@@ -61,15 +89,22 @@ const Pricing = ({ plansRef }) => {
                                 <div className="pr-plan-label">{plan.name}</div>
 
                                 {/* Price */}
-                                <div className="pr-price-row">
+                                <div className="pr-price-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {!isYearly && (
+                                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginRight: '10px' }}>
+                                            {plan.currency}{plan.monthlyPrice}
+                                        </span>
+                                    )}
                                     <span className="pr-currency">{plan.currency}</span>
-                                    <span className="pr-amount">{plan.price.toLocaleString()}</span>
-                                    <span className="pr-period">/{plan.period.replace('/', '')}</span>
+                                    <span className="pr-amount">
+                                        {isYearly ? plan.yearlyPrice.toLocaleString() : "0"}
+                                    </span>
+                                    <span className="pr-period">/{isYearly ? 'yr' : 'mo'}</span>
                                 </div>
 
                                 {/* Monthly equivalent */}
-                                <div className="pr-monthly">
-                                    ≈ {plan.currency}{Math.round(plan.price / 12).toLocaleString()} / month
+                                <div className="pr-monthly" style={{ visibility: isYearly ? 'visible' : 'hidden' }}>
+                                    ≈ {plan.currency}{Math.round(plan.yearlyPrice / 12).toLocaleString()} / month
                                 </div>
 
                                 {/* Divider */}
@@ -170,7 +205,7 @@ const Pricing = ({ plansRef }) => {
                 /* Header */
                 .pr-header {
                     text-align: center;
-                    margin-bottom: 64px;
+                    margin-bottom: 56px;
                 }
                 .pr-pill {
                     display: inline-flex;
@@ -205,7 +240,50 @@ const Pricing = ({ plansRef }) => {
                     font-size: 1rem;
                     line-height: 1.8;
                     max-width: 440px;
-                    margin: 0 auto;
+                    margin: 0 auto 28px;
+                }
+
+                /* Toggle */
+                .pr-toggle-container {
+                    display: flex;
+                    justify-content: center;
+                }
+                .pr-toggle {
+                    display: inline-flex;
+                    background: rgba(255, 255, 255, 0.7);
+                    border: 1px solid rgba(220,53,69,0.15);
+                    border-radius: 999px;
+                    padding: 4px;
+                    backdrop-filter: blur(10px);
+                }
+                .pr-toggle-btn {
+                    background: transparent;
+                    border: none;
+                    color: #64748b;
+                    font-size: 0.88rem;
+                    font-weight: 700;
+                    padding: 10px 24px;
+                    border-radius: 999px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .pr-toggle-btn.active {
+                    background: #ffffff;
+                    color: #dc3545;
+                    box-shadow: 0 4px 12px rgba(220,53,69,0.12);
+                }
+                .pr-toggle-badge {
+                    background: #ffebed;
+                    color: #dc3545;
+                    font-size: 0.6rem;
+                    font-weight: 800;
+                    padding: 3px 8px;
+                    border-radius: 999px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
                 }
 
                 /* Cards row */

@@ -130,6 +130,10 @@ const SuperAdminLayout = () => {
                         <i className="bi bi-cash-stack"></i>
                         <span className="sa-dock-label">Payments</span>
                     </NavLink>
+                    <NavLink to="/superadmin/hero-settings" className="sa-dock-item">
+                        <i className="bi bi-images"></i>
+                        <span className="sa-dock-label">Hero Settings</span>
+                    </NavLink>
                 </div>
             </nav>
         </div>

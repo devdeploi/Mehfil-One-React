@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import './LandingPage.css';
 import Navbar from '../../components/Navbar';
 
@@ -11,6 +12,7 @@ import Pricing from './components/Pricing';
 import Footer from './components/Footer';
 const LandingPage = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
+    const location = useLocation();
 
     // Section Refs for Scrolling
     const homeRef = useRef(null);
@@ -22,6 +24,14 @@ const LandingPage = () => {
     const scrollToSection = (ref) => {
         ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
+
+    useEffect(() => {
+        if (location.state?.scrollTo === 'venues') {
+            setTimeout(() => {
+                scrollToSection(venuesRef);
+            }, 100);
+        }
+    }, [location]);
 
     const refs = { home: homeRef, about: aboutRef, venues: venuesRef, flow: flowRef, plans: plansRef };
 

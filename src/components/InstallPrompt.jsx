@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FiDownload, FiSmartphone, FiTablet, FiMonitor, FiX } from 'react-icons/fi';
 import './InstallPrompt.css';
 
 const InstallPrompt = () => {
+  const location = useLocation();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -63,7 +65,7 @@ const InstallPrompt = () => {
     }, 400); // Wait for the fadeOut animation to finish
   };
 
-  if (!showPrompt && !isClosing) return null;
+  if (location.pathname !== '/' || (!showPrompt && !isClosing)) return null;
 
   return (
     <div className={`pwa-modal-overlay ${isClosing ? 'closing' : ''}`}>

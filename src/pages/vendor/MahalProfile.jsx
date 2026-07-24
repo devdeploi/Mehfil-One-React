@@ -210,8 +210,11 @@ const MahalProfile = () => {
             return;
         }
 
-        const plan = vendorData?.plan || 'Standard';
-        if (plan === 'Standard' && halls.length >= 2) {
+        const planName = vendorData?.plan || 'Standard';
+        const userPlan = SUBSCRIPTION_PLANS.find(p => p.name === planName) || SUBSCRIPTION_PLANS[0];
+        const mahalLimit = userPlan.limits?.mahals || 2;
+
+        if (mahalLimit !== -1 && halls.length >= mahalLimit) {
             setShowPremiumModal(true);
             return;
         }
@@ -302,7 +305,8 @@ const MahalProfile = () => {
             setMahalToDelete(null);
         } catch (error) {
             console.error("Error deleting mahal", error);
-            showToast('Error deleting mahal', 'error');
+            showToast(error.response?.data?.msg || 'Error deleting mahal', 'error');
+            setShowDeleteModal(false);
         }
     };
 
@@ -388,6 +392,19 @@ const MahalProfile = () => {
     const handleFileChange = async (e, field, section = null) => {
         const files = Array.from(e.target.files);
         if (files.length > 0) {
+            if (field === 'galleryImages') {
+                const planName = vendorData?.plan || 'Standard';
+                const userPlan = SUBSCRIPTION_PLANS.find(p => p.name === planName) || SUBSCRIPTION_PLANS[0];
+                const galleryLimit = userPlan.limits?.galleryPhotos || 5;
+
+                const currentCount = currentHall.galleryImages ? currentHall.galleryImages.length : 0;
+                if (galleryLimit !== -1 && (currentCount + files.length) > galleryLimit) {
+                    showToast(`Your current plan limits you to ${galleryLimit} gallery photos.`, 'error');
+                    e.target.value = null;
+                    return;
+                }
+            }
+
             setImageLoading(true);
             
             const processedFiles = [];
@@ -888,6 +905,13 @@ const MahalProfile = () => {
                                                         <option value="Wedding Hall">Wedding Hall</option>
                                                         <option value="Convention Center">Convention Center</option>
                                                         <option value="Mini Hall">Mini Hall</option>
+                                                        <option value="Banquet Hall">Banquet Hall</option>
+                                                        <option value="Party Hall">Party Hall</option>
+                                                        <option value="Resort">Resort</option>
+                                                        <option value="Hotel">Hotel</option>
+                                                        <option value="Open Lawn">Open Lawn</option>
+                                                        <option value="Conference Hall">Conference Hall</option>
+                                                        <option value="Auditorium">Auditorium</option>
                                                     </select>
                                                 </div>
                                                 <div className="col-md-4">

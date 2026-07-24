@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../../../utils/function';
-import { FaUsers, FaMapMarkerAlt, FaRupeeSign, FaStar, FaChevronRight, FaSnowflake } from 'react-icons/fa';
+import { FaUsers, FaMapMarkerAlt, FaRupeeSign, FaStar, FaChevronRight, FaSnowflake, FaBuilding } from 'react-icons/fa';
 
 const Venues = ({ venuesRef }) => {
     const navigate = useNavigate();
@@ -165,8 +165,24 @@ const Venues = ({ venuesRef }) => {
                                 </div>
                             ))
                         ) : (
-                            <div className="col-12 text-center py-5">
-                                <h3 className="text-muted">No venues found</h3>
+                            <div className="col-12 py-5 animate-fade-in">
+                                <div className="text-center mx-auto premium-empty-state" style={{ maxWidth: '700px' }}>
+                                    <div className="icon-glow-wrapper">
+                                        <FaBuilding size={40} color="#C8102E" />
+                                    </div>
+                                    <h3 className="fw-bolder mb-3 gradient-text" style={{ fontSize: '2.2rem', letterSpacing: '-0.02em' }}>
+                                        Curating <span className="accent-gradient-text">Premium</span> Venues
+                                    </h3>
+                                    <p className="text-muted mx-auto mb-4" style={{ fontSize: '1.1rem', lineHeight: '1.7', maxWidth: '520px', fontWeight: 400 }}>
+                                        Our venue partners are currently setting up their exclusive spaces. 
+                                        Beautiful mahals and world-class wedding halls will be available here very soon.
+                                    </p>
+                                    <div className="d-flex align-items-center justify-content-center gap-2 mt-5" style={{ opacity: 0.7 }}>
+                                        <div className="spinner-grow spinner-grow-sm text-danger" role="status" style={{ width: '10px', height: '10px' }}></div>
+                                        <div className="spinner-grow spinner-grow-sm text-danger" role="status" style={{ width: '10px', height: '10px', animationDelay: '0.2s' }}></div>
+                                        <div className="spinner-grow spinner-grow-sm text-danger" role="status" style={{ width: '10px', height: '10px', animationDelay: '0.4s' }}></div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -241,6 +257,72 @@ const Venues = ({ venuesRef }) => {
                 .transform-hover:hover {
                     transform: scale(1.05) translateY(-3px);
                     box-shadow: 0 15px 30px rgba(200, 16, 46, 0.4) !important;
+                }
+                
+                /* Premium Empty State Styles */
+                .premium-empty-state {
+                    position: relative;
+                    background: white;
+                    border-radius: 30px;
+                    padding: 4rem 3rem;
+                    overflow: hidden;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
+                    z-index: 1;
+                    border: 1px solid rgba(255,255,255,0.8);
+                }
+                .premium-empty-state::before {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    left: -50%;
+                    width: 200%;
+                    height: 200%;
+                    background: radial-gradient(circle at center, rgba(200, 16, 46, 0.04) 0%, transparent 60%);
+                    z-index: -1;
+                    animation: pulse-glow 8s infinite alternate;
+                }
+                @keyframes pulse-glow {
+                    0% { transform: scale(1); opacity: 0.8; }
+                    100% { transform: scale(1.1); opacity: 1; }
+                }
+                .icon-glow-wrapper {
+                    position: relative;
+                    width: 100px;
+                    height: 100px;
+                    margin: 0 auto 2.5rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: white;
+                    border-radius: 50%;
+                    box-shadow: 
+                        0 15px 35px rgba(200, 16, 46, 0.1),
+                        inset 0 0 0 1px rgba(200, 16, 46, 0.05);
+                }
+                .icon-glow-wrapper::after {
+                    content: '';
+                    position: absolute;
+                    inset: -15px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, rgba(200, 16, 46, 0.15), rgba(227, 24, 55, 0.05));
+                    z-index: -1;
+                    filter: blur(12px);
+                    animation: icon-pulse 3s infinite ease-in-out;
+                }
+                @keyframes icon-pulse {
+                    0% { transform: scale(0.95); opacity: 0.8; }
+                    50% { transform: scale(1.05); opacity: 1; }
+                    100% { transform: scale(0.95); opacity: 0.8; }
+                }
+                .gradient-text {
+                    background: linear-gradient(135deg, #111 0%, #444 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+                .accent-gradient-text {
+                    background: linear-gradient(135deg, #C8102E, #E31837);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
                 }
             `}</style>
         </section>

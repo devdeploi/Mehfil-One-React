@@ -33,8 +33,12 @@ const BookingList = () => {
     const [verifyAmount, setVerifyAmount] = useState('');
     const [isFullAdvance, setIsFullAdvance] = useState(false);
 
+    // Collect Balance States
+    const [showCollectBalanceModal, setShowCollectBalanceModal] = useState(false);
+    const [collectBalanceAmount, setCollectBalanceAmount] = useState('');
+
     // Editing Status States
-    const [tempStatus, setTempStatus] = useState({ bookingStatus: '', paymentStatus: '' });
+    const [tempStatus, setTempStatus] = useState({ bookingStatus: '', paymentStatus: '', balancePaid: 0 });
 
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
@@ -121,6 +125,60 @@ const BookingList = () => {
         }
     };
 
+    const handleSaveManagementChanges = async () => {
+        setIsUpdating(true);
+        try {
+            const updates = {};
+            if (tempStatus.bookingStatus !== selectedBooking.bookingStatus) updates.bookingStatus = tempStatus.bookingStatus;
+            if (tempStatus.paymentStatus !== selectedBooking.paymentStatus) updates.paymentStatus = tempStatus.paymentStatus;
+            if (tempStatus.balancePaid !== (selectedBooking.balancePaid || 0)) updates.balancePaid = tempStatus.balancePaid;
+
+            if (Object.keys(updates).length > 0) {
+                await axios.put(`${API_URL}/bookings/${selectedBooking._id}`, updates);
+                showToast("Management changes saved successfully!", "success");
+                
+                const vendorData = JSON.parse(localStorage.getItem('vendor_user'));
+                fetchAllBookings(vendorData.id || vendorData._id, currentPage);
+                
+                setSelectedBooking(prev => ({ ...prev, ...updates }));
+                setShowDetailsModal(false);
+            }
+        } catch (error) {
+            console.error("Failed to save changes", error);
+            showToast("Failed to save changes", "error");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleCollectBalance = () => {
+        if (!collectBalanceAmount || isNaN(collectBalanceAmount) || Number(collectBalanceAmount) <= 0) {
+            showToast("Please enter a valid amount", "error");
+            return;
+        }
+        
+        const currentBalancePaid = tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0);
+        const newBalancePaid = currentBalancePaid + Number(collectBalanceAmount);
+        
+        const isFullyPaid = (Number(selectedBooking.advancePaid || 0) + newBalancePaid) >= Number(selectedBooking.totalAmount || 0);
+        
+        let newPaymentStatus = tempStatus.paymentStatus;
+        if (isFullyPaid) {
+            newPaymentStatus = 'Paid';
+        } else if (tempStatus.paymentStatus === 'Pending') {
+            newPaymentStatus = 'Partial';
+        }
+        
+        setTempStatus(prev => ({
+            ...prev,
+            balancePaid: newBalancePaid,
+            paymentStatus: newPaymentStatus
+        }));
+        
+        showToast("Balance staged. Please click 'Save Management Changes' to confirm.", "success");
+        setShowCollectBalanceModal(false);
+    };
+
     const getStatusBadge = (status) => {
         switch (status) {
             case 'Confirmed':
@@ -181,318 +239,236 @@ const BookingList = () => {
             ? new Date(booking.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
             : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
-        const statusColor = booking.bookingStatus === 'Confirmed' ? '#16a34a'
-            : booking.bookingStatus === 'Cancelled' ? '#dc2626' : '#d97706';
-        const payStatusColor = booking.paymentStatus === 'Paid' ? '#16a34a' : '#d97706';
+        // Format dates and numbers safely
+        const formatMoney = (amount) => Number(amount || 0).toLocaleString('en-IN');
+        
+        const calculatePending = () => Math.max(0, Number(booking.totalAmount || 0) - Number(booking.advancePaid || 0) - Number(booking.balancePaid || 0));
 
-        // Build selected facilities list
         const selectedFacilities = booking.extraFacilities
             ? Object.entries(booking.extraFacilities).filter(([_, f]) => f.selected)
             : [];
-
-        const facilityRowsHTML = selectedFacilities.length > 0
-            ? selectedFacilities.map(([key, f]) => `
-                <tr>
-                    <td style="padding:3px 8px;color:rgba(255,255,255,0.55);font-size:10.5px;">+ ${key.charAt(0).toUpperCase() + key.slice(1)}</td>
-                    <td style="padding:3px 8px;text-align:right;font-size:10.5px;color:rgba(255,255,255,0.75);font-weight:600;">&#8377;${Number(f.price || 0).toLocaleString('en-IN')}</td>
-                </tr>`).join('')
-            : `<tr><td colspan="2" style="padding:3px 8px;color:rgba(255,255,255,0.35);font-size:10px;">No extra facilities</td></tr>`;
-
-        const facilityBadgesHTML = selectedFacilities.length > 0
-            ? selectedFacilities.map(([key]) =>
-                `<span style="display:inline-block;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:2px 9px;font-size:9.5px;font-weight:600;color:rgba(255,255,255,0.7);margin:2px;">${key.charAt(0).toUpperCase() + key.slice(1)}</span>`
-              ).join('')
-            : `<span style="color:rgba(255,255,255,0.35);font-size:9.5px;">Standard amenities</span>`;
 
         const shiftLabel = booking.isMultiDay && booking.dayShifts
             ? Object.values(booking.dayShifts).join(' / ')
             : (booking.shift || 'Full Day');
 
+        const statusWatermark = booking.paymentStatus === 'Paid' 
+            ? '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-45deg);font-size:120px;font-weight:bold;color:rgba(0,0,0,0.04);z-index:-1;pointer-events:none;white-space:nowrap;">PAID IN FULL</div>'
+            : booking.paymentStatus === 'Cancelled'
+            ? '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-45deg);font-size:120px;font-weight:bold;color:rgba(0,0,0,0.04);z-index:-1;pointer-events:none;white-space:nowrap;">CANCELLED</div>'
+            : '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-45deg);font-size:120px;font-weight:bold;color:rgba(0,0,0,0.04);z-index:-1;pointer-events:none;white-space:nowrap;">BALANCE DUE</div>';
+
         const receiptHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<title>Receipt #${bookingId}</title>
+<title>Invoice #${bookingId}</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-  .sheet, .sheet *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
-  .sheet{
-    width:794px;
-    min-height:1123px;
-    background:#fff;
-    display:flex;
-    flex-direction:column;
+  body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background: #fff; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet { 
+    width: 794px; min-height: 1123px; box-sizing: border-box; margin: auto; background: white; 
+    display: flex; flex-direction: column; position: relative; overflow: hidden;
   }
+  
+  /* Top Banner */
+  .top-banner { padding: 50px 60px 30px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; }
+  .logo-text { font-size: 32px; font-weight: bold; margin: 0; line-height: 1; color: #000; text-transform: uppercase; }
+  .logo-sub { font-size: 11px; color: #666; font-weight: normal; margin-top: 6px; text-transform: uppercase; }
+  
+  .invoice-title { font-size: 40px; font-weight: bold; color: #000; margin: 0; line-height: 1; text-transform: uppercase; text-align: right; }
+  .invoice-sub { font-size: 14px; color: #333; text-align: right; margin-top: 8px; }
 
-  /* ── TOP DARK HEADER ── */
-  .hdr{
-    background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
-    padding:18px 28px 14px;
-    position:relative;
-    overflow:hidden;
-  }
-  .hdr::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:rgba(220,38,38,0.12);border-radius:50%;}
-  .hdr-row1{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-  .brand{display:flex;align-items:center;gap:10px;}
-  .brand-icon{width:34px;height:34px;background:#dc2626;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
-  .brand-name{color:#fff;font-size:15px;font-weight:800;letter-spacing:-0.3px;}
-  .brand-sub{color:rgba(255,255,255,0.4);font-size:9px;margin-top:1px;}
-  .receipt-pill{background:rgba(220,38,38,0.18);border:1px solid rgba(220,38,38,0.4);color:#fca5a5;padding:4px 12px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;}
-  .hdr-row2{display:flex;justify-content:space-between;align-items:flex-end;}
-  .ref-label{color:rgba(255,255,255,0.35);font-size:8.5px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:2px;}
-  .ref-id{color:#fff;font-size:22px;font-weight:800;letter-spacing:2px;}
-  .status-right{text-align:right;}
-  .status-chip{display:inline-block;padding:4px 14px;border-radius:20px;font-size:10px;font-weight:700;}
-  .issued{color:rgba(255,255,255,0.35);font-size:9px;margin-top:4px;}
+  /* Body Content */
+  .content { padding: 40px 60px; flex: 1; display: flex; flex-direction: column; z-index: 1; position: relative; }
+  
+  /* Details Section */
+  .details-grid { display: flex; justify-content: space-between; margin-bottom: 40px; gap: 40px; }
+  .bill-to { flex: 1; padding-right: 20px; }
+  .box-label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  .client-name { font-size: 20px; font-weight: bold; color: #000; margin-bottom: 8px; text-transform: capitalize; }
+  .client-contact { font-size: 14px; color: #333; line-height: 1.6; }
+  
+  .invoice-meta { width: 300px; }
+  .meta-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
+  .meta-label { font-size: 13px; color: #666; }
+  .meta-value { font-size: 13px; color: #000; font-weight: bold; }
 
-  /* ── MAHAL BANNER ── */
-  .mahal-banner{
-    background:linear-gradient(90deg,#dc2626,#b91c1c);
-    padding:10px 28px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-  }
-  .mahal-label{color:rgba(255,255,255,0.65);font-size:8.5px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;}
-  .mahal-name{color:#fff;font-size:18px;font-weight:800;letter-spacing:-0.3px;}
-  .mahal-right{text-align:right;}
-  .mahal-date-lbl{color:rgba(255,255,255,0.6);font-size:8px;letter-spacing:1px;text-transform:uppercase;}
-  .mahal-date-val{color:#fff;font-size:12px;font-weight:700;margin-top:1px;}
+  /* Venue Info Banner */
+  .venue-banner { background: #fafafa; border: 1px solid #ccc; padding: 15px 20px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; }
+  .venue-name { font-size: 16px; font-weight: bold; color: #000; }
+  .venue-dates { font-size: 14px; color: #333; }
 
-  /* ── COLOUR STRIPE ── */
-  .stripe{height:3px;background:linear-gradient(90deg,#dc2626,#f97316,#eab308,#dc2626);}
+  /* Table */
+  .table-wrapper { margin-bottom: 40px; border: 1px solid #000; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: #f0f0f0; color: #000; border-bottom: 2px solid #000; }
+  th { padding: 12px 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; text-align: left; }
+  th.right { text-align: right; }
+  td { padding: 15px 20px; border-bottom: 1px solid #ccc; background: white; }
+  tr:last-child td { border-bottom: none; }
+  .item-title { font-size: 14px; font-weight: bold; color: #000; margin-bottom: 4px; }
+  .item-desc { font-size: 12px; color: #666; }
+  td.amount { text-align: right; font-size: 14px; font-weight: bold; color: #000; }
 
-  /* ── BODY ── */
-  .body{padding:16px 28px;flex:1;display:flex;flex-direction:column;gap:12px;}
+  /* Lower Section */
+  .lower-section { display: flex; justify-content: space-between; align-items: flex-end; }
+  
+  .auth-sign { text-align: center; margin-bottom: 10px; margin-left: 20px; }
+  .sign-line { width: 180px; height: 1px; background: #000; margin: 0 auto 10px; }
+  .sign-text { font-size: 12px; color: #000; font-weight: bold; text-transform: uppercase; }
 
-  /* customer row */
-  .cust-row{display:flex;gap:10px;}
-  .cust-main{flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;}
-  .cust-name{font-size:16px;font-weight:800;color:#0f172a;}
-  .cust-phone{font-size:10.5px;color:#64748b;font-weight:500;margin-top:2px;}
-  .pill-box{display:flex;gap:8px;flex-direction:column;justify-content:center;}
-  .mini-pill{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;text-align:center;min-width:72px;}
-  .mini-pill .lbl{font-size:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:700;}
-  .mini-pill .val{font-size:11px;font-weight:700;color:#0f172a;margin-top:1px;}
+  .summary-box { width: 350px; }
+  .sum-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+  .sum-row.total { border-top: 2px solid #000; border-bottom: none; padding-top: 15px; margin-top: 5px; }
+  .sum-row.total .lbl { font-size: 18px; font-weight: bold; color: #000; }
+  .sum-row.total .val { font-size: 20px; font-weight: bold; color: #000; }
 
-  /* info grid */
-  .info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-  .info-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;}
-  .info-card .lbl{font-size:7.5px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:3px;}
-  .info-card .val{font-size:11px;font-weight:700;color:#0f172a;line-height:1.3;}
+  /* Payment Badge */
+  .payment-status-box { margin-top: 20px; display: inline-block; padding: 10px 24px; font-size: 16px; font-weight: bold; text-transform: uppercase; border: 2px solid #000; float: right; clear: both; color: #000; }
 
-  /* 2-column lower section */
-  .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-
-  /* left details */
-  .detail-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;}
-  .detail-title{font-size:7.5px;color:#94a3b8;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:7px;display:flex;align-items:center;gap:6px;}
-  .detail-title::after{content:'';flex:1;height:1px;background:#e2e8f0;}
-  .detail-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #f1f5f9;}
-  .detail-row:last-child{border-bottom:none;}
-  .dr-key{font-size:10px;color:#64748b;}
-  .dr-val{font-size:10.5px;font-weight:700;color:#0f172a;}
-
-  /* financial dark card */
-  .fin-card{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:10px;overflow:hidden;}
-  .fin-hdr{padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.07);}
-  .fin-hdr-txt{color:rgba(255,255,255,0.4);font-size:7.5px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;}
-  .fin-table{width:100%;border-collapse:collapse;}
-  .fin-table td{padding:3.5px 14px;}
-  .fin-lbl{color:rgba(255,255,255,0.6);font-size:10px;}
-  .fin-val{text-align:right;color:rgba(255,255,255,0.85);font-weight:600;font-size:10px;}
-  .fin-divider td{padding:2px 14px;border-top:1px solid rgba(255,255,255,0.07);}
-  .fin-total-row{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.1);}
-  .total-lbl{color:rgba(255,255,255,0.4);font-size:7.5px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;}
-  .total-amt{font-size:24px;font-weight:800;color:#f87171;letter-spacing:-0.5px;}
-  .pay-badge{padding:5px 16px;border-radius:20px;font-size:10px;font-weight:700;}
-
-  ${booking.transactionId ? `
-  .txn-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:7px 12px;}
-  .txn-lbl{font-size:7.5px;color:#93c5fd;text-transform:uppercase;letter-spacing:1px;font-weight:700;}
-  .txn-val{font-size:12px;font-weight:700;color:#1d4ed8;letter-spacing:0.5px;margin-top:2px;}
-  ` : ''}
-
-  /* footer */
-  .footer{border-top:1px solid #f1f5f9;padding:10px 28px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;margin-top:auto;}
-  .footer-note{font-size:9px;color:#94a3b8;max-width:320px;line-height:1.55;}
-  .footer-stamp{background:#0f172a;border-radius:8px;padding:7px 14px;text-align:center;}
-  .fs-lbl{font-size:7px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.35);}
-  .fs-val{font-size:11px;font-weight:700;margin-top:1px;}
+  /* Footer */
+  .footer { padding: 30px 60px; color: #666; font-size: 12px; line-height: 1.5; border-top: 2px solid #000; display: flex; justify-content: space-between; align-items: center; background: #fafafa; margin-top: auto; }
+  .footer-title { color: #000; font-weight: bold; margin-bottom: 6px; font-size: 14px; text-transform: uppercase; }
+  .footer-right { text-align: right; color: #000; font-weight: bold; }
 </style>
 </head>
 <body>
 <div class="sheet">
+  ${statusWatermark}
 
-  <!-- HEADER -->
-  <div class="hdr">
-    <div class="hdr-row1">
-      <div class="brand">
-        <div class="brand-icon">&#128197;</div>
-        <div>
-          <div class="brand-name">BookMyVenue</div>
-          <div class="brand-sub">Venue Booking Platform</div>
-        </div>
-      </div>
-      <div class="receipt-pill">Official Receipt</div>
-    </div>
-    <div class="hdr-row2">
+  <div class="top-banner">
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <img src="/Mehfil_One.png" alt="Logo" style="height: 50px; width: 50px; object-fit: contain; display: block;" />
       <div>
-        <div class="ref-label">Booking Reference</div>
-        <div class="ref-id">#${bookingId}</div>
-      </div>
-      <div class="status-right">
-        <div class="status-chip" style="background:${statusColor}25;border:1px solid ${statusColor}50;color:${statusColor};">${booking.bookingStatus}</div>
-        <div class="issued">Issued: ${createdAt}</div>
+        <div class="logo-text">MEHFIL-ONE</div>
+        <div class="logo-sub" style="margin-top: 5px;">Premium Venue Booking</div>
       </div>
     </div>
-  </div>
-
-  <!-- MAHAL NAME BANNER -->
-  <div class="mahal-banner">
     <div>
-      <div class="mahal-label">&#127970; Venue / Mahal</div>
-      <div class="mahal-name">${booking.mahalName}</div>
-    </div>
-    <div class="mahal-right">
-      <div class="mahal-date-lbl">Event Date</div>
-      <div class="mahal-date-val">${startDate}${endDate ? ' &rarr; ' + endDate : ''}</div>
+      <div class="invoice-title">INVOICE</div>
+      <div class="invoice-sub">Reference No: #${bookingId}</div>
     </div>
   </div>
-  <div class="stripe"></div>
-
-  <!-- BODY -->
-  <div class="body">
-
-    <!-- Customer row -->
-    <div class="cust-row">
-      <div class="cust-main">
-        <div class="cust-name">${booking.customerName}</div>
-        <div class="cust-phone">&#128222; ${booking.customerPhone}</div>
-      </div>
-      <div class="pill-box">
-        <div class="mini-pill">
-          <div class="lbl">Guests</div>
-          <div class="val">&#128101; ${booking.guests || 'N/A'}</div>
+  
+  <div class="content">
+    
+    <div class="details-grid">
+      <div class="bill-to">
+        <div class="box-label">Billed To</div>
+        <div class="client-name">${booking.customerName}</div>
+        <div class="client-contact">
+          Phone: ${booking.customerPhone}<br/>
+          Guests: ${booking.guests || 'N/A'}<br/>
+          Booking Type: ${booking.bookingType || 'Offline'}
         </div>
-        <div class="mini-pill">
-          <div class="lbl">Type</div>
-          <div class="val">${booking.bookingType || 'Offline'}</div>
+      </div>
+      
+      <div class="invoice-meta">
+        <div class="box-label">Details</div>
+        <div class="meta-item">
+          <span class="meta-label">Date Issued:</span>
+          <span class="meta-value">${createdAt}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Transaction Ref:</span>
+          <span class="meta-value">${booking.transactionId || 'N/A'}</span>
+        </div>
+        <div class="meta-item" style="border: none; padding-bottom: 0;">
+          <span class="meta-label">Payment Mode:</span>
+          <span class="meta-value">${booking.paymentMode || 'N/A'}</span>
         </div>
       </div>
     </div>
 
-    <!-- Info grid: 4 cols -->
-    <div class="info-grid">
-      <div class="info-card">
-        <div class="lbl">Shift</div>
-        <div class="val">${shiftLabel}</div>
+    <div class="venue-banner">
+      <div class="venue-name">
+        Venue: ${booking.mahalName}
       </div>
-      <div class="info-card">
-        <div class="lbl">Payment Mode</div>
-        <div class="val">${booking.paymentMode || 'N/A'}</div>
-      </div>
-      <div class="info-card">
-        <div class="lbl">Advance Paid</div>
-        <div class="val" style="color:#16a34a;">&#8377;${Number(booking.advancePaid || 0).toLocaleString('en-IN')}${booking.isVerified ? ' &#10003;' : ''}</div>
-      </div>
-      <div class="info-card">
-        <div class="lbl">Payment Status</div>
-        <div class="val" style="color:${payStatusColor};">${booking.paymentStatus}</div>
+      <div class="venue-dates">
+        Event Date: ${startDate}${endDate ? ' - ' + endDate : ''} &nbsp;|&nbsp; Shift: ${shiftLabel}
       </div>
     </div>
 
-    <!-- 2-column: left=details+facilities, right=financial -->
-    <div class="cols">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th class="right" style="width: 180px;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="item-title">Venue Base Price</div>
+              <div class="item-desc">Core venue rental charges for the selected shift and dates</div>
+            </td>
+            <td class="amount">Rs. ${formatMoney(booking.price)}</td>
+          </tr>
+          ${selectedFacilities.length > 0 ? selectedFacilities.map(([key, f]) => `
+          <tr>
+            <td>
+              <div class="item-title">Facility: ${key.charAt(0).toUpperCase() + key.slice(1)}</div>
+            </td>
+            <td class="amount">Rs. ${formatMoney(f.price)}</td>
+          </tr>
+          `).join('') : `
+          <tr>
+            <td>
+              <div class="item-title">Standard Amenities</div>
+              <div class="item-desc">Standard features included with the venue base price</div>
+            </td>
+            <td class="amount">Rs. 0</td>
+          </tr>
+          `}
+        </tbody>
+      </table>
+    </div>
 
-      <!-- Left -->
-      <div style="display:flex;flex-direction:column;gap:10px;">
-
-        <!-- Booking details -->
-        <div class="detail-box">
-          <div class="detail-title">Booking Details</div>
-          <div class="detail-row">
-            <span class="dr-key">Booking ID</span>
-            <span class="dr-val">#${bookingId}</span>
-          </div>
-          <div class="detail-row">
-            <span class="dr-key">Start Date</span>
-            <span class="dr-val">${startDate}</span>
-          </div>
-          ${endDate ? `<div class="detail-row"><span class="dr-key">End Date</span><span class="dr-val">${endDate}</span></div>` : ''}
-          <div class="detail-row">
-            <span class="dr-key">Shift</span>
-            <span class="dr-val">${shiftLabel}</span>
-          </div>
-          <div class="detail-row">
-            <span class="dr-key">Booking Status</span>
-            <span class="dr-val" style="color:${statusColor};">${booking.bookingStatus}</span>
-          </div>
-          <div class="detail-row">
-            <span class="dr-key">Booking Type</span>
-            <span class="dr-val">${booking.bookingType || 'Offline'}</span>
-          </div>
-          ${booking.transactionId ? `<div class="detail-row"><span class="dr-key">Transaction ID</span><span class="dr-val" style="color:#2563eb;font-size:9px;">${booking.transactionId}</span></div>` : ''}
-        </div>
-
-        <!-- Facilities -->
-        <div class="detail-box" style="background:linear-gradient(135deg,#1e293b,#0f172a);">
-          <div class="detail-title" style="color:rgba(255,255,255,0.4);">Facilities Included</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
-            ${facilityBadgesHTML}
-          </div>
-        </div>
-
+    <div class="lower-section">
+      <div class="auth-sign">
+        <div class="sign-line"></div>
+        <div class="sign-text">Authorized Signature</div>
       </div>
 
-      <!-- Right: Financial card -->
-      <div class="fin-card">
-        <div class="fin-hdr">
-          <div class="fin-hdr-txt">&#128178; Financial Breakdown</div>
-        </div>
-        <table class="fin-table">
-          <tr>
-            <td class="fin-lbl" style="color:#fff;font-weight:700;font-size:11px;padding-top:8px;padding-bottom:6px;">Venue Base Price</td>
-            <td class="fin-val" style="color:#fff;font-size:11px;font-weight:700;padding-top:8px;padding-bottom:6px;">&#8377;${Number(booking.price || 0).toLocaleString('en-IN')}</td>
-          </tr>
-          <tr class="fin-divider"><td colspan="2"></td></tr>
-          ${facilityRowsHTML}
-          <tr class="fin-divider"><td colspan="2"></td></tr>
-          <tr>
-            <td class="fin-lbl" style="padding-top:6px;">Advance Paid</td>
-            <td class="fin-val" style="color:#4ade80;padding-top:6px;">&#8377;${Number(booking.advancePaid || 0).toLocaleString('en-IN')}${booking.isVerified ? ' &#10003;' : ''}</td>
-          </tr>
-          <tr>
-            <td class="fin-lbl">Payment Status</td>
-            <td class="fin-val" style="color:${payStatusColor};">${booking.paymentStatus}</td>
-          </tr>
-        </table>
-        <div class="fin-total-row">
-          <div>
-            <div class="total-lbl">Total Amount Due</div>
-            <div class="total-amt">&#8377;${Number(booking.totalAmount || 0).toLocaleString('en-IN')}</div>
+      <div>
+        <div class="summary-box">
+          <div class="sum-row">
+            <span>Subtotal</span>
+            <span>Rs. ${formatMoney(booking.totalAmount)}</span>
           </div>
-          <div class="pay-badge" style="background:${payStatusColor}22;border:1px solid ${payStatusColor}55;color:${payStatusColor};">${booking.paymentStatus}</div>
+          <div class="sum-row">
+            <span>Advance Paid ${booking.isVerified ? '(Verified)' : ''}</span>
+            <span>- Rs. ${formatMoney(booking.advancePaid)}</span>
+          </div>
+          ${Number(booking.balancePaid || 0) > 0 ? `
+          <div class="sum-row">
+            <span>Balance Paid</span>
+            <span>- Rs. ${formatMoney(booking.balancePaid)}</span>
+          </div>
+          ` : ''}
+          <div class="sum-row total">
+            <span class="lbl">Total Due</span>
+            <span class="val">Rs. ${formatMoney(calculatePending())}</span>
+          </div>
+        </div>
+        
+        <div class="payment-status-box">
+          STATUS: ${booking.paymentStatus}
         </div>
       </div>
+    </div>
 
-    </div><!-- /cols -->
-
-  </div><!-- /body -->
-
-  <!-- FOOTER -->
+  </div><!-- /content -->
+  
   <div class="footer">
-    <div class="footer-note">
-      This is an official booking receipt generated by BookMyVenue.<br/>
-      Keep this for your records. Reference: <strong>#${bookingId}</strong> &bull; Venue: <strong>${booking.mahalName}</strong>
-    </div>
-    <div class="footer-stamp">
-      <div class="fs-lbl">Booking Status</div>
-      <div class="fs-val" style="color:${statusColor};">${booking.bookingStatus}</div>
+    <div>
+      <div class="footer-title">Thank you for your business!</div>
+      If you have any questions about this invoice, please contact MEHFIL-ONE support.
     </div>
   </div>
 
-</div><!-- /sheet -->
+</div>
 </body>
 </html>`;
 
@@ -742,7 +718,8 @@ const BookingList = () => {
                                                         setSelectedBooking(booking);
                                                         setTempStatus({
                                                             bookingStatus: booking.bookingStatus,
-                                                            paymentStatus: booking.paymentStatus
+                                                            paymentStatus: booking.paymentStatus,
+                                                            balancePaid: booking.balancePaid || 0
                                                         });
                                                         setShowDetailsModal(true);
                                                     }}
@@ -1023,14 +1000,45 @@ const BookingList = () => {
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            {Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0)) > 0 && (
+                                                <div className="d-flex justify-content-between align-items-center pb-3 border-bottom border-white-10 mt-2">
+                                                    <div className="d-flex flex-column">
+                                                        <span className="text-white-50 small">Balance Paid</span>
+                                                        <span className="text-success fw-bold">₹{Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0)).toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="d-flex justify-content-between align-items-end pt-2 pb-3 border-bottom border-white-10">
+                                                <div>
+                                                    <div className="text-white-50 fw-bold text-uppercase" style={{ fontSize: '0.55rem' }}>Pending Balance</div>
+                                                    <div className="h5 fw-bold text-warning mb-0">₹{Math.max(0, Number(selectedBooking.totalAmount || 0) - Number(selectedBooking.advancePaid || 0) - Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0))).toLocaleString()}</div>
+                                                </div>
+                                                <div className="text-end">
+                                                    {Math.max(0, Number(selectedBooking.totalAmount || 0) - Number(selectedBooking.advancePaid || 0) - Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0))) > 0 && (
+                                                        <button 
+                                                            className="btn btn-sm btn-outline-light rounded-pill px-3"
+                                                            style={{ fontSize: '0.65rem', fontWeight: 600 }}
+                                                            onClick={() => {
+                                                                setCollectBalanceAmount('');
+                                                                setShowCollectBalanceModal(true);
+                                                            }}
+                                                        >
+                                                            Collect Balance
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
                                             <div className="d-flex justify-content-between align-items-end pt-2">
                                                 <div>
                                                     <div className="text-white-50 fw-bold text-uppercase" style={{ fontSize: '0.55rem' }}>Total Amount</div>
                                                     <div className="h4 fw-bold text-danger mb-0">₹{Number(selectedBooking.totalAmount || 0).toLocaleString()}</div>
                                                 </div>
                                                 <div className="text-end">
-                                                    <span className={`badge rounded-pill ${selectedBooking.paymentStatus === 'Paid' ? 'bg-success' : 'bg-warning'} px-3`} style={{ fontSize: '0.65rem' }}>
-                                                        {selectedBooking.paymentStatus}
+                                                    <span className={`badge rounded-pill ${tempStatus.paymentStatus === 'Paid' ? 'bg-success' : 'bg-warning'} px-3`} style={{ fontSize: '0.65rem' }}>
+                                                        {tempStatus.paymentStatus}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1082,16 +1090,14 @@ const BookingList = () => {
                                                 disabled={isUpdating}
                                             >
                                                 <option value="Pending">Payment Pending</option>
+                                                <option value="Partial">Partial Payment</option>
                                                 <option value="Paid">Payment Received</option>
                                             </select>
                                         </div>
                                         <div className="col-12 pt-2">
                                             <button
-                                                onClick={async () => {
-                                                    await handleUpdateStatus(selectedBooking._id, 'bookingStatus', tempStatus.bookingStatus);
-                                                    await handleUpdateStatus(selectedBooking._id, 'paymentStatus', tempStatus.paymentStatus);
-                                                }}
-                                                disabled={isUpdating || (tempStatus.bookingStatus === selectedBooking.bookingStatus && tempStatus.paymentStatus === selectedBooking.paymentStatus)}
+                                                onClick={handleSaveManagementChanges}
+                                                disabled={isUpdating || (tempStatus.bookingStatus === selectedBooking.bookingStatus && tempStatus.paymentStatus === selectedBooking.paymentStatus && tempStatus.balancePaid === (selectedBooking.balancePaid || 0))}
                                                 className="btn btn-danger w-100 rounded-pill py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
                                             >
                                                 <FaCheckCircle size={14} /> {isUpdating ? 'Saving...' : 'Save Management Changes'}
@@ -1180,6 +1186,58 @@ const BookingList = () => {
                                     {isUpdating ? 'Verifying...' : 'Verify & Confirm'}
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Collect Balance Modal */}
+            {showCollectBalanceModal && selectedBooking && (
+                <div className="modal-overlay d-flex align-items-center justify-content-center p-3 animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 10001 }}>
+                    <div className="bg-white rounded-4 shadow-lg overflow-hidden animate-slide-up" style={{ width: '100%', maxWidth: '400px' }}>
+                        <div className="p-4 border-bottom bg-light d-flex justify-content-between align-items-center">
+                            <h5 className="fw-bold mb-0 text-dark">Collect Balance</h5>
+                            <button onClick={() => setShowCollectBalanceModal(false)} className="btn btn-link text-muted p-0 text-decoration-none h4 mb-0">&times;</button>
+                        </div>
+                        <div className="p-4">
+                            <p className="small text-muted mb-4">
+                                Enter the balance amount collected from the customer. This will update the booking's financial records and notify the customer.
+                            </p>
+                            
+                            <div className="mb-4">
+                                <label className="form-label fw-bold small text-muted text-uppercase">Pending Balance</label>
+                                <div className="h4 text-warning fw-bold">₹{Math.max(0, Number(selectedBooking.totalAmount || 0) - Number(selectedBooking.advancePaid || 0) - Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0))).toLocaleString()}</div>
+                            </div>
+                            
+                            <div className="mb-4">
+                                <label className="form-label fw-bold small text-muted text-uppercase">Amount Collected</label>
+                                <div className="input-group">
+                                    <span className="input-group-text bg-white border-end-0">₹</span>
+                                    <input 
+                                        type="number" 
+                                        className="form-control border-start-0 ps-0" 
+                                        placeholder="Enter amount"
+                                        value={collectBalanceAmount}
+                                        onChange={(e) => setCollectBalanceAmount(e.target.value)}
+                                        autoFocus
+                                    />
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-outline-secondary"
+                                        onClick={() => setCollectBalanceAmount(Math.max(0, Number(selectedBooking.totalAmount || 0) - Number(selectedBooking.advancePaid || 0) - Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0))).toString())}
+                                    >
+                                        Full
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button 
+                                className="btn btn-dark w-100 py-3 fw-bold rounded-3"
+                                onClick={handleCollectBalance}
+                                disabled={isUpdating || !collectBalanceAmount}
+                            >
+                                {isUpdating ? 'Updating...' : 'Confirm Collection'}
+                            </button>
                         </div>
                     </div>
                 </div>

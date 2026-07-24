@@ -1,23 +1,77 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaStar, FaArrowRight, FaRocket, FaShieldAlt, FaCheckCircle, FaPlay, FaBuilding } from 'react-icons/fa';
-import Lanyard from './Lanyard';
+import heroBg1 from '../../../assets/landing/hero-bg-1.png';
+import heroBg2 from '../../../assets/landing/hero-bg-2.png';
+import { API_URL } from '../../../utils/function';
 
-const STATS = [
-    { value: '500+', label: 'Elite Venues' },
-    { value: '10K+', label: 'Events Hosted' },
-    { value: '98%',  label: 'Satisfaction' },
-];
 
 const TRUST_ITEMS = [
-    'No credit card required',
-    'Setup in minutes',
-    'Cancel anytime',
+    'Online Booking System',
+    'Mobile Friendly',
+    'Digital Payments',
 ];
 
 const Hero = ({ homeRef, activeTab, setActiveTab, venuesRef }) => {
     const navigate = useNavigate();
     const blobRef = useRef(null);
+
+    const [heroImages, setHeroImages] = React.useState(() => {
+        const stored = localStorage.getItem('hero_landing_images');
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch(e) {}
+        }
+        return null;
+    });
+
+    useEffect(() => {
+        const loadImages = async () => {
+            try {
+                const res = await fetch(`${API_URL}/superadmin/hero-settings`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && (data.mainArch || data.horizontal || data.vertical || data.circular)) {
+                        setHeroImages(data);
+                        try {
+                            localStorage.setItem('hero_landing_images', JSON.stringify(data));
+                        } catch (err) {
+                            console.warn("LocalStorage quota exceeded, skipping local cache.");
+                        }
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching hero images from backend API:", e);
+            }
+
+            const stored = localStorage.getItem('hero_landing_images');
+            if (stored) {
+                try {
+                    setHeroImages(JSON.parse(stored));
+                    return;
+                } catch(e) {}
+            }
+            setHeroImages(null);
+        };
+
+        loadImages();
+        window.addEventListener('hero_images_updated', loadImages);
+        window.addEventListener('storage', loadImages);
+        return () => {
+            window.removeEventListener('hero_images_updated', loadImages);
+            window.removeEventListener('storage', loadImages);
+        };
+    }, []);
+
+    const imgMainArch = heroImages?.mainArch?.url || heroBg2;
+    const titleMainArch = heroImages?.mainArch?.title || 'Royal Palace';
+    const subtitleMainArch = heroImages?.mainArch?.subtitle || 'Featured';
+
+    const imgHorizontal = heroImages?.horizontal?.url || heroBg1;
+    const imgVertical = heroImages?.vertical?.url || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80';
+    const imgCircular = heroImages?.circular?.url || 'https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=600&q=80';
 
     /* Parallax blob on mouse move */
     useEffect(() => {
@@ -72,16 +126,14 @@ const Hero = ({ homeRef, activeTab, setActiveTab, venuesRef }) => {
                         </div>
 
                         {/* Heading */}
-                        <h1 className="hero-title">
-                            Scale Your<br />
-                            <span className="hero-title-accent">Venue Empire.</span>
+                        <h1 className="hero-title" style={{ fontSize: '3rem', lineHeight: '1.2' }}>
+                            The Smart Platform for<br />
+                            <span className="hero-title-accent">Modern Venue Management.</span>
                         </h1>
 
                         {/* Description */}
                         <p className="hero-desc">
-                            The definitive platform for high-end venue management.
-                            Automate operations, maximize revenue, and deliver
-                            extraordinary events with Mehfil One's elite toolkit.
+                            Whether you're managing a wedding hall, banquet, convention center, or event venue, Mehfil One empowers vendors to streamline operations while giving customers a seamless booking experience from inquiry to confirmation.
                         </p>
 
                         {/* Trust chips */}
@@ -105,45 +157,46 @@ const Hero = ({ homeRef, activeTab, setActiveTab, venuesRef }) => {
                                 Explore Venues
                             </button>
                         </div>
-
-                        {/* Stats strip */}
-                        <div className="hero-stats">
-                            {STATS.map((s, i) => (
-                                <React.Fragment key={i}>
-                                    <div className="hero-stat">
-                                        <div className="hero-stat-value">{s.value}</div>
-                                        <div className="hero-stat-label">{s.label}</div>
-                                    </div>
-                                    {i < STATS.length - 1 && <div className="hero-stat-divider" />}
-                                </React.Fragment>
-                            ))}
-                        </div>
                     </div>
 
                     {/* ── RIGHT: Visual ── */}
                     <div className="hero-visual">
-                        {/* Glow behind Lanyard */}
+                        {/* Glow behind Layout */}
                         <div className="hero-visual-glow" />
-                        <div className="hero-lanyard-wrap">
-                            <Lanyard position={[0, 3, 24]} gravity={[0, -40, 0]} transparent={true} />
-                        </div>
 
-                        {/* Floating info cards */}
-                        <div className="hero-float-card hero-float-card--tl">
-                            <span className="hero-float-icon"><FaRocket /></span>
-                            <div>
-                                <div className="hero-float-val">500+</div>
-                                <div className="hero-float-lbl">Venues Live</div>
+                        {/* CLASSIC 3-IMAGE OVERLAPPING COMPOSITION */}
+                        <div className="hero-collage position-relative w-100">
+                            {/* Decorative Minimalist Elements */}
+                            <div className="position-absolute" style={{ top: '10%', left: '0%', zIndex: 0, opacity: 0.6, animation: 'float 6s ease-in-out infinite' }}>
+                                <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+                                    <circle cx="50" cy="50" r="48" stroke="#dc3545" strokeWidth="2" strokeDasharray="8 8" />
+                                </svg>
                             </div>
-                        </div>
-                        <div className="hero-float-card hero-float-card--br">
-                            <span className="hero-float-icon hero-float-icon--green"><FaShieldAlt /></span>
-                            <div>
-                                <div className="hero-float-val">100%</div>
-                                <div className="hero-float-lbl">Secure</div>
+                            
+                            {/* Small Circular Accent Image (Moved up so it doesn't hide text) */}
+                            <div className="position-absolute shadow-lg overflow-hidden border border-4 border-white rounded-circle" style={{ width: '130px', height: '130px', top: '40%', right: '-8%', zIndex: 4, animation: 'float 6s ease-in-out infinite' }}>
+                                <img src={imgCircular} alt="Accent Detail" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             </div>
-                        </div>
-                    </div>
+
+                            {/* Main Arch Image (Right Side) */}
+                            <div className="position-absolute shadow-lg overflow-hidden border border-4 border-white" style={{ width: '320px', height: '460px', right: '0', top: '40px', zIndex: 1, borderRadius: '160px 160px 24px 24px', transition: 'all 0.5s ease', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-10px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                                <img src={imgMainArch} alt="Premium Venue Arch" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <div className="position-absolute bottom-0 start-0 w-100 p-4 text-center" style={{ background: 'linear-gradient(to top, rgba(17,17,17,0.95) 0%, transparent 100%)' }}>
+                                    <h4 className="text-white fw-bold mb-1" style={{ letterSpacing: '-0.02em', fontSize: '1.3rem' }}>{titleMainArch}</h4>
+                                    <small className="text-danger fw-bold text-uppercase" style={{ letterSpacing: '0.1em' }}>{subtitleMainArch}</small>
+                                </div>
+                            </div>
+
+                            {/* Horizontal Image (Top Left) */}
+                            <div className="position-absolute shadow-lg overflow-hidden border border-4 border-white" style={{ width: '320px', height: '200px', left: '0', top: '0', zIndex: 2, borderRadius: '24px', transition: 'all 0.5s ease', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-10px) scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0) scale(1)'}>
+                                <img src={imgHorizontal} alt="Venue Horizontal" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+                            </div>
+
+                            {/* Vertical Image (Bottom Left) */}
+                            <div className="position-absolute shadow-lg overflow-hidden border border-4 border-white" style={{ width: '260px', height: '320px', left: '30px', bottom: '0', zIndex: 3, borderRadius: '24px', transition: 'all 0.5s ease', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-10px) scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0) scale(1)'}>
+                                <img src={imgVertical} alt="Luxury Detail Vertical" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+                            </div>
+                        </div>                   </div>
                 </div>
             </div>
 
@@ -412,6 +465,11 @@ const Hero = ({ homeRef, activeTab, setActiveTab, venuesRef }) => {
                     align-items: center;
                     justify-content: center;
                 }
+                .hero-collage {
+                    max-width: 600px;
+                    height: 560px;
+                    margin: 0 auto;
+                }
                 .hero-visual-glow {
                     position: absolute;
                     width: 400px; height: 400px;
@@ -523,6 +581,7 @@ const Hero = ({ homeRef, activeTab, setActiveTab, venuesRef }) => {
                     .hero-stat-divider { display: block; }
                     .hero-stat-value { font-size: 1.3rem; }
                 }
+                
             `}</style>
         </section>
     );

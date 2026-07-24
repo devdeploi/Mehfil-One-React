@@ -271,11 +271,16 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                     <div className="input-group shadow-sm rounded-4 overflow-hidden border">
                                         <span className="input-group-text bg-white border-0"><FaPhone className="text-danger-light" size={12} /></span>
                                         <input
-                                            type="text"
+                                            type="tel"
+                                            maxLength={10}
+                                            pattern="\d{10}"
                                             className="form-control border-0 p-3"
-                                            placeholder="Phone number"
+                                            placeholder="10-digit mobile number"
                                             value={formData.customerPhone}
-                                            onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
+                                            onChange={e => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                setFormData({ ...formData, customerPhone: val });
+                                            }}
                                             required
                                         />
                                     </div>
@@ -344,8 +349,12 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                                     }}
                                                     onFocus={(e) => e.target.showPicker && e.target.showPicker()}
                                                     onClick={(e) => e.target.showPicker && e.target.showPicker()}
-                                                    min={formatDate(selectedDate)}
                                                     required
+                                                    min={(() => {
+                                                        const next = new Date(selectedDate);
+                                                        next.setDate(next.getDate() + 1);
+                                                        return formatDate(next);
+                                                    })()}
                                                 />
                                             </div>
 

@@ -862,19 +862,35 @@ const VenueDetailsPage = () => {
                                         </div>
                                     </div>
 
-                                    <button
-                                        className="btn btn-dark w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg transform-active"
-                                        style={{ background: 'linear-gradient(135deg, #111, #333)', border: 'none' }}
-                                        onClick={() => {
-                                            if(!user) {
-                                                setShowLoginPrompt(true);
-                                                return;
-                                            }
-                                            navigate(`/user/profile?tab=messages&contactVendor=${venue.vendorId?._id}&autoMessage=${encodeURIComponent(`Hi, I am interested in booking "${venue.mahalName}". Could you please share more details regarding availability, pricing, and services?`)}`);
-                                        }}
-                                    >
-                                        <FiMessageCircle size={18} /> Contact Manager to Book <FaChevronRight size={12} />
-                                    </button>
+                                    <div className="d-flex gap-2">
+                                        <button
+                                            className="btn flex-fill rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg transform-active text-white"
+                                            style={{ background: 'linear-gradient(135deg, #dc3545 0%, #a21a24 100%)', border: 'none', fontSize: '0.85rem' }}
+                                            onClick={() => {
+                                                setActiveTab('availability');
+                                                window.scrollTo({ 
+                                                    top: document.querySelector('.tab-content')?.offsetTop - 120 || 500, 
+                                                    behavior: 'smooth' 
+                                                });
+                                            }}
+                                        >
+                                            <FiCalendar size={16} /> Book Now
+                                        </button>
+
+                                        <button
+                                            className="btn btn-dark flex-fill rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-lg transform-active"
+                                            style={{ background: 'linear-gradient(135deg, #111, #333)', border: 'none', fontSize: '0.85rem' }}
+                                            onClick={() => {
+                                                if(!user) {
+                                                    setShowLoginPrompt(true);
+                                                    return;
+                                                }
+                                                navigate(`/user/profile?tab=messages&contactVendor=${venue.vendorId?._id}&autoMessage=${encodeURIComponent(`Hi, I am interested in booking "${venue.mahalName}". Could you please share more details regarding availability, pricing, and services?`)}`);
+                                            }}
+                                        >
+                                            <FiMessageCircle size={16} /> Contact
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

@@ -380,7 +380,7 @@ const UserProfilePage = () => {
                                         <div className="text-center py-5 border-2 border-dashed rounded-4 bg-white shadow-sm">
                                             <FiCalendar size={48} className="text-muted mb-3 opacity-25" />
                                             <p className="text-muted mb-3 fw-bold">No reservations found.</p>
-                                            <button onClick={() => navigate('/')} className="btn p-btn-primary btn-sm px-4">Start Booking</button>
+                                            <button onClick={() => navigate('/', { state: { scrollTo: 'venues' } })} className="btn p-btn-primary btn-sm px-4">Start Booking</button>
                                         </div>
                                     ) : (
                                         <div className="d-flex flex-column gap-4">

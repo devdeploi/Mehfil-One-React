@@ -141,6 +141,7 @@ const VendorAvailability = () => {
         paymentStatus: 'Pending',
         bookingStatus: 'Confirmed',
         price: '',
+        advanceAmount: '',
         extraFacilities: {
             ac: { selected: false, price: 0 },
             generator: { selected: false, price: 0 },
@@ -270,6 +271,7 @@ const VendorAvailability = () => {
             paymentStatus: 'Pending',
             bookingStatus: 'Confirmed',
             price: defaultPrice,
+            advanceAmount: '',
             extraFacilities: {
                 ac: { selected: false, price: currentMahal?.facilities?.acPrice || 0 },
                 generator: { selected: false, price: currentMahal?.facilities?.generatorPrice || 0 },
@@ -350,6 +352,7 @@ const VendorAvailability = () => {
                 bookingStatus: formData.bookingStatus,
                 bookingType: 'Offline', // Manual walk-in
                 price: formData.price,
+                advancePaid: formData.paymentStatus === 'Partial' ? Number(formData.advanceAmount || 0) : 0,
                 extraFacilities: formData.extraFacilities,
                 dayShifts: formData.dayShifts,
                 totalAmount: Number(formData.price || 0) +
@@ -869,11 +872,17 @@ const VendorAvailability = () => {
                                                 <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
                                                     <span style={{ padding: '0 12px', color: '#e63946' }}><FaPhone style={{ fontSize: 13 }} /></span>
                                                     <input
+                                                        type="tel"
+                                                        maxLength={10}
+                                                        pattern="\d{10}"
                                                         style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
-                                                        placeholder="Mobile number"
+                                                        placeholder="10-digit mobile number"
                                                         required
                                                         value={formData.customerPhone}
-                                                        onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
+                                                        onChange={e => {
+                                                            const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                            setFormData({ ...formData, customerPhone: val });
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
@@ -924,7 +933,11 @@ const VendorAvailability = () => {
                                                             <input
                                                                 type="date"
                                                                 value={formData.endDate}
-                                                                min={selectedDate}
+                                                                min={(() => {
+                                                                    const next = new Date(selectedDate);
+                                                                    next.setDate(next.getDate() + 1);
+                                                                    return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+                                                                })()}
                                                                 onChange={(e) => {
                                                                     const end = e.target.value;
                                                                     const start = new Date(selectedDate);
@@ -1342,6 +1355,24 @@ const VendorAvailability = () => {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {formData.paymentStatus === 'Partial' && (
+                                            <div className="mb-4">
+                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 8, display: 'block' }}>Advance Amount Paid <span className="text-danger">*</span></label>
+                                                <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#2563eb'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
+                                                    <span style={{ padding: '0 12px', color: '#2563eb', fontWeight: 'bold' }}>₹</span>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control border-0 shadow-none"
+                                                        placeholder="e.g. 5000"
+                                                        value={formData.advanceAmount}
+                                                        onChange={(e) => setFormData({ ...formData, advanceAmount: e.target.value })}
+                                                        style={{ fontSize: '0.9rem', fontWeight: 600, color: '#334155', padding: '12px 12px 12px 0' }}
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* ── Submit Button ── */}
                                         <button

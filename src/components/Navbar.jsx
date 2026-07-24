@@ -165,15 +165,12 @@ const Navbar = ({ scrollToSection, refs }) => {
         }
     };
 
-    const navItems = isHomePage ? [
+    const navItems = [
         { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiHome size={15} /> Home</span>, onClick: () => handleNavClick('home') },
         { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiMap size={15} /> Mahal's</span>, onClick: () => handleNavClick('venues') },
         { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiLayers size={15} /> Features</span>, onClick: () => handleNavClick('about') },
         { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiActivity size={15} /> User Flow</span>, onClick: () => handleNavClick('flow') },
         { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiTag size={15} /> Pricing</span>, onClick: () => handleNavClick('plans') }
-    ] : [
-        { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiHome size={15} /> Home</span>, onClick: () => navigate('/') },
-        { label: <span className="d-flex align-items-center gap-2" style={styles.navLink}><FiUser size={15} /> My Dashboard</span>, onClick: () => navigate('/user/profile') }
     ];
 
     return (

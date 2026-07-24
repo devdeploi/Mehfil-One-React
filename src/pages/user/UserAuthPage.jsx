@@ -72,6 +72,18 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
             setFormData({ ...formData, [e.target.name]: e.target.files[0] });
         } else {
             const { name, value } = e.target;
+            
+            if (name === 'phone') {
+                if (/\D/.test(value)) {
+                    setError('Please enter numbers only for phone number.');
+                    return;
+                }
+                if (value.length > 10) {
+                    setError('Phone number limit is 10 digits.');
+                    return;
+                }
+            }
+
             setFormData({ ...formData, [name]: value });
             if (name === 'password') {
                 setPasswordStrength(value ? calculateStrength(value) : 0);
@@ -89,6 +101,9 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
             // First step: Send OTP
             if (formData.password !== formData.confirmPassword) {
                 return setError('Passwords do not match');
+            }
+            if (formData.phone.length !== 10) {
+                return setError('Phone number must be exactly 10 digits');
             }
             try {
                 setLoading(true);

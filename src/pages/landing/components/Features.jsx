@@ -13,7 +13,7 @@ const features = [
     { icon: <FaPaintBrush />, title: 'Custom Branding',    description: 'Your brand, your identity. Personalize your venue page with custom themes and logos.',                       glow: 'rgba(200,40,60,0.55)' },
     { icon: <FaBell />,       title: 'Instant Alerts',     description: 'Stay ahead with real-time SMS and email notifications for every premium inquiry received.',                   glow: 'rgba(220,53,69,0.6)' },
     { icon: <FaHeadset />,    title: 'Concierge Support',  description: 'Our dedicated support team is available 24/7 to assist you with priority service.',                          glow: 'rgba(255,100,120,0.55)' },
-    { icon: <FaMobileAlt />,  title: 'Mobile Management',  description: 'Manage bookings and inquiries on the go with our fully responsive mobile-first platform.',                    glow: 'rgba(180,30,50,0.55)' },
+    { icon: <FaMobileAlt />,  title: 'Mobile Optimization',  description: 'Manage bookings and inquiries on the go with our fully responsive mobile-first platform.',                    glow: 'rgba(180,30,50,0.55)' },
 ];
 
 const TiltCard = ({ feature, index }) => {

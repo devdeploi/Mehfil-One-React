@@ -11,6 +11,7 @@ import Dashboard from './pages/superadmin/Dashboard';
 import VendorList from './pages/superadmin/VendorList';
 import UserList from './pages/superadmin/UserList';
 import PaymentTracking from './pages/superadmin/PaymentTracking';
+import HeroSettings from './pages/superadmin/HeroSettings';
 import VendorRegistration from './pages/vendor/VendorRegistration';
 import Terms from './pages/common/Terms';
 import Policy from './pages/common/Policy';
@@ -32,6 +33,8 @@ import InstallPrompt from './components/InstallPrompt';
 
 
 import AllVenuesPage from './pages/landing/AllVenuesPage';
+
+import ResourcePage from './pages/landing/ResourcePage';
 
 function App() {
   const [currentSocket, setCurrentSocket] = useState(null);
@@ -87,6 +90,7 @@ function App() {
         <Route path="/user/profile" element={<UserProfilePage />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/policy" element={<Policy />} />
+        <Route path="/resources/:type" element={<ResourcePage />} />
 
         {/* Super Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
@@ -95,6 +99,7 @@ function App() {
             <Route path="vendors" element={<VendorList />} />
             <Route path="users" element={<UserList />} />
             <Route path="payments" element={<PaymentTracking />} />
+            <Route path="hero-settings" element={<HeroSettings />} />
           </Route>
         </Route>
 

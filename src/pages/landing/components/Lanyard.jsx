@@ -9,6 +9,7 @@ import { FaChartLine, FaCalendarAlt, FaUserTie } from 'react-icons/fa';
 
 import cardGLB from '../../../assets/lanyard/card.glb';
 import lanyard from '../../../assets/lanyard/lanyard.png';
+import heroBg2 from '../../../assets/landing/hero-bg-2.png';
 
 import * as THREE from 'three';
 import './Lanyard.css';
@@ -174,47 +175,10 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false }) {
             <mesh geometry={nodes.clip.geometry} material={materials.metal} material-roughness={0.3} />
             <mesh geometry={nodes.clamp.geometry} material={materials.metal} />
 
-            {/* HTML dashboard acting as the card itself */}
+            {/* Premium Image Card */}
             <Html transform distanceFactor={1.5} position={[0, 0.25, 0.01]} zIndexRange={[100, 0]} rotation={[0, 0, 0]}>
-              <div className="shadow-lg rounded-4 overflow-hidden bg-white" style={{ width: '380px', pointerEvents: 'none', border: '1px solid #e9ecef' }}>
-                <div className="px-3 py-2 d-flex gap-1 bg-dark">
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff5f56' }}></div>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbd2e' }}></div>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#27c93f' }}></div>
-                </div>
-                <div className="d-flex bg-white" style={{ height: '360px' }}>
-                  <div className="p-2 border-end bg-light d-flex flex-column align-items-center" style={{ width: '60px' }}>
-                    <div className="mb-3 opacity-25 mt-2"><FaChartLine size={16} /></div>
-                    <div className="mb-3 text-danger"><FaCalendarAlt size={16} /></div>
-                    <div className="mb-3 opacity-25"><FaUserTie size={16} /></div>
-                  </div>
-                  <div className="flex-grow-1 p-3">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <div className="fw-bold small text-dark">Revenue</div>
-                      <div className="badge bg-danger rounded-pill smaller" style={{ fontSize: '0.5rem' }}>LIVE</div>
-                    </div>
-                    <div className="row g-2 mb-3">
-                      <div className="col-6">
-                        <div className="p-2 bg-light rounded-3">
-                          <div className="fw-bold text-dark small">₹2.4M</div>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div className="p-2 bg-danger-subtle rounded-3 text-danger">
-                          <div className="fw-bold small">88%</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-3 border rounded-3 bg-light">
-                      <div className="d-flex align-items-end gap-1" style={{ height: '80px' }}>
-                        <div className="bg-danger-subtle flex-grow-1 rounded-top" style={{ height: '35%' }}></div>
-                        <div className="bg-danger flex-grow-1 rounded-top" style={{ height: '65%' }}></div>
-                        <div className="bg-danger-subtle flex-grow-1 rounded-top" style={{ height: '45%' }}></div>
-                        <div className="bg-danger flex-grow-1 rounded-top" style={{ height: '90%' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="shadow-lg rounded-4 overflow-hidden" style={{ width: '380px', height: '410px', pointerEvents: 'none', border: '3px solid rgba(255,255,255,0.1)', background: '#111' }}>
+                <div style={{ width: '100%', height: '100%', backgroundImage: `url(${heroBg2})`, backgroundSize: 'cover', backgroundPosition: 'center', transition: 'all 0.5s' }} />
               </div>
             </Html>
           </group>

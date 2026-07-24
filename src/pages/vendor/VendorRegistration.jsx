@@ -122,6 +122,7 @@ const VendorRegistration = () => {
     // Registration Success State
     const [isRegistered, setIsRegistered] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(() => getSavedData()?.termsAccepted || false);
+    const [isYearly, setIsYearly] = useState(() => planFromNav?.isYearly || getSavedData()?.isYearly || false);
 
     // Toast State
     const [toast, setToast] = useState({ show: false, message: '', type: '' });
@@ -168,7 +169,8 @@ const VendorRegistration = () => {
             step,
             selectedPlan,
             termsAccepted,
-            isOtpVerified
+            isOtpVerified,
+            isYearly
         };
         sessionStorage.setItem('vendorRegistrationData', JSON.stringify(dataToSave));
     };
@@ -186,7 +188,13 @@ const VendorRegistration = () => {
     };
 
     const handlePlanSelect = (plan) => {
-        setSelectedPlan(plan);
+        const planWithPricing = {
+            ...plan,
+            price: isYearly ? plan.yearlyPrice : 0, // Free trial, but Razorpay needs min 1 which is handled during checkout
+            period: isYearly ? '/yr' : '/mo',
+            isYearly
+        };
+        setSelectedPlan(planWithPricing);
         setStep(2);
     };
 
@@ -228,6 +236,11 @@ const VendorRegistration = () => {
                 return;
             }
 
+            if (formData.phone && formData.phone.length !== 10) {
+                showToast('Phone number must be exactly 10 digits.', 'error');
+                return;
+            }
+
             // UPI Validation
             const upiRegex = /^[a-zA-Z0-9.-]+@[a-zA-Z0-9.-]+$/;
             if (!upiRegex.test(formData.upiId)) {
@@ -253,6 +266,15 @@ const VendorRegistration = () => {
 
     const handlePayment = async () => {
         setIsProcessing(true);
+        const amountToPay = isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice;
+
+        if (amountToPay === 0) {
+            setIsRegistering(true);
+            await registerVendor('free_plan', 'free_order', 0);
+            setIsProcessing(false);
+            return;
+        }
+
         const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
 
         if (!res) {
@@ -264,7 +286,7 @@ const VendorRegistration = () => {
         try {
             // 1. Create Order
             const orderResult = await axios.post(`${API_URL}/payment/create-order`, {
-                amount: selectedPlan.price,
+                amount: amountToPay,
                 currency: 'INR',
                 receipt: `receipt_${Date.now()}`
             });
@@ -320,20 +342,22 @@ const VendorRegistration = () => {
         }
     };
 
-    const registerVendor = async (paymentId, orderId) => {
+    const registerVendor = async (paymentId, orderId, paidAmount) => {
         try {
             const formDataPayload = new FormData();
             formDataPayload.append('fullName', formData.fullName);
             formDataPayload.append('email', formData.email);
             formDataPayload.append('phone', formData.phone);
             formDataPayload.append('password', formData.password);
-            formDataPayload.append('plan', selectedPlan?.name || 'Standard');
+            formDataPayload.append('plan', selectedPlan?.name || 'Basic');
+            formDataPayload.append('billingCycle', isYearly ? 'yearly' : 'monthly');
             formDataPayload.append('businessName', formData.businessName);
             formDataPayload.append('gstNumber', formData.gstNumber);
             formDataPayload.append('businessAddress', formData.businessAddress);
             formDataPayload.append('upiId', formData.upiId);
             formDataPayload.append('paymentId', paymentId);
             formDataPayload.append('orderId', orderId);
+            formDataPayload.append('amount', paidAmount !== undefined ? paidAmount : (isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice));
             if (formData.proofDocument) {
                 formDataPayload.append('proofDocument', formData.proofDocument);
             }
@@ -539,16 +563,51 @@ const VendorRegistration = () => {
                                 <>
                                     {step === 1 && (
                                         <>
-                                            <div className="vr-form-header">
-                                                <h3>Select a Plan</h3>
+                                            {!isYearly && (
+                                                <div style={{ position: 'relative', width: '100%', background: '#dc3545', color: '#fff', padding: '10px 0', zIndex: 10, fontSize: '1.1rem', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', boxShadow: '0 4px 12px rgba(220,53,69,0.3)', marginBottom: '24px', borderRadius: '8px', overflow: 'hidden' }}>
+                                                    <marquee scrollamount="12">Launch Offers one month Free trial 🎉 Launch Offers one month Free trial 🎉 Launch Offers one month Free trial 🎉</marquee>
+                                                </div>
+                                            )}
+                                            <div className="vr-form-header text-center mb-4">
+                                                <h3 className="mb-3">Select a Plan</h3>
+                                                <div className="d-flex justify-content-center">
+                                                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '999px', padding: '5px', display: 'inline-flex' }}>
+                                                        <button 
+                                                            type="button"
+                                                            className="btn btn-sm rounded-pill px-4 fw-bold border-0" 
+                                                            style={!isYearly ? { background: '#ffffff', color: '#dc3545', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' } : { color: '#64748b' }}
+                                                            onClick={() => setIsYearly(false)}
+                                                        >
+                                                            Monthly
+                                                        </button>
+                                                        <button 
+                                                            type="button"
+                                                            className="btn btn-sm rounded-pill px-4 fw-bold border-0 d-flex align-items-center gap-2" 
+                                                            style={isYearly ? { background: '#ffffff', color: '#dc3545', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' } : { color: '#64748b' }}
+                                                            onClick={() => setIsYearly(true)}
+                                                        >
+                                                            Yearly <span className="badge rounded-pill bg-danger-subtle text-danger" style={{ fontSize: '0.65rem' }}>Save ~20%</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div className="vr-plans-grid">
-                                                {SUBSCRIPTION_PLANS.map(plan => (
+                                                {SUBSCRIPTION_PLANS.map(plan => {
+                                                    const price = isYearly ? plan.yearlyPrice : 0;
+                                                    const period = isYearly ? '/yr' : '/mo';
+                                                    return (
                                                     <div key={plan.id} className={`vr-plan-card ${selectedPlan?.id === plan.id ? 'selected' : ''}`}>
                                                         {plan.recommended && <div className="vr-plan-badge">Most Popular</div>}
                                                         <h3>{plan.name}</h3>
-                                                        <div className="vr-price">
-                                                            {plan.currency}{plan.price}<span>{plan.period}</span>
+                                                        <div className="vr-price" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            {!isYearly && (
+                                                                <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginRight: '10px' }}>
+                                                                    {plan.currency}{plan.monthlyPrice}
+                                                                </span>
+                                                            )}
+                                                            <span className="pr-currency" style={{ fontSize: '1rem', alignSelf: 'flex-start', marginTop: '4px', fontWeight: '700' }}>{plan.currency}</span>
+                                                            <span className="pr-amount" style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: 1 }}>{price.toLocaleString()}</span>
+                                                            <span className="pr-period" style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600', marginLeft: '2px', alignSelf: 'flex-end', marginBottom: '8px' }}>{period}</span>
                                                         </div>
                                                         <ul className="vr-features">
                                                             {plan.features.map((f, i) => (
@@ -563,7 +622,8 @@ const VendorRegistration = () => {
                                                             {selectedPlan?.id === plan.id ? 'Selected' : 'Select Plan'}
                                                         </button>
                                                     </div>
-                                                ))}
+                                                    )
+                                                })}
                                             </div>
                                         </>
                                     )}
@@ -581,19 +641,19 @@ const VendorRegistration = () => {
                                                     <h5 className="text-muted border-bottom pb-2 mb-3">Business Details</h5>
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Business Name</label>
+                                                    <label className="form-label">Business Name <span className="text-danger">*</span></label>
                                                     <input type="text" name="businessName" required value={formData.businessName} onChange={handleInputChange} className="form-control" placeholder="My Event Company" />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">GST Number</label>
+                                                    <label className="form-label">GST Number <span className="text-danger">*</span></label>
                                                     <input type="text" name="gstNumber" required value={formData.gstNumber} onChange={handleInputChange} className="form-control" placeholder="22AAAAA0000A1Z5" />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Business Address</label>
+                                                    <label className="form-label">Business Address <span className="text-danger">*</span></label>
                                                     <textarea name="businessAddress" required value={formData.businessAddress} onChange={handleInputChange} className="form-control" rows="2" placeholder="123, Main Street, City"></textarea>
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Proof Upload (ID/License)</label>
+                                                    <label className="form-label">Proof Upload (ID/License) <span className="text-danger">*</span></label>
                                                     <input type="file" name="proofDocument" required onChange={handleInputChange} className="form-control" accept="image/*,application/pdf" />
                                                     <div className="form-text text-muted">Upload a valid ID proof or Business License (Image or PDF).</div>
                                                 </div>
@@ -603,15 +663,15 @@ const VendorRegistration = () => {
                                                     <h5 className="text-muted border-bottom pb-2 mb-3">Personal Details</h5>
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Full Name</label>
+                                                    <label className="form-label">Full Name <span className="text-danger">*</span></label>
                                                     <input type="text" name="fullName" required value={formData.fullName} onChange={handleInputChange} className="form-control" placeholder="John Doe" />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Phone</label>
+                                                    <label className="form-label">Phone <span className="text-danger">*</span></label>
                                                     <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange} className="form-control" placeholder="+1 234..." />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Email Address</label>
+                                                    <label className="form-label">Email Address <span className="text-danger">*</span></label>
                                                     <div className="input-group">
                                                         <input
                                                             type="email"
@@ -632,7 +692,7 @@ const VendorRegistration = () => {
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">UPI ID</label>
+                                                    <label className="form-label">UPI ID <span className="text-danger">*</span></label>
                                                     <div className="position-relative">
                                                         <input
                                                             type="text"
@@ -662,7 +722,7 @@ const VendorRegistration = () => {
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Password</label>
+                                                    <label className="form-label">Password <span className="text-danger">*</span></label>
                                                     <div className="position-relative">
                                                         <input
                                                             type={showPassword ? "text" : "password"}
@@ -718,7 +778,7 @@ const VendorRegistration = () => {
                                                     )}
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Confirm Password</label>
+                                                    <label className="form-label">Confirm Password <span className="text-danger">*</span></label>
                                                     <div className="position-relative">
                                                         <input
                                                             type={showConfirmPassword ? "text" : "password"}
@@ -840,7 +900,7 @@ const VendorRegistration = () => {
                                                     </div>
                                                     <div className="d-flex justify-content-between mt-3 pt-2 border-top">
                                                         <span className="fw-bold text-dark">Total Payable:</span>
-                                                        <span className="fw-bold text-danger fs-5">₹{selectedPlan?.price}</span>
+                                                        <span className="fw-bold text-danger fs-5">₹{isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice}</span>
                                                     </div>
                                                 </div>
 
@@ -870,33 +930,8 @@ const VendorRegistration = () => {
                                                 className="sa-login-btn mt-4"
                                                 disabled={isProcessing || !termsAccepted}
                                             >
-                                                {isProcessing ? 'Processing Payment...' : (isTestMode ? `Pay ₹${selectedPlan?.price}` : `Pay ₹${selectedPlan?.price} & Register`)}
+                                                {isProcessing ? 'Processing Payment...' : ((isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice) === 0 ? 'Register for Free' : (isTestMode ? `Pay ₹${isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice}` : `Pay ₹${isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice} & Register`))}
                                             </button>
-
-                                            {isTestMode && (
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-outline-dark w-100 mt-3 py-3 rounded-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
-                                                    disabled={isProcessing || !termsAccepted}
-                                                    onClick={async () => {
-                                                        setIsProcessing(true);
-                                                        try {
-                                                            const fakePaymentId = `pay_fake_${Date.now()}`;
-                                                            const fakeOrderId = `order_fake_${Date.now()}`;
-                                                            setIsRegistering(true);
-                                                            await registerVendor(fakePaymentId, fakeOrderId);
-                                                        } catch (err) {
-                                                            console.error('Simulation Error:', err);
-                                                            showToast('Simulation failed.', 'error');
-                                                            setIsRegistering(false);
-                                                        } finally {
-                                                            setIsProcessing(false);
-                                                        }
-                                                    }}
-                                                >
-                                                    Simulate Payment Success (Test Mode)
-                                                </button>
-                                            )}
                                         </form>
                                     )}
                                 </>
