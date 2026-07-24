@@ -560,12 +560,6 @@ const BookingList = () => {
                     <h2 className="fw-bold text-dark mb-1" style={{ letterSpacing: '-0.5px' }}>Reservations</h2>
                     <p className="text-muted small mb-0">Manage and track all your venue bookings in one place.</p>
                 </div>
-                <div className="d-flex gap-2">
-                    <button className="btn btn-white border shadow-sm rounded-3 d-flex align-items-center gap-2 px-3 py-2 bg-white">
-                        <FaFilter className="text-secondary small" />
-                        <span className="fw-bold small">Export Report</span>
-                    </button>
-                </div>
             </div>
 
             {/* Tab Switcher */}

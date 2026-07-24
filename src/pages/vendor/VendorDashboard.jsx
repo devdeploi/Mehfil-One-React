@@ -221,7 +221,6 @@ const VendorDashboard = () => {
                     <div className="sa-card-wrapper h-100">
                         <div className="d-flex justify-content-between align-items-center mb-4">
                             <h2 className="sa-section-title">All Bookings</h2>
-                            <button className="btn btn-sm btn-outline-secondary">Export CSV</button>
                         </div>
                         <div className="table-responsive">
                             <table className="table sa-table">

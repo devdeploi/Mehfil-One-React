@@ -188,7 +188,7 @@ const Venues = ({ venuesRef }) => {
                     </div>
                 )}
 
-                {!loading && venues.length > 0 && (
+                {!loading && venues.length > 3 && (
                     <div className="text-center mt-5 animate-fade-in">
                         <button 
                             className="btn btn-danger btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg transform-hover"

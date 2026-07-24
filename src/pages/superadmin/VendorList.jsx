@@ -201,6 +201,25 @@ const VendorList = () => {
                     >
                         Active
                     </button>
+                    <button 
+                        type="button" 
+                        onClick={() => { setActiveTab('Inactive'); setCurrentPage(1); }}
+                        style={{
+                            minWidth: '140px',
+                            border: 'none',
+                            padding: '10px 24px',
+                            borderRadius: '30px',
+                            background: activeTab === 'Inactive' ? 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)' : 'transparent',
+                            color: activeTab === 'Inactive' ? '#fff' : '#475569',
+                            fontWeight: '600',
+                            fontSize: '0.95rem',
+                            letterSpacing: '0.3px',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: activeTab === 'Inactive' ? '0 4px 12px rgba(220, 38, 38, 0.35)' : 'none'
+                        }}
+                    >
+                        Rejected
+                    </button>
                 </div>
             </div>
             <div className="sa-table-container">

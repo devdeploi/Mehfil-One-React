@@ -201,7 +201,13 @@ const VendorRegistration = () => {
     const handleInputChange = (e) => {
         const { name, value, files } = e.target;
 
-        if (name === 'phone') {
+        if (name === 'fullName' || name === 'businessName') {
+            if (/[^a-zA-Z\s]/.test(value)) {
+                showToast('Only alphabets are allowed.', 'error');
+                return; // Block input
+            }
+            setFormData(prev => ({ ...prev, [name]: value }));
+        } else if (name === 'phone') {
             // Strict Validation for Phone
             if (/\D/.test(value)) {
                 showToast('Please enter numbers only.', 'error');
@@ -266,7 +272,7 @@ const VendorRegistration = () => {
 
     const handlePayment = async () => {
         setIsProcessing(true);
-        const amountToPay = isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice;
+        const amountToPay = isYearly ? selectedPlan?.yearlyPrice : 1;
 
         if (amountToPay === 0) {
             setIsRegistering(true);
@@ -357,7 +363,7 @@ const VendorRegistration = () => {
             formDataPayload.append('upiId', formData.upiId);
             formDataPayload.append('paymentId', paymentId);
             formDataPayload.append('orderId', orderId);
-            formDataPayload.append('amount', paidAmount !== undefined ? paidAmount : (isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice));
+            formDataPayload.append('amount', paidAmount !== undefined ? paidAmount : (isYearly ? selectedPlan?.yearlyPrice : 1));
             if (formData.proofDocument) {
                 formDataPayload.append('proofDocument', formData.proofDocument);
             }
@@ -565,7 +571,7 @@ const VendorRegistration = () => {
                                         <>
                                             {!isYearly && (
                                                 <div style={{ position: 'relative', width: '100%', background: '#dc3545', color: '#fff', padding: '10px 0', zIndex: 10, fontSize: '1.1rem', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', boxShadow: '0 4px 12px rgba(220,53,69,0.3)', marginBottom: '24px', borderRadius: '8px', overflow: 'hidden' }}>
-                                                    <marquee scrollamount="12">Launch Offers one month Free trial 🎉 Launch Offers one month Free trial 🎉 Launch Offers one month Free trial 🎉</marquee>
+                                                    <marquee scrollamount="12"> 🎉 Launch Offers one month Free trial 🎉 Launch Offers one month Free trial 🎉 Launch Offers one month Free trial </marquee>
                                                 </div>
                                             )}
                                             <div className="vr-form-header text-center mb-4">
@@ -900,7 +906,7 @@ const VendorRegistration = () => {
                                                     </div>
                                                     <div className="d-flex justify-content-between mt-3 pt-2 border-top">
                                                         <span className="fw-bold text-dark">Total Payable:</span>
-                                                        <span className="fw-bold text-danger fs-5">₹{isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice}</span>
+                                                        <span className="fw-bold text-danger fs-5">₹{isYearly ? selectedPlan?.yearlyPrice : 1}</span>
                                                     </div>
                                                 </div>
 
@@ -930,7 +936,7 @@ const VendorRegistration = () => {
                                                 className="sa-login-btn mt-4"
                                                 disabled={isProcessing || !termsAccepted}
                                             >
-                                                {isProcessing ? 'Processing Payment...' : ((isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice) === 0 ? 'Register for Free' : (isTestMode ? `Pay ₹${isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice}` : `Pay ₹${isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice} & Register`))}
+                                                {isProcessing ? 'Processing Payment...' : ((isYearly ? selectedPlan?.yearlyPrice : 1) === 0 ? 'Register for Free' : (isTestMode ? `Pay ₹${isYearly ? selectedPlan?.yearlyPrice : 1}` : `Pay ₹${isYearly ? selectedPlan?.yearlyPrice : 1} & Register`))}
                                             </button>
                                         </form>
                                     )}
