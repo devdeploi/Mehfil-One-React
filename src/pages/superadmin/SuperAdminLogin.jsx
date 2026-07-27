@@ -92,10 +92,10 @@ const SuperAdminLogin = () => {
         e.preventDefault();
 
         try {
-            const response = await axios.post(`${API_URL}/auth/login`, loginData);
+            const response = await axios.post(`${API_URL}/auth/login-admin`, loginData);
 
             if (response.status === 200) {
-                const userData = response.data.vendor;
+                const userData = response.data.admin;
                 
                 if (userData.role !== 'superadmin') {
                     setLoginError('Access denied. This portal is for Super Admins only.');

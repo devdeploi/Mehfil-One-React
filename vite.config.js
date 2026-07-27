@@ -14,28 +14,41 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['Mehfil_One.png', 'mask-icon.svg'],
       manifest: {
-        name: 'MEHFIL-ONE',
+        name: 'MEHFIL ONE',
         short_name: 'MEHFIL',
-        description: 'MEHFIL-ONE PWA Web App',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
+        description: 'Premium event space and venue booking platform for elite gatherings.',
+        theme_color: '#dc2626',
+        background_color: '#242424',
         display: 'standalone',
+        start_url: '/',
+        id: '/',
         icons: [
           {
             src: '/Mehfil_One.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: '/Mehfil_One.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: '/Mehfil_One.png',
-            sizes: '512x512',
+            sizes: '500x500',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: '/Mehfil_One.png',
+            sizes: '500x500',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ],
+        screenshots: [
+          {
+            src: '/Web_screen.png',
+            sizes: '1599x762',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'Mehfil One Desktop View'
+          },
+          {
+            src: '/Mobile_screen.jpeg',
+            sizes: '1080x2149',
+            type: 'image/jpeg',
+            label: 'Mehfil One Mobile View'
           }
         ]
       },
@@ -49,6 +62,7 @@ export default defineConfig({
     include: ['socket.io-client', 'engine.io-client']
   },
   server: {
-    open: true
+    open: true,
+    host: true
   }
 })
