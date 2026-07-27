@@ -97,14 +97,14 @@ const Pricing = ({ plansRef }) => {
                                     )}
                                     <span className="pr-currency">{plan.currency}</span>
                                     <span className="pr-amount">
-                                        {isYearly ? plan.yearlyPrice.toLocaleString() : "0"}
+                                        {isYearly ? plan.yearlyPrice.toLocaleString('en-IN') : "0"}
                                     </span>
                                     <span className="pr-period">/{isYearly ? 'yr' : 'mo'}</span>
                                 </div>
 
                                 {/* Monthly equivalent */}
                                 <div className="pr-monthly" style={{ visibility: isYearly ? 'visible' : 'hidden' }}>
-                                    ≈ {plan.currency}{Math.round(plan.yearlyPrice / 12).toLocaleString()} / month
+                                    ≈ {plan.currency}{Math.round(plan.yearlyPrice / 12).toLocaleString('en-IN')} / month
                                 </div>
 
                                 {/* Divider */}

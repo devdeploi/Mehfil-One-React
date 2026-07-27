@@ -142,6 +142,7 @@ const VendorAvailability = () => {
         bookingStatus: 'Confirmed',
         price: '',
         advanceAmount: '',
+        guests: '',
         extraFacilities: {
             ac: { selected: false, price: 0 },
             generator: { selected: false, price: 0 },
@@ -272,6 +273,7 @@ const VendorAvailability = () => {
             bookingStatus: 'Confirmed',
             price: defaultPrice,
             advanceAmount: '',
+            guests: '',
             extraFacilities: {
                 ac: { selected: false, price: currentMahal?.facilities?.acPrice || 0 },
                 generator: { selected: false, price: currentMahal?.facilities?.generatorPrice || 0 },
@@ -336,6 +338,14 @@ const VendorAvailability = () => {
         e.preventDefault();
         if (!selectedMahalId) return;
 
+        const mahal = mahals.find(m => m.id === selectedMahalId);
+        if (mahal && formData.guests) {
+            if (Number(formData.guests) > Number(mahal.seatingCapacity || 0)) {
+                showToast(`Guests cannot exceed seating capacity (${mahal.seatingCapacity})`, "error");
+                return;
+            }
+        }
+
         try {
             const payload = {
                 mahalId: selectedMahalId,
@@ -347,6 +357,7 @@ const VendorAvailability = () => {
                 customerName: formData.customerName,
                 customerPhone: formData.customerPhone,
                 customerEmail: formData.customerEmail || null,
+                guests: formData.guests ? Number(formData.guests) : null,
                 paymentMode: formData.paymentMode,
                 paymentStatus: formData.paymentStatus,
                 bookingStatus: formData.bookingStatus,
@@ -863,7 +874,10 @@ const VendorAvailability = () => {
                                                         placeholder="Full name"
                                                         required
                                                         value={formData.customerName}
-                                                        onChange={e => setFormData({ ...formData, customerName: e.target.value })}
+                                                        onChange={e => {
+                                                            const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                                                            setFormData({ ...formData, customerName: val });
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
@@ -890,7 +904,7 @@ const VendorAvailability = () => {
 
                                         {/* ── Customer Email Row ── */}
                                         <div className="row g-3 mb-3">
-                                            <div className="col-12">
+                                            <div className="col-md-6">
                                                 <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Customer Email (Optional)</label>
                                                 <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
                                                     <span style={{ padding: '0 12px', color: '#e63946' }}><FaEnvelope style={{ fontSize: 13 }} /></span>
@@ -899,6 +913,27 @@ const VendorAvailability = () => {
                                                         placeholder="customer@example.com (optional)"
                                                         value={formData.customerEmail}
                                                         onChange={e => setFormData({ ...formData, customerEmail: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 6, display: 'block' }}>Estimated Guests</label>
+                                                <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
+                                                    <span style={{ padding: '0 12px', color: '#e63946' }}><FaUser style={{ fontSize: 13 }} /></span>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        style={{ flex: 1, border: 'none', outline: 'none', padding: '11px 12px 11px 0', fontSize: '0.9rem', color: '#1a1a2e', background: 'transparent', fontWeight: 500 }}
+                                                        placeholder={`Max: ${currentMahal?.seatingCapacity || ''}`}
+                                                        required
+                                                        value={formData.guests}
+                                                        onChange={e => {
+                                                            let val = e.target.value;
+                                                            if (currentMahal && Number(val) > Number(currentMahal.seatingCapacity || 0)) {
+                                                                val = currentMahal.seatingCapacity;
+                                                            }
+                                                            setFormData({ ...formData, guests: val });
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
@@ -1052,86 +1087,76 @@ const VendorAvailability = () => {
                                             <div className="col-md-5">
                                                 <div className="d-flex justify-content-between align-items-center mb-1">
                                                     <label style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#6c757d', marginBottom: 0 }}>
-                                                        {formData.isMultiDay ? 'Multi-day Base Price' : 'Discount %'}
+                                                        Discount %
                                                     </label>
-                                                    {formData.isMultiDay && (
-                                                        <span style={{ fontSize: '0.6rem', color: '#28a745', fontWeight: 700, background: '#eefcf1', padding: '1px 6px', borderRadius: 4 }}>Auto-Calculated</span>
-                                                    )}
-                                                    {!formData.isMultiDay && currentMahal && (currentMahal.discountMax > 0 || currentMahal.discountMin > 0) && (
+                                                    {currentMahal && (currentMahal.discountMax > 0 || currentMahal.discountMin > 0) && (
                                                         <span style={{ fontSize: '0.6rem', color: '#e63946', fontWeight: 700, background: '#fff3f4', padding: '1px 6px', borderRadius: 4 }}>Range: {currentMahal.discountMin || 0}% - {currentMahal.discountMax || 0}%</span>
                                                     )}
                                                 </div>
-                                                {!formData.isMultiDay ? (
-                                                    <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', padding: '4px' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const current = Number(formData.appliedDiscount) || 0;
-                                                                const minAllowed = currentMahal?.discountMin || 0;
-                                                                let val = current - 1;
+                                                <div className="d-flex align-items-center" style={{ background: '#fff', border: '1.5px solid #e9ecef', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.2s', padding: '4px' }} onFocusCapture={e => e.currentTarget.style.borderColor = '#e63946'} onBlurCapture={e => e.currentTarget.style.borderColor = '#e9ecef'}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const current = Number(formData.appliedDiscount) || 0;
+                                                            const minAllowed = currentMahal?.discountMin || 0;
+                                                            let val = current - 1;
 
-                                                                // Jump straight to 0 (no discount) if we hit or go below the minimum
-                                                                if (current <= minAllowed) val = 0;
+                                                            // Jump straight to 0 (no discount) if we hit or go below the minimum
+                                                            if (current <= minAllowed) val = 0;
 
-                                                                const maxAllowed = currentMahal?.discountMax || 100;
-                                                                const finalDiscount = val <= 0 ? '' : Math.min(val, maxAllowed);
+                                                            const maxAllowed = currentMahal?.discountMax || 100;
+                                                            const finalDiscount = val <= 0 ? '' : Math.min(val, maxAllowed);
 
-                                                                let defaultPrice = recommendedPrice;
+                                                            let defaultPrice = recommendedPrice;
 
-                                                                let newPrice = defaultPrice;
-                                                                if (finalDiscount !== '' && newPrice > 0) newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
-                                                                setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
-                                                            }}
-                                                            style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', border: 'none', borderRadius: 8, color: '#64748b', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
-                                                            onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
-                                                            onMouseOut={e => e.currentTarget.style.background = '#f8fafc'}
-                                                        >
-                                                            <FaMinus style={{ fontSize: '0.75rem' }} />
-                                                        </button>
-                                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                                                            <input
-                                                                type="text"
-                                                                readOnly
-                                                                value={formData.appliedDiscount || '0'}
-                                                                style={{ border: 'none', outline: 'none', width: '30px', textAlign: 'center', fontSize: '1rem', fontWeight: 800, color: '#e63946', background: 'transparent' }}
-                                                            />
-                                                            <span style={{ color: '#e63946', fontWeight: 800, fontSize: '0.9rem' }}>%</span>
-                                                        </div>
-
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const current = Number(formData.appliedDiscount) || 0;
-                                                                const minAllowed = currentMahal?.discountMin || 0;
-                                                                let val = current + 1;
-
-                                                                // If starting from 0, jump immediately to the minimum allowed discount!
-                                                                if (current === 0 && minAllowed > 0) val = minAllowed;
-                                                                // If somehow below min Allowed, jump to minAllowed
-                                                                else if (current > 0 && current < minAllowed) val = minAllowed;
-
-                                                                const maxAllowed = currentMahal?.discountMax || 100;
-                                                                const finalDiscount = Math.min(val, maxAllowed);
-
-                                                                let defaultPrice = recommendedPrice;
-
-                                                                let newPrice = defaultPrice;
-                                                                if (finalDiscount > 0 && newPrice > 0) newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
-                                                                setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
-                                                            }}
-                                                            style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff3f4', border: 'none', borderRadius: 8, color: '#e63946', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
-                                                            onMouseOver={e => e.currentTarget.style.background = '#ffe4e6'}
-                                                            onMouseOut={e => e.currentTarget.style.background = '#fff3f4'}
-                                                        >
-                                                            <FaPlus style={{ fontSize: '0.75rem' }} />
-                                                        </button>
+                                                            let newPrice = defaultPrice;
+                                                            if (finalDiscount !== '' && newPrice > 0) newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
+                                                            setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
+                                                        }}
+                                                        style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', border: 'none', borderRadius: 8, color: '#64748b', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
+                                                        onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                                                        onMouseOut={e => e.currentTarget.style.background = '#f8fafc'}
+                                                    >
+                                                        <FaMinus style={{ fontSize: '0.75rem' }} />
+                                                    </button>
+                                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                                                        <input
+                                                            type="text"
+                                                            readOnly
+                                                            value={formData.appliedDiscount || '0'}
+                                                            style={{ border: 'none', outline: 'none', width: '30px', textAlign: 'center', fontSize: '1rem', fontWeight: 800, color: '#e63946', background: 'transparent' }}
+                                                        />
+                                                        <span style={{ color: '#e63946', fontWeight: 800, fontSize: '0.9rem' }}>%</span>
                                                     </div>
-                                                ) : (
-                                                    <div className="d-flex align-items-center" style={{ background: '#f8fafc', border: '1.5px solid #e9ecef', borderRadius: 10, padding: '10px 15px' }}>
-                                                        <FaRupeeSign className="text-muted small me-2" />
-                                                        <span style={{ fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>{recommendedPrice.toLocaleString('en-IN')}</span>
-                                                    </div>
-                                                )}
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const current = Number(formData.appliedDiscount) || 0;
+                                                            const minAllowed = currentMahal?.discountMin || 0;
+                                                            let val = current + 1;
+
+                                                            // If starting from 0, jump immediately to the minimum allowed discount!
+                                                            if (current === 0 && minAllowed > 0) val = minAllowed;
+                                                            // If somehow below min Allowed, jump to minAllowed
+                                                            else if (current > 0 && current < minAllowed) val = minAllowed;
+
+                                                            const maxAllowed = currentMahal?.discountMax || 100;
+                                                            const finalDiscount = Math.min(val, maxAllowed);
+
+                                                            let defaultPrice = recommendedPrice;
+
+                                                            let newPrice = defaultPrice;
+                                                            if (finalDiscount > 0 && newPrice > 0) newPrice = Math.round(newPrice - (newPrice * finalDiscount / 100));
+                                                            setFormData({ ...formData, appliedDiscount: finalDiscount, price: newPrice || '' });
+                                                        }}
+                                                        style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff3f4', border: 'none', borderRadius: 8, color: '#e63946', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
+                                                        onMouseOver={e => e.currentTarget.style.background = '#ffe4e6'}
+                                                        onMouseOut={e => e.currentTarget.style.background = '#fff3f4'}
+                                                    >
+                                                        <FaPlus style={{ fontSize: '0.75rem' }} />
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="col-md-7">
                                                 {(() => {

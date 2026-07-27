@@ -93,7 +93,6 @@ const Dashboard = () => {
                     <div className="sa-card-wrapper">
                         <div className="d-flex justify-content-between align-items-center mb-4">
                             <h2 className="sa-section-title">Recent Registrations</h2>
-                            <button className="btn sa-btn-outline">View All</button>
                         </div>
                         <div className="table-responsive">
                             <table className="table sa-table">
@@ -103,7 +102,6 @@ const Dashboard = () => {
                                         <th>Plan</th>
                                         <th>Status</th>
                                         <th>Date</th>
-                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -116,16 +114,11 @@ const Dashboard = () => {
                                                 {vendor.status}
                                             </td>
                                             <td className="text-muted">{formatDate(vendor.createdAt)}</td>
-                                            <td>
-                                                <button className="btn btn-sm sa-btn-icon">
-                                                    <i className="bi bi-three-dots-vertical"></i>
-                                                </button>
-                                            </td>
                                         </tr>
                                     ))}
                                     {statsData.recentVendors.length === 0 && (
                                         <tr>
-                                            <td colSpan="5" className="text-center py-4 text-muted">No recent registrations found</td>
+                                            <td colSpan="4" className="text-center py-4 text-muted">No recent registrations found</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -143,7 +136,7 @@ const Dashboard = () => {
                                 <div className="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 className="text-white-50 text-uppercase mb-2">Monthly Target</h6>
-                                        <h3 className="mb-0 fw-bold">₹{(statsData.currentMonthRevenue || 0).toLocaleString()} <span className="fs-6 text-white-50">/ ₹50k</span></h3>
+                                        <h3 className="mb-0 fw-bold">₹{(statsData.currentMonthRevenue || 0).toLocaleString('en-IN')} <span className="fs-6 text-white-50">/ ₹50k</span></h3>
                                     </div>
                                     <div className="sa-circular-chart" style={{ "--progress": `${Math.min(((statsData.currentMonthRevenue || 0) / 50000) * 100, 100).toFixed(0)}%` }}>
                                         <span>{Math.min(((statsData.currentMonthRevenue || 0) / 50000) * 100, 100).toFixed(0)}%</span>

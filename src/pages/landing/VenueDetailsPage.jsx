@@ -375,7 +375,7 @@ const VenueDetailsPage = () => {
                                 <div className="glass-card d-inline-block p-4 rounded-4" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.2)' }}>
                                     <div className="text-white-50 small fw-bold text-uppercase mb-1">Starting From</div>
                                     <div className="h2 fw-bold text-white mb-0 d-flex align-items-center justify-content-lg-end gap-2">
-                                        <FaRupeeSign /> {venue.fullDayPrice?.toLocaleString()}
+                                        <FaRupeeSign /> {venue.fullDayPrice?.toLocaleString('en-IN')}
                                     </div>
                                 </div>
                             </div>
@@ -389,7 +389,7 @@ const VenueDetailsPage = () => {
                 <div className="container d-flex justify-content-between align-items-center">
                     <div>
                         <div className="small text-white-50 text-uppercase fw-bold" style={{ fontSize: '0.6rem' }}>Starting Price</div>
-                        <div className="h5 fw-bold mb-0"><FaRupeeSign size={14} /> {venue.fullDayPrice?.toLocaleString()}</div>
+                        <div className="h5 fw-bold mb-0"><FaRupeeSign size={14} /> {venue.fullDayPrice?.toLocaleString('en-IN')}</div>
                     </div>
 
                 </div>
@@ -826,7 +826,7 @@ const VenueDetailsPage = () => {
                                                 </div>
                                             </div>
                                             <div className="text-end">
-                                                <div className="fw-bold text-dark"><FaRupeeSign size={12} /> {(venue.morningPrice || venue.fullDayPrice / 2).toLocaleString()}</div>
+                                                <div className="fw-bold text-dark"><FaRupeeSign size={12} /> {(venue.morningPrice || venue.fullDayPrice / 2).toLocaleString('en-IN')}</div>
                                             </div>
                                         </div>
 
@@ -839,7 +839,7 @@ const VenueDetailsPage = () => {
                                                 </div>
                                             </div>
                                             <div className="text-end">
-                                                <div className="fw-bold text-dark"><FaRupeeSign size={12} /> {(venue.eveningPrice || venue.fullDayPrice / 2).toLocaleString()}</div>
+                                                <div className="fw-bold text-dark"><FaRupeeSign size={12} /> {(venue.eveningPrice || venue.fullDayPrice / 2).toLocaleString('en-IN')}</div>
                                             </div>
                                         </div>
                                         <div className="p-3 rounded-4 bg-dark text-white d-flex justify-content-between align-items-center shadow-sm">
@@ -851,7 +851,7 @@ const VenueDetailsPage = () => {
                                                 </div>
                                             </div>
                                             <div className="text-end">
-                                                <div className="fw-bold" style={{ color: '#ff8a94' }}><FaRupeeSign size={12} /> {venue.fullDayPrice?.toLocaleString()}</div>
+                                                <div className="fw-bold" style={{ color: '#ff8a94' }}><FaRupeeSign size={12} /> {venue.fullDayPrice?.toLocaleString('en-IN')}</div>
                                             </div>
                                         </div>
                                     </div>

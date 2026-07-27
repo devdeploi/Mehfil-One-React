@@ -82,18 +82,15 @@ const VendorProfile = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         
-        if (name === 'phone') {
-            if (/\D/.test(value)) {
-                showToast('Please enter numbers only.', 'error');
-                return;
-            }
-            if (value.length > 10) {
-                showToast('Phone number limit is 10 digits.', 'error');
-                return;
-            }
+        if (name === 'fullName') {
+            const alphabetsOnly = value.replace(/[^a-zA-Z\s]/g, '');
+            setProfile(prev => ({ ...prev, [name]: alphabetsOnly }));
+        } else if (name === 'phone') {
+            const numbersOnly = value.replace(/\D/g, '').slice(0, 10);
+            setProfile(prev => ({ ...prev, [name]: numbersOnly }));
+        } else {
+            setProfile(prev => ({ ...prev, [name]: value }));
         }
-        
-        setProfile(prev => ({ ...prev, [name]: value }));
     };
 
     const handleImageChange = (e) => {

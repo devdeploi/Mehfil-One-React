@@ -319,11 +319,30 @@ const MahalProfile = () => {
         const { name, value, type, checked } = e.target;
         const val = type === 'checkbox' ? checked : value;
 
+        if (name === 'ownerName') {
+            const textValue = value.replace(/[^a-zA-Z\s]/g, '');
+            if (section) {
+                setCurrentHall(prev => ({ ...prev, [section]: { ...prev[section], [name]: textValue } }));
+            } else {
+                setCurrentHall(prev => ({ ...prev, [name]: textValue }));
+            }
+            return;
+        }
+
+        if (name === 'pincode') {
+            const numericValue = value.replace(/\D/g, '').slice(0, 8);
+            if (section) {
+                setCurrentHall(prev => ({ ...prev, [section]: { ...prev[section], [name]: numericValue } }));
+            } else {
+                setCurrentHall(prev => ({ ...prev, [name]: numericValue }));
+            }
+            return;
+        }
+
         // Mobile Validation: Allow only digits and max 10 chars
         if (['mobile', 'altMobile', 'whatsapp'].includes(name)) {
-            const numericValue = value.replace(/\D/g, ''); // Remove non-digits
-            if (numericValue.length > 10) return; // Prevent more than 10
-
+            const numericValue = value.replace(/\D/g, '').slice(0, 10);
+            
             // For updates, we pass the cleaned numericValue
             if (section) {
                 setCurrentHall(prev => ({
@@ -332,6 +351,20 @@ const MahalProfile = () => {
                 }));
             } else {
                 setCurrentHall(prev => ({ ...prev, [name]: numericValue }));
+            }
+            return;
+        }
+
+        // City, State, District Validation: Prevent numbers
+        if (['city', 'state', 'district'].includes(name)) {
+            const textValue = value.replace(/[0-9]/g, ''); // Remove numbers
+            if (section) {
+                setCurrentHall(prev => ({
+                    ...prev,
+                    [section]: { ...prev[section], [name]: textValue }
+                }));
+            } else {
+                setCurrentHall(prev => ({ ...prev, [name]: textValue }));
             }
             return;
         }
@@ -508,6 +541,7 @@ const MahalProfile = () => {
             { key: 'seatingCapacity', label: 'Seating Capacity' },
             { key: 'diningCapacity', label: 'Dining Capacity' },
             { key: 'fullDayPrice', label: 'Full Day Price' },
+            { key: 'advanceAmount', label: 'Advance Amount' },
             { key: 'terms', label: 'Terms & Conditions' }
         ];
 
@@ -988,7 +1022,7 @@ const MahalProfile = () => {
                                                 <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Evening Slot Price</label><input type="number" className="form-control" style={inputStyle} name="eveningPrice" value={currentHall.eveningPrice} onChange={handleFormChange} /></div>
                                                 <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Full Day Price <span className="text-danger">*</span></label><input type="number" className="form-control" style={inputStyle} name="fullDayPrice" value={currentHall.fullDayPrice} onChange={handleFormChange} required /></div>
                                                 <div className="col-md-3"><label className="form-label fw-bold small text-secondary">Extra Hour Charges</label><input type="number" className="form-control" style={inputStyle} name="extraHourPrice" value={currentHall.extraHourPrice} onChange={handleFormChange} /></div>
-                                                <div className="col-md-6"><label className="form-label fw-bold small text-secondary">Advance Amount</label><input type="number" className="form-control" style={inputStyle} name="advanceAmount" value={currentHall.advanceAmount} onChange={handleFormChange} /></div>
+                                                <div className="col-md-6"><label className="form-label fw-bold small text-secondary">Advance Amount <span className="text-danger">*</span></label><input type="number" className="form-control" style={inputStyle} name="advanceAmount" value={currentHall.advanceAmount} onChange={handleFormChange} required /></div>
                                                 <div className="col-md-6">
                                                     <label className="form-label fw-bold small text-secondary d-flex align-items-center gap-2">
                                                         Discount Range
@@ -1610,12 +1644,12 @@ const MahalProfile = () => {
                                                     <div className="fw-bold text-dark">Annual Subscription</div>
                                                     <div className="small text-secondary">Unlimited listings & premium support</div>
                                                 </div>
-                                                <div className="fw-bold text-dark" style={{ fontSize: '1.2rem' }}>₹{premiumPrice.toLocaleString()}</div>
+                                                <div className="fw-bold text-dark" style={{ fontSize: '1.2rem' }}>₹{premiumPrice.toLocaleString('en-IN')}</div>
                                             </div>
                                             
                                             <div className="d-flex justify-content-between align-items-center fw-bold text-success" style={{ fontSize: '1.1rem' }}>
                                                 <div>Total Amount to Pay</div>
-                                                <div>₹{premiumPrice.toLocaleString()}</div>
+                                                <div>₹{premiumPrice.toLocaleString('en-IN')}</div>
                                             </div>
                                         </div>
 

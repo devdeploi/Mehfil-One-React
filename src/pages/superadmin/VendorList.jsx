@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../utils/function';
-import { FaToggleOn, FaToggleOff, FaTrash, FaCheck, FaChevronLeft, FaChevronRight, FaExclamationTriangle, FaEye, FaTimes, FaHistory, FaFilePdf, FaFileDownload, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaToggleOn, FaToggleOff, FaTrash, FaCheck, FaChevronLeft, FaChevronRight, FaExclamationTriangle, FaEye, FaTimes, FaHistory, FaFilePdf, FaFileDownload, FaExternalLinkAlt, FaBan } from 'react-icons/fa';
 import '../../styles/superadmin/VendorList.css';
 
 const VendorList = () => {
@@ -131,7 +131,12 @@ const VendorList = () => {
             fetchVendors();
         } catch (error) {
             console.error('Error deleting vendor:', error);
-            showToast('Failed to delete vendor', 'error');
+            if (error.response && error.response.status === 400) {
+                showToast(error.response.data.msg, 'error');
+            } else {
+                showToast('Failed to delete vendor', 'error');
+            }
+            setDeleteModal({ show: false, id: null });
         }
     };
 
@@ -235,38 +240,71 @@ const VendorList = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {vendors.map((vendor, index) => (
-                            <tr key={vendor._id}>
-                                <td>{index + 1}</td>
-                                <td>
-                                    {vendor.fullName}
-                                    {activeTab === 'Pending' && isNew(vendor.createdAt) && (
-                                        <span className="badge bg-danger ms-2" style={{fontSize: '0.65rem', verticalAlign: 'middle'}}>New</span>
-                                    )}
-                                </td>
-                                <td>{vendor.email}</td>
-                                <td>{vendor.phone}</td>
-                                <td><span className={getStatusBadge(vendor.status)}>{vendor.status}</span></td>
-                                <td>
-                                    <button
-                                        className="sa-action-btn sa-btn-view"
-                                        title="View Details"
-                                        onClick={() => setViewModal({ show: true, vendor: vendor })}
-                                        style={{ color: '#3b82f6', background: '#eff6ff', marginRight: '5px' }}
-                                    >
-                                        <FaEye />
-                                    </button>
-
-                                    <button
-                                        className="sa-action-btn sa-btn-delete"
-                                        title="Delete"
-                                        onClick={() => confirmDelete(vendor._id)}
-                                    >
-                                        <FaTrash />
-                                    </button>
+                        {vendors.length === 0 ? (
+                            <tr>
+                                <td colSpan="6" className="text-center" style={{ padding: '4rem 1rem' }}>
+                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                        <div style={{ fontSize: '3.5rem', color: '#e2e8f0', marginBottom: '1rem' }}>
+                                            <i className="bi bi-inbox"></i>
+                                        </div>
+                                        <h5 className="fw-bold mb-2" style={{ color: '#475569' }}>
+                                            {activeTab === 'Pending' ? 'No Pending Vendors' : activeTab === 'Active' ? 'No Active Vendors' : 'No Rejected Vendors'}
+                                        </h5>
+                                        <p className="mb-0" style={{ color: '#64748b', fontSize: '0.95rem', maxWidth: '400px', margin: '0 auto' }}>
+                                            {activeTab === 'Pending' 
+                                                ? 'All new vendor registrations awaiting your review and approval will appear here.' 
+                                                : activeTab === 'Active' 
+                                                ? 'Approved vendors who are currently active on the platform will be listed here.' 
+                                                : 'Vendors whose accounts have been rejected or deactivated will appear here.'}
+                                        </p>
+                                    </div>
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            vendors.map((vendor, index) => (
+                                <tr key={vendor._id}>
+                                    <td>{index + 1}</td>
+                                    <td>
+                                        {vendor.fullName}
+                                        {activeTab === 'Pending' && isNew(vendor.createdAt) && (
+                                            <span className="badge bg-danger ms-2" style={{fontSize: '0.65rem', verticalAlign: 'middle'}}>New</span>
+                                        )}
+                                    </td>
+                                    <td>{vendor.email}</td>
+                                    <td>{vendor.phone}</td>
+                                    <td><span className={getStatusBadge(vendor.status)}>{vendor.status}</span></td>
+                                    <td>
+                                        <button
+                                            className="sa-action-btn sa-btn-view"
+                                            title="View Details"
+                                            onClick={() => setViewModal({ show: true, vendor: vendor })}
+                                            style={{ color: '#3b82f6', background: '#eff6ff', marginRight: '5px' }}
+                                        >
+                                            <FaEye />
+                                        </button>
+                                        
+                                        {vendor.status === 'Active' && (
+                                            <button
+                                                className="sa-action-btn"
+                                                title="Deactivate Vendor"
+                                                onClick={() => confirmToggle(vendor._id, vendor.status)}
+                                                style={{ color: '#f59e0b', background: '#fef3c7', marginRight: '5px' }}
+                                            >
+                                                <FaBan />
+                                            </button>
+                                        )}
+
+                                        <button
+                                            className="sa-action-btn sa-btn-delete"
+                                            title="Delete"
+                                            onClick={() => confirmDelete(vendor._id)}
+                                        >
+                                            <FaTrash />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

@@ -956,14 +956,14 @@ const BookingList = () => {
                                         <div className="space-y-3">
                                             <div className="d-flex justify-content-between align-items-center mb-1">
                                                 <span className="text-white-50 small">Venue Price</span>
-                                                <span className="fw-bold">₹{Number(selectedBooking.price || 0).toLocaleString()}</span>
+                                                <span className="fw-bold">₹{Number(selectedBooking.price || 0).toLocaleString('en-IN')}</span>
                                             </div>
 
                                             {/* Itemized Facilities */}
                                             {selectedBooking.extraFacilities && Object.entries(selectedBooking.extraFacilities).map(([key, f]) => f.selected && (
                                                 <div key={key} className="d-flex justify-content-between align-items-center mb-1 animate-fade-in" style={{ opacity: 0.9 }}>
                                                     <span className="text-white-50" style={{ fontSize: '0.7rem' }}>+ {key.charAt(0).toUpperCase() + key.slice(1)}</span>
-                                                    <span className="text-white-50 small">₹{Number(f.price || 0).toLocaleString()}</span>
+                                                    <span className="text-white-50 small">₹{Number(f.price || 0).toLocaleString('en-IN')}</span>
                                                 </div>
                                             ))}
 
@@ -971,7 +971,7 @@ const BookingList = () => {
                                                 <div className="d-flex flex-column">
                                                     <span className="text-white-50 small">Advance Paid</span>
                                                     <div className="d-flex align-items-center gap-2">
-                                                        <span className="text-success fw-bold">₹{Number(selectedBooking.advancePaid || 0).toLocaleString()}</span>
+                                                        <span className="text-success fw-bold">₹{Number(selectedBooking.advancePaid || 0).toLocaleString('en-IN')}</span>
                                                         {selectedBooking.isVerified ? (
                                                             <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style={{ fontSize: '0.55rem' }}>
                                                                 <FaCheckCircle className="me-1" size={8} /> VERIFIED
@@ -999,7 +999,7 @@ const BookingList = () => {
                                                 <div className="d-flex justify-content-between align-items-center pb-3 border-bottom border-white-10 mt-2">
                                                     <div className="d-flex flex-column">
                                                         <span className="text-white-50 small">Balance Paid</span>
-                                                        <span className="text-success fw-bold">₹{Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0)).toLocaleString()}</span>
+                                                        <span className="text-success fw-bold">₹{Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0)).toLocaleString('en-IN')}</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -1007,7 +1007,7 @@ const BookingList = () => {
                                             <div className="d-flex justify-content-between align-items-end pt-2 pb-3 border-bottom border-white-10">
                                                 <div>
                                                     <div className="text-white-50 fw-bold text-uppercase" style={{ fontSize: '0.55rem' }}>Pending Balance</div>
-                                                    <div className="h5 fw-bold text-warning mb-0">₹{Math.max(0, Number(selectedBooking.totalAmount || 0) - Number(selectedBooking.advancePaid || 0) - Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0))).toLocaleString()}</div>
+                                                    <div className="h5 fw-bold text-warning mb-0">₹{Math.max(0, Number(selectedBooking.totalAmount || 0) - Number(selectedBooking.advancePaid || 0) - Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0))).toLocaleString('en-IN')}</div>
                                                 </div>
                                                 <div className="text-end">
                                                     {Math.max(0, Number(selectedBooking.totalAmount || 0) - Number(selectedBooking.advancePaid || 0) - Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0))) > 0 && (
@@ -1028,7 +1028,7 @@ const BookingList = () => {
                                             <div className="d-flex justify-content-between align-items-end pt-2">
                                                 <div>
                                                     <div className="text-white-50 fw-bold text-uppercase" style={{ fontSize: '0.55rem' }}>Total Amount</div>
-                                                    <div className="h4 fw-bold text-danger mb-0">₹{Number(selectedBooking.totalAmount || 0).toLocaleString()}</div>
+                                                    <div className="h4 fw-bold text-danger mb-0">₹{Number(selectedBooking.totalAmount || 0).toLocaleString('en-IN')}</div>
                                                 </div>
                                                 <div className="text-end">
                                                     <span className={`badge rounded-pill ${tempStatus.paymentStatus === 'Paid' ? 'bg-success' : 'bg-warning'} px-3`} style={{ fontSize: '0.65rem' }}>
@@ -1142,7 +1142,7 @@ const BookingList = () => {
                             <div className="p-3 bg-light rounded-4 border d-flex justify-content-between align-items-center">
                                 <div>
                                     <div className="fw-bold small text-dark">Full Advance Paid</div>
-                                    <div className="x-small text-muted">Expected: ₹{Number(selectedBooking.advancePaid || 1000).toLocaleString()}</div>
+                                    <div className="x-small text-muted">Expected: ₹{Number(selectedBooking.advancePaid || 1000).toLocaleString('en-IN')}</div>
                                 </div>
                                 <div className="form-check form-switch">
                                     <input
@@ -1200,7 +1200,7 @@ const BookingList = () => {
                             
                             <div className="mb-4">
                                 <label className="form-label fw-bold small text-muted text-uppercase">Pending Balance</label>
-                                <div className="h4 text-warning fw-bold">₹{Math.max(0, Number(selectedBooking.totalAmount || 0) - Number(selectedBooking.advancePaid || 0) - Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0))).toLocaleString()}</div>
+                                <div className="h4 text-warning fw-bold">₹{Math.max(0, Number(selectedBooking.totalAmount || 0) - Number(selectedBooking.advancePaid || 0) - Number(tempStatus.balancePaid !== undefined ? tempStatus.balancePaid : (selectedBooking.balancePaid || 0))).toLocaleString('en-IN')}</div>
                             </div>
                             
                             <div className="mb-4">

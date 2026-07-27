@@ -73,18 +73,15 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
         } else {
             const { name, value } = e.target;
             
-            if (name === 'phone') {
-                if (/\D/.test(value)) {
-                    setError('Please enter numbers only for phone number.');
-                    return;
-                }
-                if (value.length > 10) {
-                    setError('Phone number limit is 10 digits.');
-                    return;
-                }
+            if (name === 'fullName') {
+                const alphabetsOnly = value.replace(/[^a-zA-Z\s]/g, '');
+                setFormData({ ...formData, [name]: alphabetsOnly });
+            } else if (name === 'phone') {
+                const numbersOnly = value.replace(/\D/g, '').slice(0, 10);
+                setFormData({ ...formData, [name]: numbersOnly });
+            } else {
+                setFormData({ ...formData, [name]: value });
             }
-
-            setFormData({ ...formData, [name]: value });
             if (name === 'password') {
                 setPasswordStrength(value ? calculateStrength(value) : 0);
             }

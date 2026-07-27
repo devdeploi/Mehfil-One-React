@@ -429,7 +429,7 @@ const AllVenuesPage = () => {
                                             {/* Price Tag */}
                                             <div className="position-absolute bottom-0 end-0 m-2">
                                                 <div className="bg-danger text-white px-2 py-1 rounded-3 fw-bold shadow-sm x-small">
-                                                    ₹{venue.fullDayPrice?.toLocaleString()}
+                                                    ₹{venue.fullDayPrice?.toLocaleString('en-IN')}
                                                 </div>
                                             </div>
                                         </div>

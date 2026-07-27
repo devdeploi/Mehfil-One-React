@@ -89,24 +89,22 @@ const HeroSettings = () => {
     };
 
     const handleReset = async () => {
-        if (window.confirm("Reset all 4 hero images to system default static images?")) {
-            setLoading(true);
-            try {
-                await fetch(`${API_URL}/superadmin/hero-settings`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(DEFAULT_HERO_IMAGES)
-                });
-                try { localStorage.removeItem('hero_landing_images'); } catch (err) {}
-                setImages(DEFAULT_HERO_IMAGES);
-                window.dispatchEvent(new Event('hero_images_updated'));
-                showToast("Reset to system default static images!", "info");
-            } catch (e) {
-                console.error("Error resetting hero settings:", e);
-                showToast("Failed to reset settings.", "danger");
-            } finally {
-                setLoading(false);
-            }
+        setLoading(true);
+        try {
+            await fetch(`${API_URL}/superadmin/hero-settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(DEFAULT_HERO_IMAGES)
+            });
+            try { localStorage.removeItem('hero_landing_images'); } catch (err) {}
+            setImages(DEFAULT_HERO_IMAGES);
+            window.dispatchEvent(new Event('hero_images_updated'));
+            showToast("Reset to system default static images!", "info");
+        } catch (e) {
+            console.error("Error resetting hero settings:", e);
+            showToast("Failed to reset settings.", "danger");
+        } finally {
+            setLoading(false);
         }
     };
 

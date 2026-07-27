@@ -127,6 +127,10 @@ const VendorRegistration = () => {
     // Toast State
     const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [step]);
+
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
         setTimeout(() => setToast({ show: false, message: '', type: '' }), 3000);
@@ -202,24 +206,18 @@ const VendorRegistration = () => {
         const { name, value, files } = e.target;
 
         if (name === 'fullName' || name === 'businessName') {
-            if (/[^a-zA-Z\s]/.test(value)) {
-                showToast('Only alphabets are allowed.', 'error');
-                return; // Block input
-            }
-            setFormData(prev => ({ ...prev, [name]: value }));
+            const alphabetsOnly = value.replace(/[^a-zA-Z\s]/g, '');
+            setFormData(prev => ({ ...prev, [name]: alphabetsOnly }));
         } else if (name === 'phone') {
-            // Strict Validation for Phone
-            if (/\D/.test(value)) {
-                showToast('Please enter numbers only.', 'error');
-                return; // Block input
+            const numbersOnly = value.replace(/\D/g, '').slice(0, 10);
+            setFormData(prev => ({ ...prev, [name]: numbersOnly }));
+        } else if (name === 'gstNumber') {
+            const upperVal = value.toUpperCase();
+            if (upperVal.length > 15) {
+                showToast('GST Number must be exactly 15 characters.', 'error');
+                return;
             }
-            if (value.length > 10) {
-                showToast('Phone number limit is 10 digits.', 'error');
-                return; // Block input
-            }
-            // Optional: Check exactly 10 digits? Usually checked on blur or submit.
-            // For now, allow typing up to 10.
-            setFormData(prev => ({ ...prev, [name]: value }));
+            setFormData(prev => ({ ...prev, [name]: upperVal }));
         } else if (name === 'proofDocument') {
             setFormData(prev => ({ ...prev, proofDocument: files[0] }));
         } else {
@@ -612,7 +610,7 @@ const VendorRegistration = () => {
                                                                 </span>
                                                             )}
                                                             <span className="pr-currency" style={{ fontSize: '1rem', alignSelf: 'flex-start', marginTop: '4px', fontWeight: '700' }}>{plan.currency}</span>
-                                                            <span className="pr-amount" style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: 1 }}>{price.toLocaleString()}</span>
+                                                            <span className="pr-amount" style={{ fontSize: '3.5rem', fontWeight: '900', lineHeight: 1 }}>{price.toLocaleString('en-IN')}</span>
                                                             <span className="pr-period" style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600', marginLeft: '2px', alignSelf: 'flex-end', marginBottom: '8px' }}>{period}</span>
                                                         </div>
                                                         <ul className="vr-features">
@@ -652,7 +650,7 @@ const VendorRegistration = () => {
                                                 </div>
                                                 <div className="col-md-6">
                                                     <label className="form-label">GST Number <span className="text-danger">*</span></label>
-                                                    <input type="text" name="gstNumber" required value={formData.gstNumber} onChange={handleInputChange} className="form-control" placeholder="22AAAAA0000A1Z5" />
+                                                    <input type="text" name="gstNumber" required value={formData.gstNumber} onChange={handleInputChange} className="form-control" placeholder="22AAAAA0000A1Z5" maxLength="15" />
                                                 </div>
                                                 <div className="col-md-6">
                                                     <label className="form-label">Business Address <span className="text-danger">*</span></label>

@@ -15,10 +15,16 @@ const SuperAdminRegistration = () => {
     });
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+        if (name === 'fullName') {
+            const alphabetsOnly = value.replace(/[^a-zA-Z\s]/g, '');
+            setFormData({ ...formData, [name]: alphabetsOnly });
+        } else if (name === 'mobile') {
+            const numbersOnly = value.replace(/\D/g, '').slice(0, 10);
+            setFormData({ ...formData, [name]: numbersOnly });
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
     };
 
     const handleRegister = (e) => {

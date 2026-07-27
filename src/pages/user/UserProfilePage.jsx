@@ -450,7 +450,7 @@ const UserProfilePage = () => {
                                                                     <div className="booking-id-tag">ID: #{booking._id.slice(-8).toUpperCase()}</div>
                                                                     <div className="booking-price-display">
                                                                         <span className="price-label">Total Amount</span>
-                                                                        <span className="price-value">₹{booking.totalAmount?.toLocaleString()}</span>
+                                                                        <span className="price-value">₹{booking.totalAmount?.toLocaleString('en-IN')}</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -498,7 +498,7 @@ const UserProfilePage = () => {
                                                             <div className="d-flex justify-content-between align-items-end mt-3">
                                                                 <div>
                                                                     <div className="text-muted" style={{ fontSize: '0.65rem' }}>STARTING PRICE</div>
-                                                                    <div className="fw-bold text-dark">₹{venue.fullDayPrice?.toLocaleString() || venue.morningPrice?.toLocaleString()}</div>
+                                                                    <div className="fw-bold text-dark">₹{venue.fullDayPrice?.toLocaleString('en-IN') || venue.morningPrice?.toLocaleString('en-IN')}</div>
                                                                 </div>
                                                                 <div className="d-flex align-items-center gap-1 bg-light px-2 py-1 rounded">
                                                                     <FiStar className="text-warning" size={12} fill="currentColor" />

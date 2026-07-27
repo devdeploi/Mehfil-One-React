@@ -185,7 +185,7 @@ const VenueDetailModal = ({ venue, initialTab, onClose }) => {
                                     <div className="d-flex justify-content-between align-items-center mb-4">
                                         <h2 className="fw-bold h3 mb-0">{venue.mahalName}</h2>
                                         <div className="badge bg-danger p-2 px-3 rounded-pill fw-bold d-flex align-items-center gap-1 shadow-sm">
-                                            <FaRupeeSign /> {venue.fullDayPrice?.toLocaleString()}
+                                            <FaRupeeSign /> {venue.fullDayPrice?.toLocaleString('en-IN')}
                                         </div>
                                     </div>
 

@@ -136,6 +136,13 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (formData.guests && venue) {
+            if (Number(formData.guests) > Number(venue.seatingCapacity || 0)) {
+                showToast(`Guests cannot exceed seating capacity (${venue.seatingCapacity})`, "error");
+                return;
+            }
+        }
+
         // Multi-day warning check: if any of the spanned dates are booked
         if (formData.isMultiDay && formData.endDate) {
             let curr = new Date(selectedDate);
@@ -261,7 +268,10 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                             className="form-control border-0 p-3"
                                             placeholder="Enter your name"
                                             value={formData.customerName}
-                                            onChange={e => setFormData({ ...formData, customerName: e.target.value })}
+                                            onChange={e => {
+                                                const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                                                setFormData({ ...formData, customerName: val });
+                                            }}
                                             required
                                         />
                                     </div>
@@ -294,7 +304,13 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                             className="form-control border-0 p-3"
                                             placeholder={`Max ${venue.seatingCapacity}`}
                                             value={formData.guests}
-                                            onChange={e => setFormData({ ...formData, guests: e.target.value })}
+                                            onChange={e => {
+                                                let val = e.target.value;
+                                                if (venue && Number(val) > Number(venue.seatingCapacity || 0)) {
+                                                    val = venue.seatingCapacity;
+                                                }
+                                                setFormData({ ...formData, guests: val });
+                                            }}
                                             required
                                         />
                                     </div>
@@ -484,21 +500,21 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                             <div className="space-y-2">
                                 <div className="d-flex justify-content-between align-items-center" style={{ fontSize: '0.75rem' }}>
                                     <span className="text-white-50">Venue Rent</span>
-                                    <span className="fw-bold text-white">₹{recommendedPrice.toLocaleString()}</span>
+                                    <span className="fw-bold text-white">₹{recommendedPrice.toLocaleString('en-IN')}</span>
                                 </div>
 
                                 {totalFacilitiesPrice > 0 && (
                                     <>
                                         <div className="d-flex justify-content-between align-items-center mt-2" style={{ fontSize: '0.75rem' }}>
                                             <span className="text-white-50">Facilities Add-ons:</span>
-                                            <span className="text-success fw-bold">+ ₹{totalFacilitiesPrice.toLocaleString()}</span>
+                                            <span className="text-success fw-bold">+ ₹{totalFacilitiesPrice.toLocaleString('en-IN')}</span>
                                         </div>
                                         <div className="ps-2 mt-1 border-start border-white-10 ms-1">
                                             {Object.entries(formData.extraFacilities).map(([key, f]) =>
                                                 f.selected && (
                                                     <div key={key} className="d-flex justify-content-between align-items-center mb-1" style={{ fontSize: '0.65rem' }}>
                                                         <span className="text-white-50 text-capitalize">- {key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                                        <span className="text-white-50">₹{(Number(f.price || 0) * numDays).toLocaleString()}</span>
+                                                        <span className="text-white-50">₹{(Number(f.price || 0) * numDays).toLocaleString('en-IN')}</span>
                                                     </div>
                                                 )
                                             )}
@@ -512,7 +528,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                         <div className="text-muted" style={{ fontSize: '0.5rem' }}>Final Total</div>
                                     </div>
                                     <div className="text-end">
-                                        <div className="h3 fw-bold mb-0 text-danger" style={{ lineHeight: 1 }}>₹{finalAmount.toLocaleString()}</div>
+                                        <div className="h3 fw-bold mb-0 text-danger" style={{ lineHeight: 1 }}>₹{finalAmount.toLocaleString('en-IN')}</div>
                                     </div>
                                 </div>
                             </div>
@@ -529,7 +545,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
 
                             <div className="p-3 bg-white rounded-4 border border-danger-subtle mb-3 text-center">
                                 <div className="text-muted small fw-bold text-uppercase mb-1" style={{ fontSize: '0.6rem' }}>Advance Amount ({numDays} {numDays > 1 ? 'Days' : 'Day'})</div>
-                                <div className="h4 fw-bold text-dark mb-3">₹{totalAdvance.toLocaleString()}</div>
+                                <div className="h4 fw-bold text-dark mb-3">₹{totalAdvance.toLocaleString('en-IN')}</div>
 
                                 {/* QR Code for Desktop/Mobile Scans */}
                                 {venue.vendorId?.upiId && (

@@ -135,7 +135,7 @@ const Venues = ({ venuesRef }) => {
                                                     <div className="small text-muted mb-1" style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Starting From</div>
                                                     <div className="fw-bold text-dark d-flex align-items-center gap-1" style={{ fontSize: '1.1rem' }}>
                                                         <FaRupeeSign size={14} className="text-danger" />
-                                                        {venue.fullDayPrice?.toLocaleString()}
+                                                        {venue.fullDayPrice?.toLocaleString('en-IN')}
                                                     </div>
                                                 </div>
                                             </div>

@@ -63,7 +63,12 @@ const UserList = () => {
             setDeleteModal({ show: false, id: null });
         } catch (error) {
             console.error('Error deleting user:', error);
-            showToast('Failed to delete user', 'error');
+            if (error.response && error.response.status === 400) {
+                showToast(error.response.data.msg, 'error');
+            } else {
+                showToast('Failed to delete user', 'error');
+            }
+            setDeleteModal({ show: false, id: null });
         } finally {
             setIsProcessing(false);
         }
