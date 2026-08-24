@@ -151,7 +151,7 @@ const Pricing = ({ plansRef }) => {
 
                 {/* Bottom trust bar */}
                 <div className="pr-trust">
-                    {['Secure Payments', 'Instant Activation', '24/7 Support', '100% Satisfaction'].map((t, i) => (
+                    {['Secure Payments', 'Instant Activation', 'Full Support', '100% Satisfaction'].map((t, i) => (
                         <div key={i} className="pr-trust-item">
                             <span className="pr-trust-dot" />
                             {t}

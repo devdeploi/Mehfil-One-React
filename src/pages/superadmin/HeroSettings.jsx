@@ -11,6 +11,7 @@ const DEFAULT_HERO_IMAGES = {
 
 const HeroSettings = () => {
     const [images, setImages] = useState(DEFAULT_HERO_IMAGES);
+    const [imageFiles, setImageFiles] = useState({});
     const [loading, setLoading] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
@@ -42,12 +43,20 @@ const HeroSettings = () => {
         fetchSettings();
     }, []);
 
+    const getImageUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('data:') || url.startsWith('http')) return url;
+        const baseUrl = API_URL.replace(/\/api$/, '');
+        return `${baseUrl}/${url.replace(/^\//, '')}`;
+    };
+
     const handleFileChange = (key, file) => {
         if (!file) return;
         if (file.size > 5 * 1024 * 1024) {
             showToast("File size exceeds 5MB limit. Please choose a smaller image.", "danger");
             return;
         }
+        setImageFiles(prev => ({ ...prev, [key]: file }));
         const reader = new FileReader();
         reader.onloadend = () => {
             setImages(prev => ({ ...prev, [key]: { ...prev[key], url: reader.result } }));
@@ -62,19 +71,37 @@ const HeroSettings = () => {
 
     const handleClearSlot = (key) => {
         setImages(prev => ({ ...prev, [key]: { ...prev[key], url: '' } }));
+        setImageFiles(prev => ({ ...prev, [key]: null }));
         showToast("Slot reset to default template image.", "info");
     };
 
     const handleSave = async () => {
         setLoading(true);
         try {
+            const formData = new FormData();
+            
+            const dataToSend = JSON.parse(JSON.stringify(images));
+            ['mainArch', 'horizontal', 'vertical', 'circular'].forEach(key => {
+                if (dataToSend[key] && dataToSend[key].url && dataToSend[key].url.startsWith('data:image')) {
+                    dataToSend[key].url = 'NEW_FILE';
+                }
+            });
+            formData.append('settingsData', JSON.stringify(dataToSend));
+            
+            if (imageFiles.mainArch) formData.append('mainArchImage', imageFiles.mainArch);
+            if (imageFiles.horizontal) formData.append('horizontalImage', imageFiles.horizontal);
+            if (imageFiles.vertical) formData.append('verticalImage', imageFiles.vertical);
+            if (imageFiles.circular) formData.append('circularImage', imageFiles.circular);
+
             const res = await fetch(`${API_URL}/superadmin/hero-settings`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(images)
+                body: formData
             });
             if (res.ok) {
-                try { localStorage.setItem('hero_landing_images', JSON.stringify(images)); } catch (err) {}
+                const jsonRes = await res.json();
+                try { localStorage.setItem('hero_landing_images', JSON.stringify(jsonRes.settings)); } catch (err) {}
+                setImages(jsonRes.settings);
+                setImageFiles({});
                 window.dispatchEvent(new Event('hero_images_updated'));
                 showToast("Hero section images updated successfully in database!");
             } else {
@@ -521,7 +548,7 @@ const HeroSettings = () => {
                                 <div className="hs-preview">
                                     {images.mainArch?.url ? (
                                         <>
-                                            <img src={images.mainArch.url} alt="Main Arch" />
+                                            <img src={getImageUrl(images.mainArch.url)} alt="Main Arch" />
                                             <div className="hs-preview-overlay">{images.mainArch?.title || 'Featured'}</div>
                                             <button className="hs-preview-delete" title="Remove image" onClick={() => handleClearSlot('mainArch')}>
                                                 <FaTrashAlt />
@@ -568,7 +595,7 @@ const HeroSettings = () => {
                                 <div className="hs-preview">
                                     {images.horizontal?.url ? (
                                         <>
-                                            <img src={images.horizontal.url} alt="Horizontal" />
+                                            <img src={getImageUrl(images.horizontal.url)} alt="Horizontal" />
                                             <div className="hs-preview-overlay">{images.horizontal?.title || 'Grand Banquet'}</div>
                                             <button className="hs-preview-delete" title="Remove image" onClick={() => handleClearSlot('horizontal')}>
                                                 <FaTrashAlt />
@@ -610,7 +637,7 @@ const HeroSettings = () => {
                                 <div className="hs-preview">
                                     {images.vertical?.url ? (
                                         <>
-                                            <img src={images.vertical.url} alt="Vertical" />
+                                            <img src={getImageUrl(images.vertical.url)} alt="Vertical" />
                                             <div className="hs-preview-overlay">{images.vertical?.title || 'Luxury Decor'}</div>
                                             <button className="hs-preview-delete" title="Remove image" onClick={() => handleClearSlot('vertical')}>
                                                 <FaTrashAlt />
@@ -652,7 +679,7 @@ const HeroSettings = () => {
                                 <div className="hs-preview">
                                     {images.circular?.url ? (
                                         <>
-                                            <img src={images.circular.url} alt="Circular" />
+                                            <img src={getImageUrl(images.circular.url)} alt="Circular" />
                                             <div className="hs-preview-overlay">{images.circular?.title || 'Event Hall'}</div>
                                             <button className="hs-preview-delete" title="Remove image" onClick={() => handleClearSlot('circular')}>
                                                 <FaTrashAlt />

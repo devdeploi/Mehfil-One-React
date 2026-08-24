@@ -84,16 +84,9 @@ const Footer = ({ scrollToSection, refs }) => {
                         <h4 className="ft-col-title">Get in Touch</h4>
                         <ul className="ft-contact-list">
                             <li><span className="ft-contact-icon"><FaHeadset /></span>Email Support</li>
-                            <li><span className="ft-contact-icon"><FaBell /></span>+91 97896 21043</li>
-                            <li><span className="ft-contact-icon"><FaEnvelope /></span>support@mehfilone.com</li>
-                            <li style={{ alignItems: 'flex-start' }}>
-                                <span className="ft-contact-icon" style={{ marginTop: '2px' }}><FaMapMarkerAlt /></span>
-                                <div style={{ lineHeight: '1.4' }}>
-                                    2nd Floor, VSB EDIFICE, 303,<br />
-                                    Bazaar St, Pernambut,<br />
-                                    Tamil Nadu 635810
-                                </div>
-                            </li>
+                            <li><span className="ft-contact-icon"><FaBell /></span>+91 9789621043</li>
+                            <li><span className="ft-contact-icon"><FaEnvelope /></span>info@mehfilone.in</li>
+
                         </ul>
 
 
