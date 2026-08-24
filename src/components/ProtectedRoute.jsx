@@ -1,19 +1,20 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import { generateAdminLoginUrl } from '../utils/function';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const storedUser = localStorage.getItem('vendor_user');
     const user = storedUser ? JSON.parse(storedUser) : null;
 
     if (!user) {
-        const redirectPath = allowedRoles?.includes('superadmin') ? '/superadmin/login' : '/vendor/login';
+        const redirectPath = allowedRoles?.includes('superadmin') ? generateAdminLoginUrl() : '/vendor/login';
         return <Navigate to={redirectPath} replace />;
     }
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {
         // Redirect based on role if they try to access unauthorized route
         if (user.role === 'superadmin') {
-            return <Navigate to="/superadmin/dashboard" replace />;
+            return <Navigate to="/9fe66b121b3e4c9cabe51b36d5bbcaed/dashboard" replace />;
         } else {
             return <Navigate to="/vendor/dashboard" replace />;
         }

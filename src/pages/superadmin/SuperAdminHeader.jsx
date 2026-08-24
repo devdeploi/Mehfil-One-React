@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUserCircle } from 'react-icons/fa';
-import { API_URL } from '../../utils/function';
+import { API_URL, generateAdminLoginUrl } from '../../utils/function';
 
 const SuperAdminHeader = () => {
     const navigate = useNavigate();
@@ -40,7 +40,7 @@ const SuperAdminHeader = () => {
         setShowLogoutModal(false);
         
         if (role === 'superadmin') {
-            navigate('/superadmin/login');
+            navigate(generateAdminLoginUrl());
         } else {
             navigate('/vendor/login');
         }

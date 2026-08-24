@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import '../../styles/superadmin/SuperAdminLogin.css'; // Reusing Login styles for consistency
 import { useToast } from '../../hooks/useToast';
 import Toast from '../../components/Toast';
+import { generateAdminLoginUrl } from '../../utils/function';
 
 const SuperAdminRegistration = () => {
     const { toast, showToast } = useToast();
@@ -31,7 +32,7 @@ const SuperAdminRegistration = () => {
         e.preventDefault();
         // Dummy Registration Logic
         showToast('Registration Successful! Please Login.', 'success');
-        setTimeout(() => navigate('/superadmin/login'), 1500);
+        setTimeout(() => navigate(generateAdminLoginUrl()), 1500);
     };
 
     return (
@@ -98,7 +99,7 @@ const SuperAdminRegistration = () => {
                     <button type="submit" className="btn btn-primary sa-login-btn">Register</button>
 
                     <div className="text-center mt-4">
-                        <Link to="/superadmin/login" className="text-decoration-none text-light opacity-75 hover-opacity-100" style={{ fontSize: '0.9rem', transition: 'opacity 0.2s' }}>
+                        <Link to={generateAdminLoginUrl()} className="text-decoration-none text-light opacity-75 hover-opacity-100" style={{ fontSize: '0.9rem', transition: 'opacity 0.2s' }}>
                             Already have an account? <span className="text-warning fw-bold">Login</span>
                         </Link>
                     </div>

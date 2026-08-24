@@ -114,23 +114,23 @@ const SuperAdminLayout = () => {
                         <i className="bi bi-grip-vertical"></i>
                     </div>
 
-                    <NavLink to="/superadmin/dashboard" className="sa-dock-item" end>
+                    <NavLink to="/9fe66b121b3e4c9cabe51b36d5bbcaed/dashboard" className="sa-dock-item" end>
                         <i className="bi bi-grid-fill"></i>
                         <span className="sa-dock-label">Dashboard</span>
                     </NavLink>
-                    <NavLink to="/superadmin/vendors" className="sa-dock-item">
+                    <NavLink to="/9fe66b121b3e4c9cabe51b36d5bbcaed/vendors" className="sa-dock-item">
                         <i className="bi bi-shop"></i>
                         <span className="sa-dock-label">Vendors</span>
                     </NavLink>
-                    <NavLink to="/superadmin/users" className="sa-dock-item">
+                    <NavLink to="/9fe66b121b3e4c9cabe51b36d5bbcaed/users" className="sa-dock-item">
                         <i className="bi bi-people-fill"></i>
                         <span className="sa-dock-label">Users</span>
                     </NavLink>
-                    <NavLink to="/superadmin/payments" className="sa-dock-item">
+                    <NavLink to="/9fe66b121b3e4c9cabe51b36d5bbcaed/payments" className="sa-dock-item">
                         <i className="bi bi-cash-stack"></i>
                         <span className="sa-dock-label">Payments</span>
                     </NavLink>
-                    <NavLink to="/superadmin/hero-settings" className="sa-dock-item">
+                    <NavLink to="/9fe66b121b3e4c9cabe51b36d5bbcaed/hero-settings" className="sa-dock-item">
                         <i className="bi bi-images"></i>
                         <span className="sa-dock-label">Hero Settings</span>
                     </NavLink>

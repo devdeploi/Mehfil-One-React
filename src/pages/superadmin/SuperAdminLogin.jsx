@@ -104,7 +104,7 @@ const SuperAdminLogin = () => {
                 }
 
                 localStorage.setItem('vendor_user', JSON.stringify(userData));
-                navigate('/superadmin/dashboard');
+                navigate('/9fe66b121b3e4c9cabe51b36d5bbcaed/dashboard');
             }
         } catch (error) {
             console.error('Login Error:', error);

@@ -81,7 +81,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/venue/:id" element={<VenueDetailsPage />} />
         <Route path="/all-venues" element={<AllVenuesPage />} />
-        <Route path="/superadmin/login" element={<SuperAdminLogin />} />
+        <Route path="/9fe66b121b3e4c9cabe51b36d5bbcaed/login" element={<SuperAdminLogin />} />
         <Route path="/vendor/login" element={<VendorLogin />} />
         <Route path="/vendor/register" element={<VendorRegistration />} />
         <Route path="/user/login" element={<UserAuthPage defaultView="login" />} />
@@ -94,7 +94,7 @@ function App() {
 
         {/* Super Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
-          <Route path="/superadmin" element={<SuperAdminLayout />}>
+          <Route path="/9fe66b121b3e4c9cabe51b36d5bbcaed" element={<SuperAdminLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="vendors" element={<VendorList />} />
             <Route path="users" element={<UserList />} />
