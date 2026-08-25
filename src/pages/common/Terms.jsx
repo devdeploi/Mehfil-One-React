@@ -1,26 +1,11 @@
 import React from 'react';
-import { FaArrowLeft } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
 import '../../styles/superadmin/SuperAdminLogin.css';
 
 const Terms = ({ onBack }) => {
-    const navigate = useNavigate();
-
-    const handleBack = () => {
-        if (onBack) {
-            onBack();
-        } else {
-            navigate(-1);
-        }
-    };
-
     return (
         <div className="sa-login-container">
             <div className="sa-login-card sa-register-mode" style={{ maxWidth: '800px' }}>
                 <div className="d-flex align-items-center mb-4">
-                    <button className="btn btn-outline-dark rounded-circle p-2 me-3" style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={handleBack}>
-                        <FaArrowLeft />
-                    </button>
                     <h2 className="sa-login-title m-0 text-start w-auto" style={{ background: 'none', WebkitTextFillColor: 'initial', color: '#1e293b' }}>Terms and Conditions</h2>
                 </div>
 

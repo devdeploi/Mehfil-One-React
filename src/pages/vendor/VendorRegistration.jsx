@@ -121,6 +121,8 @@ const VendorRegistration = () => {
 
     // Registration Success State
     const [isRegistered, setIsRegistered] = useState(false);
+    const [showPolicyModal, setShowPolicyModal] = useState(false);
+    const [showTermsModal, setShowTermsModal] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(() => getSavedData()?.termsAccepted || false);
     const [isYearly, setIsYearly] = useState(() => planFromNav?.isYearly || getSavedData()?.isYearly || false);
 
@@ -634,8 +636,7 @@ const VendorRegistration = () => {
 
                                     {step === 2 && (
                                         <form onSubmit={handleNext} className="sa-login-form">
-                                            <div className="vr-form-header">
-                                                <button type="button" onClick={handleBack} className="vr-back-btn" title="Back"><FaArrowLeft /></button>
+                                            <div className="vr-form-header justify-content-center">
                                                 <h3>Account Details</h3>
                                             </div>
 
@@ -872,18 +873,13 @@ const VendorRegistration = () => {
                                                     Resend OTP
                                                 </button>
                                             </div>
-                                            <div className="text-center mt-2">
-                                                <button type="button" onClick={() => setStep(2)} className="btn btn-link text-muted text-decoration-none small">
-                                                    Back to Details
-                                                </button>
-                                            </div>
+                                            {/* Back button removed */}
                                         </div>
                                     )}
 
                                     {step === 4 && (
                                         <form onSubmit={handleNext} className="sa-login-form">
-                                            <div className="vr-form-header">
-                                                <button type="button" onClick={handleBack} className="vr-back-btn" title="Back"><FaArrowLeft /></button>
+                                            <div className="vr-form-header justify-content-center">
                                                 <h3>Payment & Confirmation</h3>
                                             </div>
 
@@ -922,7 +918,7 @@ const VendorRegistration = () => {
                                                         style={{ cursor: 'pointer', flexShrink: 0 }}
                                                     />
                                                     <label className="text-muted small" htmlFor="termsCheckStep3" style={{ cursor: 'pointer', lineHeight: '1.5' }}>
-                                                        I have read and agree to the <span onClick={() => handleNavigate('/terms')} className="text-danger text-decoration-none fw-bold" style={{ cursor: 'pointer' }}>Terms and Conditions</span> and <span onClick={() => handleNavigate('/policy')} className="text-danger text-decoration-none fw-bold" style={{ cursor: 'pointer' }}>Communication Policy</span>.
+                                                        I have read and agree to the <span onClick={() => setShowTermsModal(true)} className="text-danger text-decoration-none fw-bold" style={{ cursor: 'pointer' }}>Terms and Conditions</span> and <span onClick={() => setShowPolicyModal(true)} className="text-danger text-decoration-none fw-bold" style={{ cursor: 'pointer' }}>Communication Policy</span>.
                                                     </label>
                                                 </div>
                                             </div>
@@ -980,25 +976,44 @@ const VendorRegistration = () => {
                         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                             {[
                                 { label: 'Home', to: '/' },
-                                { label: 'Privacy Policy', to: '/policy' },
-                                { label: 'Terms of Service', to: '/terms' },
+                                { label: 'Privacy Policy', action: () => setShowPolicyModal(true) },
+                                { label: 'Terms of Service', action: () => setShowTermsModal(true) },
                                 { label: 'Sign In', to: '/vendor/login' },
-                            ].map(({ label, to }) => (
-                                <Link
-                                    key={label}
-                                    to={to}
-                                    style={{
-                                        color: '#94a3b8',
-                                        textDecoration: 'none',
-                                        fontSize: '0.82rem',
-                                        fontWeight: 500,
-                                        transition: 'color 0.2s'
-                                    }}
-                                    onMouseEnter={e => e.target.style.color = '#f1f5f9'}
-                                    onMouseLeave={e => e.target.style.color = '#94a3b8'}
-                                >
-                                    {label}
-                                </Link>
+                            ].map((item) => (
+                                item.to ? (
+                                    <Link
+                                        key={item.label}
+                                        to={item.to}
+                                        style={{
+                                            color: '#94a3b8',
+                                            textDecoration: 'none',
+                                            fontSize: '0.82rem',
+                                            fontWeight: 500,
+                                            transition: 'color 0.2s'
+                                        }}
+                                        onMouseEnter={e => e.target.style.color = '#f1f5f9'}
+                                        onMouseLeave={e => e.target.style.color = '#94a3b8'}
+                                    >
+                                        {item.label}
+                                    </Link>
+                                ) : (
+                                    <span
+                                        key={item.label}
+                                        onClick={item.action}
+                                        style={{
+                                            color: '#94a3b8',
+                                            textDecoration: 'none',
+                                            fontSize: '0.82rem',
+                                            fontWeight: 500,
+                                            transition: 'color 0.2s',
+                                            cursor: 'pointer'
+                                        }}
+                                        onMouseEnter={e => e.target.style.color = '#f1f5f9'}
+                                        onMouseLeave={e => e.target.style.color = '#94a3b8'}
+                                    >
+                                        {item.label}
+                                    </span>
+                                )
                             ))}
                         </div>
                     </div>
@@ -1014,6 +1029,38 @@ const VendorRegistration = () => {
                 </div>
             </footer>
 
+            {/* Modals */}
+            {showPolicyModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px' }}>
+                    <div style={{ backgroundColor: 'white', borderRadius: '12px', width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+                        <div style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Communication Policy</h4>
+                            <button onClick={() => setShowPolicyModal(false)} style={{ background: '#f1f5f9', border: 'none', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b', transition: 'all 0.2s' }} onMouseEnter={e => {e.target.style.background = '#e2e8f0'; e.target.style.color = '#0f172a';}} onMouseLeave={e => {e.target.style.background = '#f1f5f9'; e.target.style.color = '#64748b';}}>
+                                &times;
+                            </button>
+                        </div>
+                        <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+                            <Policy />
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {showTermsModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px' }}>
+                    <div style={{ backgroundColor: 'white', borderRadius: '12px', width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+                        <div style={{ padding: '15px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Terms and Conditions</h4>
+                            <button onClick={() => setShowTermsModal(false)} style={{ background: '#f1f5f9', border: 'none', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b', transition: 'all 0.2s' }} onMouseEnter={e => {e.target.style.background = '#e2e8f0'; e.target.style.color = '#0f172a';}} onMouseLeave={e => {e.target.style.background = '#f1f5f9'; e.target.style.color = '#64748b';}}>
+                                &times;
+                            </button>
+                        </div>
+                        <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+                            <Terms />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
