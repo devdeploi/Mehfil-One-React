@@ -28,7 +28,7 @@ const Policy = ({ onBack }) => {
 
                 <div className="mt-4 text-secondary" style={{ textAlign: 'justify', lineHeight: '1.7' }}>
                     <h4 className="text-dark mt-4 mb-3">1. Communication Channels</h4>
-                    <p>By registering, you explicitly consent to receive communications from Mehfil One via email, SMS, and WhatsApp regarding your account, updates, security alerts, and support messages.</p>
+                    <p>By registering, you explicitly consent to receive communications from Mehfil One via email regarding your account, updates, security alerts, and support messages.</p>
 
                     <h4 className="text-dark mt-4 mb-3">2. Promotional Messages</h4>
                     <p>We may send you promotional messages about new features, special offers, and events. You can opt-out of receiving promotional messages at any time by following the unsubscribe instructions provided in those messages.</p>

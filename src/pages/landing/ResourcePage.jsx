@@ -53,7 +53,7 @@ const ResourcePage = () => {
                         <p className="text-secondary border-bottom pb-4 mb-4" style={{ fontSize: '0.9rem' }}>Last updated: {new Date().toLocaleDateString()}</p>
                         <div className="text-secondary" style={{ textAlign: 'justify', lineHeight: '1.8', fontSize: '1.05rem' }}>
                             <h4 className="text-dark mt-4 mb-3 fw-bold">1. Communication Channels</h4>
-                            <p>By registering, you explicitly consent to receive communications from Mehfil One via email, SMS, and WhatsApp regarding your account, updates, security alerts, and support messages.</p>
+                            <p>By registering, you explicitly consent to receive communications from Mehfil One via email regarding your account, updates, security alerts, and support messages.</p>
                             <h4 className="text-dark mt-4 mb-3 fw-bold">2. Promotional Messages</h4>
                             <p>We may send you promotional messages about new features, special offers, and events. You can opt-out of receiving promotional messages at any time by following the unsubscribe instructions provided in those messages.</p>
                             <h4 className="text-dark mt-4 mb-3 fw-bold">3. Privacy & Data Protection</h4>

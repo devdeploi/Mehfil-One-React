@@ -84,7 +84,6 @@ const Footer = ({ scrollToSection, refs }) => {
                         <h4 className="ft-col-title">Get in Touch</h4>
                         <ul className="ft-contact-list">
                             <li><span className="ft-contact-icon"><FaHeadset /></span>Email Support</li>
-                            <li><span className="ft-contact-icon"><FaBell /></span>+91 9789621043</li>
                             <li><span className="ft-contact-icon"><FaEnvelope /></span>info@mehfilone.in</li>
 
                         </ul>
