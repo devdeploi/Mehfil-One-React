@@ -65,13 +65,23 @@ const Hero = ({ homeRef, activeTab, setActiveTab, venuesRef }) => {
         };
     }, []);
 
-    const imgMainArch = heroImages?.mainArch?.url || heroBg2;
+    const getImageUrl = (url, fallback) => {
+        if (!url) return fallback;
+        if (url.startsWith('http') || url.startsWith('data:')) return url;
+        if (url.startsWith('uploads/')) {
+            const baseUrl = API_URL.replace(/\/api$/, '');
+            return `${baseUrl}/${url}`;
+        }
+        return url;
+    };
+
+    const imgMainArch = getImageUrl(heroImages?.mainArch?.url, heroBg2);
     const titleMainArch = heroImages?.mainArch?.title || 'Royal Palace';
     const subtitleMainArch = heroImages?.mainArch?.subtitle || 'Featured';
 
-    const imgHorizontal = heroImages?.horizontal?.url || heroBg1;
-    const imgVertical = heroImages?.vertical?.url || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80';
-    const imgCircular = heroImages?.circular?.url || 'https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=600&q=80';
+    const imgHorizontal = getImageUrl(heroImages?.horizontal?.url, heroBg1);
+    const imgVertical = getImageUrl(heroImages?.vertical?.url, 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80');
+    const imgCircular = getImageUrl(heroImages?.circular?.url, 'https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=600&q=80');
 
     /* Parallax blob on mouse move */
     useEffect(() => {
