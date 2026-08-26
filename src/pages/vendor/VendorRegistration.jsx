@@ -272,7 +272,20 @@ const VendorRegistration = () => {
 
     const handlePayment = async () => {
         setIsProcessing(true);
-        const amountToPay = isYearly ? selectedPlan?.yearlyPrice : 1;
+        
+        // For now, it's set to 1 Rupee (the minimum allowed by Razorpay) for all plans.
+        // When changing to use constants.js amounts later, update this to:
+        // let baseAmount = isYearly ? selectedPlan?.yearlyPrice : selectedPlan?.monthlyPrice;
+        let baseAmount = 1; 
+        
+        let amountToPay = baseAmount;
+        
+        // Only apply GST and convenience fee if it's a real price (greater than the 1 rupee dummy charge)
+        if (baseAmount > 1) {
+            const gst = baseAmount * 0.18;
+            const convenienceFee = baseAmount * 0.02;
+            amountToPay = Math.round(baseAmount + gst + convenienceFee);
+        }
 
         if (amountToPay === 0) {
             setIsRegistering(true);

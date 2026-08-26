@@ -121,6 +121,7 @@ const MahalProfile = () => {
         refundPolicy: '',
         discountMin: '',
         discountMax: '',
+        applyGst: false,
 
         // 5. Availability / Booking
         availableDays: 'All Days', // Default
@@ -246,7 +247,8 @@ const MahalProfile = () => {
                 ...(hall.utensils?.items || {}) // Flatten items (plates, glasses, etc)
             },
             catering: hall.catering || initialHallState.catering,
-            facilities: hall.facilities || {}
+            facilities: hall.facilities || {},
+            applyGst: hall.applyGst || false
         };
 
         // Flatten facilities for frontend toggles if they come as object
@@ -1113,6 +1115,23 @@ const MahalProfile = () => {
                                                             </div>
                                                         </div>
                                                     )}
+                                                </div>
+                                                <div className="col-md-6 d-flex align-items-center mt-4">
+                                                    <div className="form-check form-switch p-3 border rounded-3 w-100 bg-white shadow-sm d-flex justify-content-between align-items-center">
+                                                        <label className="form-check-label fw-bold small text-dark m-0" htmlFor="applyGst">
+                                                            Apply 18% GST on Bookings
+                                                        </label>
+                                                        <input 
+                                                            className="form-check-input ms-3" 
+                                                            style={{ width: '2.5em', height: '1.25em' }} 
+                                                            type="checkbox" 
+                                                            role="switch" 
+                                                            id="applyGst" 
+                                                            name="applyGst" 
+                                                            checked={currentHall.applyGst} 
+                                                            onChange={handleFormChange} 
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div className="col-12"><label className="form-label fw-bold small text-secondary">Refund Policy</label><textarea className="form-control" style={inputStyle} rows="2" name="refundPolicy" value={currentHall.refundPolicy} onChange={handleFormChange}></textarea></div>
                                             </div>

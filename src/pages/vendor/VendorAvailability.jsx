@@ -366,14 +366,29 @@ const VendorAvailability = () => {
                 advancePaid: formData.paymentStatus === 'Partial' ? Number(formData.advanceAmount || 0) : 0,
                 extraFacilities: formData.extraFacilities,
                 dayShifts: formData.dayShifts,
-                totalAmount: Number(formData.price || 0) +
-                    Object.values(formData.extraFacilities).reduce((acc, f) => {
-                        if (!f.selected) return acc;
-                        const dayCount = formData.isMultiDay && formData.endDate
-                            ? Math.max(1, Math.ceil((new Date(formData.endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24)) + 1)
-                            : 1;
-                        return acc + (Number(f.price) * dayCount);
-                    }, 0)
+                totalAmount: (() => {
+                    const baseAmount = Number(formData.price || 0) +
+                        Object.values(formData.extraFacilities).reduce((acc, f) => {
+                            if (!f.selected) return acc;
+                            const dayCount = formData.isMultiDay && formData.endDate
+                                ? Math.max(1, Math.ceil((new Date(formData.endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24)) + 1)
+                                : 1;
+                            return acc + (Number(f.price) * dayCount);
+                        }, 0);
+                    const gstAmount = mahal?.applyGst ? Math.round(baseAmount * 0.18) : 0;
+                    return baseAmount + gstAmount;
+                })(),
+                gstAmount: (() => {
+                    const baseAmount = Number(formData.price || 0) +
+                        Object.values(formData.extraFacilities).reduce((acc, f) => {
+                            if (!f.selected) return acc;
+                            const dayCount = formData.isMultiDay && formData.endDate
+                                ? Math.max(1, Math.ceil((new Date(formData.endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24)) + 1)
+                                : 1;
+                            return acc + (Number(f.price) * dayCount);
+                        }, 0);
+                    return mahal?.applyGst ? Math.round(baseAmount * 0.18) : 0;
+                })()
             };
 
             await axios.post(`${API_URL}/bookings`, payload);
@@ -1164,6 +1179,19 @@ const VendorAvailability = () => {
                                                     let appliedDiscountPercent = Number(formData.appliedDiscount) || 0;
                                                     let discountAmount = Math.round(basePrice * (appliedDiscountPercent / 100));
                                                     let finalPrice = formData.price || basePrice;
+                                                    
+                                                    // Calculate Facilities Price
+                                                    let totalFacilitiesPrice = Object.values(formData.extraFacilities).reduce((acc, f) => {
+                                                        if (!f.selected) return acc;
+                                                        const dayCount = formData.isMultiDay && formData.endDate
+                                                            ? Math.max(1, Math.ceil((new Date(formData.endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24)) + 1)
+                                                            : 1;
+                                                        return acc + (Number(f.price || 0) * dayCount);
+                                                    }, 0);
+                                                    
+                                                    let baseAmount = finalPrice + totalFacilitiesPrice;
+                                                    let gstAmount = currentMahal?.applyGst ? Math.round(baseAmount * 0.18) : 0;
+                                                    let grandTotal = baseAmount + gstAmount;
 
                                                     return (
                                                         <div style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)', borderRadius: 12, padding: '12px 16px', color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -1179,6 +1207,20 @@ const VendorAvailability = () => {
                                                                 <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Agreed Price</span>
                                                                 <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>₹{Number(finalPrice || 0).toLocaleString('en-IN')}</span>
                                                             </div>
+                                                            
+                                                            {gstAmount > 0 && (
+                                                                <div className="d-flex justify-content-between align-items-end mt-2 pt-2" style={{ borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+                                                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>GST (18%)</span>
+                                                                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fca5a5', lineHeight: 1 }}>+ ₹{gstAmount.toLocaleString('en-IN')}</span>
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {gstAmount > 0 && (
+                                                                <div className="d-flex justify-content-between align-items-end mt-2">
+                                                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Total Amount</span>
+                                                                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>₹{grandTotal.toLocaleString('en-IN')}</span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })()}

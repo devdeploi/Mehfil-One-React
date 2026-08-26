@@ -131,7 +131,9 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
     }, [formData.extraFacilities, numDays]);
 
     const totalAdvance = (venue.advanceAmount || 0) * numDays;
-    const finalAmount = recommendedPrice + totalFacilitiesPrice;
+    const baseAmount = recommendedPrice + totalFacilitiesPrice;
+    const gstAmount = venue?.applyGst ? Math.round(baseAmount * 0.18) : 0;
+    const finalAmount = baseAmount + gstAmount;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -189,6 +191,7 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                     ])
                 ),
                 totalAmount: finalAmount,
+                gstAmount: gstAmount,
                 guests: formData.guests,
                 advancePaid: totalAdvance,
                 transactionId: formData.transactionId
@@ -520,6 +523,13 @@ const OnlineBookingForm = ({ venue, selectedDate, bookings = {}, onClose, onSucc
                                             )}
                                         </div>
                                     </>
+                                )}
+
+                                {gstAmount > 0 && (
+                                    <div className="d-flex justify-content-between align-items-center mt-2" style={{ fontSize: '0.75rem' }}>
+                                        <span className="text-white-50">GST (18%)</span>
+                                        <span className="text-danger fw-bold">+ ₹{gstAmount.toLocaleString('en-IN')}</span>
+                                    </div>
                                 )}
 
                                 <div className="border-top border-white-10 pt-3 mt-3 d-flex justify-content-between align-items-end">
