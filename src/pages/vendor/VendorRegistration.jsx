@@ -25,9 +25,6 @@ const toastStyles = `
 
 const VendorRegistration = () => {
 
-    const RAZORPAY_KEY_ID = "rzp_test_UrJKDxSMMBVdgW";
-    const isTestMode = RAZORPAY_KEY_ID.startsWith('rzp_test_');
-
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -303,7 +300,11 @@ const VendorRegistration = () => {
         }
 
         try {
-            // 1. Create Order
+            // 1. Fetch Razorpay Key
+            const keyRes = await axios.get(`${API_URL}/payment/key`);
+            const razorpayKey = keyRes.data.key;
+
+            // 2. Create Order
             const orderResult = await axios.post(`${API_URL}/payment/create-order`, {
                 amount: amountToPay,
                 currency: 'INR',
@@ -312,9 +313,9 @@ const VendorRegistration = () => {
 
             const { id: order_id, currency, amount } = orderResult.data;
 
-            // 2. Initialize Options
+            // 3. Initialize Options
             const options = {
-                key: RAZORPAY_KEY_ID, // Enter the Key ID generated from the Dashboard
+                key: razorpayKey, // Enter the Key ID generated from the Dashboard
                 amount: amount.toString(),
                 currency: currency,
                 name: "Mehfil One",
@@ -943,7 +944,7 @@ const VendorRegistration = () => {
                                                 className="sa-login-btn mt-4"
                                                 disabled={isProcessing || !termsAccepted}
                                             >
-                                                {isProcessing ? 'Processing Payment...' : ((isYearly ? selectedPlan?.yearlyPrice : 1) === 0 ? 'Register for Free' : (isTestMode ? `Pay ₹${isYearly ? selectedPlan?.yearlyPrice : 1}` : `Pay ₹${isYearly ? selectedPlan?.yearlyPrice : 1} & Register`))}
+                                                {isProcessing ? 'Processing Payment...' : ((isYearly ? selectedPlan?.yearlyPrice : 1) === 0 ? 'Register for Free' : `Pay ₹${isYearly ? selectedPlan?.yearlyPrice : 1} & Register`)}
                                             </button>
                                         </form>
                                     )}
