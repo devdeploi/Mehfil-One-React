@@ -4,6 +4,7 @@ import axios from 'axios';
 import { API_URL } from '../../utils/function';
 import Navbar from '../../components/Navbar';
 import Footer from './components/Footer';
+import SEO from '../../components/SEO';
 import { FaUsers, FaMapMarkerAlt, FaRupeeSign, FaStar, FaChevronRight, FaSearch, FaFilter, FaChevronLeft, FaSnowflake, FaTimes } from 'react-icons/fa';
 import { FiInfo } from 'react-icons/fi';
 
@@ -76,6 +77,11 @@ const AllVenuesPage = () => {
 
     return (
         <div className="all-venues-container" style={{ background: '#f8f9fa', minHeight: '100vh', position: 'relative' }}>
+            <SEO 
+                title="Browse Premium Wedding Halls & Party Venues | MEHFIL ONE"
+                description="Explore all available marriage halls, party venues, banquet spaces, and luxury convention centers on MEHFIL ONE. Filter by price, capacity, and city."
+                canonicalUrl="https://mehfilone.com/all-venues"
+            />
             <Navbar />
             
             {/* Header Section */}

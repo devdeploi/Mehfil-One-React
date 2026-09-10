@@ -10,6 +10,8 @@ import Venues from './components/Venues';
 import HowItWorks from './components/HowItWorks';
 import Pricing from './components/Pricing';
 import Footer from './components/Footer';
+import SEO from '../../components/SEO';
+
 const LandingPage = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const location = useLocation();
@@ -37,6 +39,11 @@ const LandingPage = () => {
 
     return (
         <div className="landing-container">
+            <SEO 
+                title="MEHFIL ONE - Premium Venue Booking & Event Management Platform"
+                description="MEHFIL ONE is India's top venue booking platform to explore and reserve luxury wedding halls, party spaces, banquet centers, and convention spaces."
+                canonicalUrl="https://mehfilone.com/"
+            />
             <Navbar 
                 scrollToSection={scrollToSection} 
                 refs={refs} 

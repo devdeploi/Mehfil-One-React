@@ -61,6 +61,17 @@ export default defineConfig({
   optimizeDeps: {
     include: ['socket.io-client', 'engine.io-client']
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          three: ['three', '@react-three/fiber', '@react-three/drei'],
+          icons: ['react-icons'],
+        },
+      },
+    },
+  },
   server: {
     open: true,
     host: true

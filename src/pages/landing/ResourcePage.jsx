@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import Footer from './components/Footer';
+import SEO from '../../components/SEO';
 import { FiFileText, FiShield, FiHelpCircle, FiSettings, FiGlobe, FiChevronRight } from 'react-icons/fi';
 import heroBg from '../../assets/landing/hero-bg-2.png';
 
@@ -128,6 +129,11 @@ const ResourcePage = () => {
 
     return (
         <div className="resource-page min-vh-100 d-flex flex-column bg-light font-outfit">
+            <SEO 
+                title="Official Resources & Venue Guidelines | MEHFIL ONE Platform"
+                description="Explore MEHFIL ONE resource guides, terms of service, vendor registration guidelines, and platform privacy policies."
+                canonicalUrl={`https://mehfilone.com/resources/${activeType}`}
+            />
             <Navbar />
             
             {/* Premium Theme Header Section */}

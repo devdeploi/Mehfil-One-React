@@ -1,19 +1,25 @@
 import React from 'react';
 import '../../styles/superadmin/SuperAdminLogin.css';
+import SEO from '../../components/SEO';
 
 const Policy = ({ onBack }) => {
     return (
         <div className="sa-login-container">
+            <SEO 
+                title="Privacy Policy & Communication Terms | MEHFIL ONE Platform"
+                description="Understand how MEHFIL ONE handles user privacy, data security, customer communications, and promotional options."
+                canonicalUrl="https://mehfilone.com/policy"
+            />
             <div className="sa-login-card sa-register-mode" style={{ maxWidth: '800px' }}>
                 <div className="d-flex align-items-center mb-4">
-                    <h2 className="sa-login-title m-0 text-start w-auto" style={{ background: 'none', WebkitTextFillColor: 'initial', color: '#1e293b' }}>Communication Policy</h2>
+                    <h2 className="sa-login-title m-0 text-start w-auto" style={{ background: 'none', WebkitTextFillColor: 'initial', color: '#1e293b' }}>Communication & Privacy Policy</h2>
                 </div>
 
                 <p className="text-secondary border-bottom pb-3">Last updated: {new Date().toLocaleDateString()}</p>
 
                 <div className="mt-4 text-secondary" style={{ textAlign: 'justify', lineHeight: '1.7' }}>
                     <h4 className="text-dark mt-4 mb-3">1. Communication Channels</h4>
-                    <p>By registering, you explicitly consent to receive communications from Mehfil One via email regarding your account, updates, security alerts, and support messages.</p>
+                    <p>By registering, you explicitly consent to receive communications from MEHFIL ONE via email regarding your account, updates, security alerts, and support messages.</p>
 
                     <h4 className="text-dark mt-4 mb-3">2. Promotional Messages</h4>
                     <p>We may send you promotional messages about new features, special offers, and events. You can opt-out of receiving promotional messages at any time by following the unsubscribe instructions provided in those messages.</p>

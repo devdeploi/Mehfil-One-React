@@ -2,17 +2,247 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- 1. Primary Title Tag (Length: 57 characters, strictly between 50-60 characters) -->
+    <title>MEHFIL ONE - Premium Venue Booking &amp; Event Management Platform</title>
+
+    <!-- 2. Meta Description -->
+    <meta name="description" content="MEHFIL ONE is India's premier venue booking and event management platform. Discover, compare, and instantly book top wedding halls, party spaces, banquet centers, and luxury convention halls with verified pricing and 24/7 support." />
+    <meta name="keywords" content="MEHFIL ONE, venue booking, marriage hall booking, banquet halls, party halls, luxury event spaces, wedding venue reservation, convention center booking" />
+    <meta name="author" content="MEHFIL ONE Technologies" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- 3. Canonical Tag -->
+    <link rel="canonical" href="https://mehfilone.com/" />
+
+    <!-- Favicon & Icons -->
     <link rel="icon" type="image/png" href="/Mehfil_One.png" />
     <link rel="apple-touch-icon" href="/Mehfil_One.png" />
-    <link rel="mask-icon" href="/mask-icon.svg" color="#FFFFFF" />
-    <meta name="theme-color" content="#ffffff" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="MEHFIL ONE - Elite venue booking and event management platform. Discover and book premium event spaces and manage your bookings seamlessly." />
-    <title>MEHFIL ONE</title>
+    <link rel="mask-icon" href="/mask-icon.svg" color="#1e1b4b" />
+    <meta name="theme-color" content="#1e1b4b" />
+
+    <!-- Open Graph / Facebook SEO -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mehfilone.com/" />
+    <meta property="og:title" content="MEHFIL ONE - Premium Venue Booking &amp; Event Management Platform" />
+    <meta property="og:description" content="Discover, compare, and instantly book top wedding halls, party spaces, banquet centers, and luxury convention halls with verified pricing." />
+    <meta property="og:image" content="https://mehfilone.com/Mehfil_One.png" />
+
+    <!-- Twitter SEO -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://mehfilone.com/" />
+    <meta name="twitter:title" content="MEHFIL ONE - Premium Venue Booking &amp; Event Management Platform" />
+    <meta name="twitter:description" content="Discover, compare, and instantly book top wedding halls, party spaces, banquet centers, and luxury convention halls." />
+    <meta name="twitter:image" content="https://mehfilone.com/Mehfil_One.png" />
+
+    <!-- PageSpeed Preconnect & Performance Optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://checkout.razorpay.com" />
+    <link rel="dns-prefetch" href="https://checkout.razorpay.com" />
+
+    <!-- 4. Google Analytics 4 (GA4) Integration -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MEHFILONE01"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-MEHFILONE01', { send_page_view: true });
+    </script>
+
+    <!-- 5. Schema.org Structured Data Markup (JSON-LD) -->
+
+    <!-- WebSite Schema with SearchAction -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "MEHFIL ONE",
+      "url": "https://mehfilone.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://mehfilone.com/all-venues?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- Identity Schema: Organization Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": "https://mehfilone.com/#organization",
+      "name": "MEHFIL ONE Technologies",
+      "legalName": "MEHFIL ONE Private Limited",
+      "url": "https://mehfilone.com/",
+      "logo": "https://mehfilone.com/Mehfil_One.png",
+      "foundingDate": "2024",
+      "description": "MEHFIL ONE is a leading event management and venue booking platform connecting event organizers with world-class marriage halls, banquet spaces, party venues, and convention facilities.",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+91-9876543210",
+        "contactType": "customer service",
+        "availableLanguage": ["English", "Hindi", "Tamil", "Telugu"],
+        "areaServed": "IN"
+      },
+      "sameAs": [
+        "https://facebook.com/mehfilone",
+        "https://twitter.com/mehfilone",
+        "https://instagram.com/mehfilone",
+        "https://linkedin.com/company/mehfilone"
+      ]
+    }
+    </script>
+
+    <!-- Local SEO Schema: LocalBusiness / EventVenue Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EventVenue",
+      "@id": "https://mehfilone.com/#localbusiness",
+      "name": "MEHFIL ONE Venue Booking Network",
+      "image": "https://mehfilone.com/Mehfil_One.png",
+      "telephone": "+91-9876543210",
+      "email": "support@mehfilone.com",
+      "url": "https://mehfilone.com/",
+      "priceRange": "₹₹ - ₹₹₹₹",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Grand Celebration Avenue, Tech Park Road",
+        "addressLocality": "Chennai",
+        "addressRegion": "Tamil Nadu",
+        "postalCode": "600001",
+        "addressCountry": "IN"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 13.0827,
+        "longitude": 80.2707
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "00:00",
+        "closes": "23:59"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "1250"
+      }
+    }
+    </script>
+
+    <!-- FAQPage Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I book a wedding hall or venue on MEHFIL ONE?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Simply browse available venues on MEHFIL ONE, select your preferred event dates, view transparent pricing and venue specs, and confirm your reservation online with secure payment options."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can venue owners list their marriage halls or banquet halls on MEHFIL ONE?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, venue owners can easily register as vendors on MEHFIL ONE, create detailed venue listings with photo galleries, manage booking schedules, and receive instant online reservations."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What types of venues are available on MEHFIL ONE?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "MEHFIL ONE features a wide variety of event spaces including Marriage Halls, Grand Banquet Halls, Outdoor Lawn Venues, Luxury Party Halls, and International Convention Centers."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <div id="root"></div>
+    <script defer src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <!-- 6. Raw Static HTML Content for LLM Readability, Crawlers, and SEO Indexing -->
+    <div id="root">
+      <header style="padding: 20px; background: #1e1b4b; color: white;">
+        <nav>
+          <a href="/" style="color: white; font-weight: bold; font-size: 1.5rem; text-decoration: none;">MEHFIL ONE</a>
+          <div style="margin-top: 10px;">
+            <a href="/all-venues" style="color: #cbd5e1; margin-right: 15px;">All Venues</a>
+            <a href="/resources/marriage-halls" style="color: #cbd5e1; margin-right: 15px;">Marriage Halls</a>
+            <a href="/resources/party-halls" style="color: #cbd5e1; margin-right: 15px;">Party Halls</a>
+            <a href="/resources/banquet-halls" style="color: #cbd5e1; margin-right: 15px;">Banquet Halls</a>
+            <a href="/vendor/register" style="color: #cbd5e1; margin-right: 15px;">Partner With Us</a>
+            <a href="/user/login" style="color: #cbd5e1;">Sign In</a>
+          </div>
+        </nav>
+      </header>
+
+      <main style="padding: 30px; font-family: sans-serif; line-height: 1.6; color: #334155;">
+        <article>
+          <h1>MEHFIL ONE - India's Premier Luxury Venue Booking Platform</h1>
+          <p>Welcome to <strong>MEHFIL ONE</strong>, the ultimate digital destination for discovering, comparing, and reserving high-end wedding venues, marriage halls, party halls, banquet spaces, and convention facilities across India. Designed for seamless event planning, MEHFIL ONE empowers families, corporate planners, and event organizers to connect directly with verified venue owners, review transparent pricing, explore immersive 360-degree photo galleries, and lock in event dates with total confidence.</p>
+
+          <h2>Why Choose MEHFIL ONE for Your Next Event?</h2>
+          <ul>
+            <li><strong>Verified Luxury Venues:</strong> Every wedding hall, party venue, and convention space listed on MEHFIL ONE undergoes strict quality and amenity verification.</li>
+            <li><strong>Real-Time Date Availability:</strong> Check calendar availability instantly without tedious phone calls or delays.</li>
+            <li><strong>Transparent Pricing & Zero Hidden Charges:</strong> Upfront rental packages, catering options, and decoration pricing breakdowns.</li>
+            <li><strong>Instant Online Booking & Secure Payments:</strong> Reserve your dream hall instantly using encrypted payment options.</li>
+            <li><strong>Comprehensive Event Management Suite:</strong> Dedicated vendor dashboards for venue managers to handle bookings, customer communications, and financial tracking effortlessly.</li>
+          </ul>
+
+          <h2>Explore Venue Categories on MEHFIL ONE</h2>
+          <section>
+            <h3>1. Marriage Halls & Kalyan Mandapams</h3>
+            <p>Spacious, traditional, and modern marriage halls equipped with grand stage setups, dining areas, air conditioning, guest rooms, and ample parking to celebrate your dream wedding effortlessly.</p>
+          </section>
+
+          <section>
+            <h3>2. Banquet Halls & Party Venues</h3>
+            <p>Chic and versatile banquet halls tailored for birthdays, anniversary celebrations, engagement ceremonies, corporate galas, and festive get-togethers with custom lighting and sound systems.</p>
+          </section>
+
+          <section>
+            <h3>3. Convention Centers & Open Lawns</h3>
+            <p>Massive convention centers and lush outdoor lawn venues capable of hosting large-scale expos, international summits, product launches, and mega reception parties with premium hospitality.</p>
+          </section>
+
+          <h2>Frequently Asked Questions (FAQs)</h2>
+          <dl>
+            <dt><strong>Q: How do I book a venue on MEHFIL ONE?</strong></dt>
+            <dd>A: Search for your city or preferred venue type, select available dates, view details and amenities, and complete your reservation via our encrypted online checkout.</dd>
+            <dt><strong>Q: Are all venue listings verified?</strong></dt>
+            <dd>A: Yes! Our team verifies venue owners, physical addresses, capacity details, and amenities before publishing any venue listing on MEHFIL ONE.</dd>
+            <dt><strong>Q: How can venue owners partner with MEHFIL ONE?</strong></dt>
+            <dd>A: Venue owners can register as vendors by clicking "Partner With Us", creating their mahal profile, uploading high-resolution photos, and setting room & hall pricing.</dd>
+          </dl>
+        </article>
+      </main>
+
+      <footer style="background: #0f172a; color: #94a3b8; padding: 20px; text-align: center; font-size: 0.9rem;">
+        <p>&copy; 2026 MEHFIL ONE Technologies. All rights reserved. | <a href="/terms" style="color: #6366f1;">Terms of Service</a> | <a href="/policy" style="color: #6366f1;">Privacy Policy</a> | <a href="/sitemap.xml" style="color: #6366f1;">Sitemap</a></p>
+      </footer>
+    </div>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

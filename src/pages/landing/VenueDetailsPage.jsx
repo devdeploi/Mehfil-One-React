@@ -9,6 +9,7 @@ import { FiArrowLeft, FiCheckCircle, FiStar, FiCalendar, FiMapPin, FiUsers, FiIn
 import { FaRupeeSign, FaChevronRight, FaTags, FaUsers, FaUtensils, FaCar } from 'react-icons/fa';
 import Navbar from '../../components/Navbar';
 import Footer from './components/Footer';
+import SEO from '../../components/SEO';
 
 const format12Hour = (timeStr) => {
     if (!timeStr) return '';
@@ -306,6 +307,26 @@ const VenueDetailsPage = () => {
 
     return (
         <div className="venue-details-page bg-white min-vh-100">
+            <SEO 
+                title={`${venue.mahalName} - Book Venue Online`}
+                description={`Book ${venue.mahalName} in ${venue.city}. Capacity: ${venue.seatingCapacity}+ guests. View amenities, price ₹${venue.fullDayPrice?.toLocaleString('en-IN')}, availability and reserve on MEHFIL ONE.`}
+                canonicalUrl={`https://mehfilone.com/venue/${venue._id}`}
+                schema={{
+                    "@context": "https://schema.org",
+                    "@type": "EventVenue",
+                    "name": venue.mahalName,
+                    "description": venue.description || `Luxury event venue in ${venue.city}`,
+                    "image": `${API_URL.replace('/api', '')}/${venue.coverImage}`,
+                    "telephone": venue.phone || "+91-9876543210",
+                    "address": {
+                        "@type": "PostalAddress",
+                        "streetAddress": venue.address || venue.city,
+                        "addressLocality": venue.city,
+                        "addressCountry": "IN"
+                    },
+                    "priceRange": `₹${venue.fullDayPrice}`
+                }}
+            />
             <Navbar />
 
             {/* Hero Header Section - Responsive Height */}

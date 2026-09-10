@@ -1,0 +1,21 @@
+# MEHFIL ONE Robots.txt
+User-agent: *
+Allow: /
+Allow: /all-venues
+Allow: /resources/
+Allow: /terms
+Allow: /policy
+
+# Disallow private user & admin paths
+Disallow: /9fe66b121b3e4c9cabe51b36d5bbcaed/
+Disallow: /vendor/dashboard
+Disallow: /vendor/profile
+Disallow: /vendor/mahal-profile
+Disallow: /vendor/availability
+Disallow: /vendor/bookings
+Disallow: /vendor/messages
+Disallow: /user/profile
+Disallow: /user/verify-otp
+
+# XML Sitemap reference
+Sitemap: https://mehfilone.com/sitemap.xml
