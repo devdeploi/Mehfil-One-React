@@ -27,12 +27,10 @@ const InstallPrompt = () => {
     window.addEventListener('resize', handleResize);
 
     const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      
-      // Only show if it hasn't been shown in this "session" or marked as shown
       const hasBeenShown = sessionStorage.getItem('pwa_prompt_shown');
       if (!hasBeenShown) {
+        e.preventDefault();
+        setDeferredPrompt(e);
         setShowPrompt(true);
         sessionStorage.setItem('pwa_prompt_shown', 'true');
       }

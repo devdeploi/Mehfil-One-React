@@ -401,7 +401,7 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
                                         <label className="form-label">Email Address</label>
                                         <div className="position-relative">
                                             <FiMail className="input-icon-left" />
-                                            <input type="email" name="email" className="form-control ps-5" placeholder="email@example.com" value={formData.email} onChange={handleChange} required />
+                                            <input type="email" name="email" autoComplete="username" className="form-control ps-5" placeholder="email@example.com" value={formData.email} onChange={handleChange} required />
                                         </div>
                                     </div>
                                 </div>
@@ -413,6 +413,7 @@ const UserAuthPage = ({ defaultView = 'login' }) => {
                                             <input 
                                                 type={showPassword ? 'text' : 'password'} 
                                                 name="password" 
+                                                autoComplete="current-password"
                                                 className="form-control ps-5 pe-5" 
                                                 placeholder="••••••••" 
                                                 value={formData.password} 

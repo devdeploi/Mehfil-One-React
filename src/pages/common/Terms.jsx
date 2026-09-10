@@ -8,7 +8,7 @@ const Terms = ({ onBack }) => {
             <SEO 
                 title="Terms of Service & Usage Guidelines | MEHFIL ONE Platform"
                 description="Read the official Terms of Service and venue booking guidelines for customers and vendor partners on MEHFIL ONE."
-                canonicalUrl="https://mehfilone.com/terms"
+                canonicalUrl="https://mehfilone.in/terms"
             />
             <div className="sa-login-card sa-register-mode" style={{ maxWidth: '800px' }}>
                 <div className="d-flex align-items-center mb-4">

@@ -42,7 +42,7 @@ const LandingPage = () => {
             <SEO 
                 title="MEHFIL ONE - Premium Venue Booking & Event Management Platform"
                 description="MEHFIL ONE is India's top venue booking platform to explore and reserve luxury wedding halls, party spaces, banquet centers, and convention spaces."
-                canonicalUrl="https://mehfilone.com/"
+                canonicalUrl="https://mehfilone.in/"
             />
             <Navbar 
                 scrollToSection={scrollToSection} 

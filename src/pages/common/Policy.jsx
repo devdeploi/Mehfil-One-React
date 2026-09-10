@@ -8,7 +8,7 @@ const Policy = ({ onBack }) => {
             <SEO 
                 title="Privacy Policy & Communication Terms | MEHFIL ONE Platform"
                 description="Understand how MEHFIL ONE handles user privacy, data security, customer communications, and promotional options."
-                canonicalUrl="https://mehfilone.com/policy"
+                canonicalUrl="https://mehfilone.in/policy"
             />
             <div className="sa-login-card sa-register-mode" style={{ maxWidth: '800px' }}>
                 <div className="d-flex align-items-center mb-4">

@@ -3,7 +3,7 @@ import { trackPageView } from '../utils/analytics';
 
 const DEFAULT_TITLE = 'MEHFIL ONE - Premium Venue Booking & Event Management Platform'; // 57 characters
 const DEFAULT_DESCRIPTION = 'MEHFIL ONE is India\'s top venue booking platform to explore and reserve luxury wedding halls, party spaces, banquet centers, and convention spaces.';
-const DEFAULT_CANONICAL = 'https://mehfilone.com';
+const DEFAULT_CANONICAL = 'https://mehfilone.in';
 
 /**
  * Custom React Hook for dynamically updating SEO metadata per route.

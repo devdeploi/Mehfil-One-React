@@ -80,7 +80,7 @@ const AllVenuesPage = () => {
             <SEO 
                 title="Browse Premium Wedding Halls & Party Venues | MEHFIL ONE"
                 description="Explore all available marriage halls, party venues, banquet spaces, and luxury convention centers on MEHFIL ONE. Filter by price, capacity, and city."
-                canonicalUrl="https://mehfilone.com/all-venues"
+                canonicalUrl="https://mehfilone.in/all-venues"
             />
             <Navbar />
             

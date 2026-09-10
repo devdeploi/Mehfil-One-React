@@ -310,7 +310,7 @@ const VenueDetailsPage = () => {
             <SEO 
                 title={`${venue.mahalName} - Book Venue Online`}
                 description={`Book ${venue.mahalName} in ${venue.city}. Capacity: ${venue.seatingCapacity}+ guests. View amenities, price ₹${venue.fullDayPrice?.toLocaleString('en-IN')}, availability and reserve on MEHFIL ONE.`}
-                canonicalUrl={`https://mehfilone.com/venue/${venue._id}`}
+                canonicalUrl={`https://mehfilone.in/venue/${venue._id}`}
                 schema={{
                     "@context": "https://schema.org",
                     "@type": "EventVenue",
@@ -929,7 +929,7 @@ const VenueDetailsPage = () => {
                                         <div className="p-2 bg-light rounded-3 text-danger"><FiMail size={16} /></div>
                                         <div>
                                             <div className="text-muted" style={{ fontSize: '0.65rem' }}>Email Us</div>
-                                            <div className="fw-bold small">support@mehfilone.com</div>
+                                            <div className="fw-bold small">support@mehfilone.in</div>
                                         </div>
                                     </div>
                                 </div>

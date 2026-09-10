@@ -79,7 +79,7 @@ const ResourcePage = () => {
                             </div>
                             <div className="p-4 bg-light rounded-4 my-4 shadow-sm border border-white">
                                 <h5 className="text-dark mb-2 fw-bold d-flex align-items-center gap-2"><FiHelpCircle className="text-danger" /> How do I contact support?</h5>
-                                <p className="mb-0">If you face any issues, feel free to email us at support@mehfilone.com or call our 24/7 helpline.</p>
+                                <p className="mb-0">If you face any issues, feel free to email us at support@mehfilone.in or call our 24/7 helpline.</p>
                             </div>
                         </div>
                     </div>
@@ -132,7 +132,7 @@ const ResourcePage = () => {
             <SEO 
                 title="Official Resources & Venue Guidelines | MEHFIL ONE Platform"
                 description="Explore MEHFIL ONE resource guides, terms of service, vendor registration guidelines, and platform privacy policies."
-                canonicalUrl={`https://mehfilone.com/resources/${activeType}`}
+                canonicalUrl={`https://mehfilone.in/resources/${activeType}`}
             />
             <Navbar />
             
